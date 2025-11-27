@@ -66,7 +66,7 @@ export async function exportAnalysisMarkdown(submissionId: string) {
   }
 
   const groupedIssues = submission.issues.reduce<Record<string, IssueType[]>>(
-    (acc, issue) => {
+    (acc: Record<string, IssueType[]>, issue) => {
       if (!acc[issue.severity]) acc[issue.severity] = [];
       acc[issue.severity].push(issue);
       return acc;
