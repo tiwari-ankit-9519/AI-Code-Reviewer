@@ -130,12 +130,13 @@ Total Issues: ${submission.issues.length}
 
   Object.entries(groupedIssues)
     .sort(([a], [b]) => severityOrder[a] - severityOrder[b])
-    .forEach(([severity, issues]: [string, IssueType[]]) => {
+    .forEach(([severity, issues]) => {
+      const typedIssues = issues as IssueType[];
       markdown += `\n### ${
         severity.charAt(0).toUpperCase() + severity.slice(1)
-      } (${issues.length})\n\n`;
+      } (${typedIssues.length})\n\n`;
 
-      issues.forEach((issue: IssueType, index) => {
+      typedIssues.forEach((issue: IssueType, index) => {
         markdown += `#### ${index + 1}. ${issue.title}\n`;
         markdown += `**Severity:** ${issue.severity.toUpperCase()}\n`;
         markdown += `**Line:** ${issue.lineStart}${
