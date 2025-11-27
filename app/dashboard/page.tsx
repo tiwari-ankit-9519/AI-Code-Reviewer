@@ -58,8 +58,6 @@ export default async function DashboardPage() {
     return "bg-red-50";
   };
 
-  type SubmissionType = (typeof submissions)[number];
-
   return (
     <div className="space-y-8">
       <div>
@@ -144,7 +142,7 @@ export default async function DashboardPage() {
             </div>
             <Link
               href="/dashboard/new"
-              className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center hover:shadow-lg transition"
+              className="w-12 h-12 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center hover:shadow-lg transition"
             >
               <svg
                 className="w-6 h-6 text-white"
@@ -192,60 +190,64 @@ export default async function DashboardPage() {
             </p>
             <Link
               href="/dashboard/new"
-              className="inline-block mt-4 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition"
+              className="inline-block mt-4 px-4 py-2 bg-linear-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition"
             >
               New Review
             </Link>
           </div>
         ) : (
           <div className="divide-y divide-[#ececec]">
-            {submissions.map((submission: SubmissionType) => (
-              <Link
-                key={submission.id}
-                href={`/dashboard/submissions/${submission.id}`}
-                className="px-6 py-4 hover:bg-[#f9f9fa] transition flex items-center justify-between"
-              >
-                <div className="flex-1">
-                  <p className="font-medium text-[#15192c]">
-                    {submission.fileName || "Untitled.js"}
-                  </p>
-                  <p className="text-sm text-[#b2b5be] mt-1">
-                    {submission.language} •{" "}
-                    {new Date(submission.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    {submission.analysis ? (
-                      <p
-                        className={`text-lg font-bold ${getScoreColor(
-                          submission.analysis.overallScore
-                        )}`}
-                      >
-                        {submission.analysis.overallScore}%
-                      </p>
-                    ) : (
-                      <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-medium rounded">
-                        Analyzing
-                      </span>
-                    )}
+            {submissions.map(
+              (
+                submission: (typeof submissions)[number] // 👈 FIX ADDED HERE
+              ) => (
+                <Link
+                  key={submission.id}
+                  href={`/dashboard/submissions/${submission.id}`}
+                  className="px-6 py-4 hover:bg-[#f9f9fa] transition flex items-center justify-between"
+                >
+                  <div className="flex-1">
+                    <p className="font-medium text-[#15192c]">
+                      {submission.fileName || "Untitled.js"}
+                    </p>
+                    <p className="text-sm text-[#b2b5be] mt-1">
+                      {submission.language} •{" "}
+                      {new Date(submission.createdAt).toLocaleDateString()}
+                    </p>
                   </div>
-                  <svg
-                    className="w-5 h-5 text-[#b2b5be]"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </div>
-              </Link>
-            ))}
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      {submission.analysis ? (
+                        <p
+                          className={`text-lg font-bold ${getScoreColor(
+                            submission.analysis.overallScore
+                          )}`}
+                        >
+                          {submission.analysis.overallScore}%
+                        </p>
+                      ) : (
+                        <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-medium rounded">
+                          Analyzing
+                        </span>
+                      )}
+                    </div>
+                    <svg
+                      className="w-5 h-5 text-[#b2b5be]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </div>
+                </Link>
+              )
+            )}
           </div>
         )}
       </div>

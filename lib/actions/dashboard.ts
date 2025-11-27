@@ -76,12 +76,19 @@ export async function getDashboardStats() {
     },
   });
 
+  type IssueStatType = (typeof issueStats)[number];
+
   const issuesBySeverity = {
-    critical: issueStats.find((s) => s.severity === "critical")?._count || 0,
-    high: issueStats.find((s) => s.severity === "high")?._count || 0,
-    medium: issueStats.find((s) => s.severity === "medium")?._count || 0,
-    low: issueStats.find((s) => s.severity === "low")?._count || 0,
-    info: issueStats.find((s) => s.severity === "info")?._count || 0,
+    critical:
+      issueStats.find((s: IssueStatType) => s.severity === "critical")
+        ?._count || 0,
+    high:
+      issueStats.find((s: IssueStatType) => s.severity === "high")?._count || 0,
+    medium:
+      issueStats.find((s: IssueStatType) => s.severity === "medium")?._count ||
+      0,
+    low:
+      issueStats.find((s: IssueStatType) => s.severity === "low")?._count || 0,
   };
 
   return {
