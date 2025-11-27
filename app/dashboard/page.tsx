@@ -197,53 +197,57 @@ export default async function DashboardPage() {
           </div>
         ) : (
           <div className="divide-y divide-[#ececec]">
-            {submissions.map((submission) => (
-              <Link
-                key={submission.id}
-                href={`/dashboard/submissions/${submission.id}`}
-                className="px-6 py-4 hover:bg-[#f9f9fa] transition flex items-center justify-between"
-              >
-                <div className="flex-1">
-                  <p className="font-medium text-[#15192c]">
-                    {submission.fileName || "Untitled.js"}
-                  </p>
-                  <p className="text-sm text-[#b2b5be] mt-1">
-                    {submission.language} •{" "}
-                    {new Date(submission.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    {submission.analysis ? (
-                      <p
-                        className={`text-lg font-bold ${getScoreColor(
-                          submission.analysis.overallScore
-                        )}`}
-                      >
-                        {submission.analysis.overallScore}%
-                      </p>
-                    ) : (
-                      <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-medium rounded">
-                        Analyzing
-                      </span>
-                    )}
+            {submissions.map(
+              (
+                submission: (typeof submissions)[number] // 👈 FIX ADDED HERE
+              ) => (
+                <Link
+                  key={submission.id}
+                  href={`/dashboard/submissions/${submission.id}`}
+                  className="px-6 py-4 hover:bg-[#f9f9fa] transition flex items-center justify-between"
+                >
+                  <div className="flex-1">
+                    <p className="font-medium text-[#15192c]">
+                      {submission.fileName || "Untitled.js"}
+                    </p>
+                    <p className="text-sm text-[#b2b5be] mt-1">
+                      {submission.language} •{" "}
+                      {new Date(submission.createdAt).toLocaleDateString()}
+                    </p>
                   </div>
-                  <svg
-                    className="w-5 h-5 text-[#b2b5be]"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </div>
-              </Link>
-            ))}
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      {submission.analysis ? (
+                        <p
+                          className={`text-lg font-bold ${getScoreColor(
+                            submission.analysis.overallScore
+                          )}`}
+                        >
+                          {submission.analysis.overallScore}%
+                        </p>
+                      ) : (
+                        <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-medium rounded">
+                          Analyzing
+                        </span>
+                      )}
+                    </div>
+                    <svg
+                      className="w-5 h-5 text-[#b2b5be]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </div>
+                </Link>
+              )
+            )}
           </div>
         )}
       </div>
