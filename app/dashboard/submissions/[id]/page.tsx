@@ -79,19 +79,16 @@ export default async function SubmissionDetailPage({
 
   const severityOrder = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
 
-  const groupedIssues = submission.issues.reduce(
-    (
-      acc: Record<string, typeof submission.issues>,
-      issue: (typeof submission.issues)[number]
-    ) => {
-      if (!acc[issue.severity]) {
-        acc[issue.severity] = [];
-      }
-      acc[issue.severity].push(issue);
-      return acc;
-    },
-    {} as Record<string, typeof submission.issues>
-  );
+  type IssueItem = (typeof submission.issues)[number];
+  type IssueGroup = Record<string, IssueItem[]>;
+
+  const groupedIssues = submission.issues.reduce<IssueGroup>((acc, issue) => {
+    if (!acc[issue.severity]) {
+      acc[issue.severity] = [];
+    }
+    acc[issue.severity].push(issue);
+    return acc;
+  }, {});
 
   return (
     <div className="space-y-6">
