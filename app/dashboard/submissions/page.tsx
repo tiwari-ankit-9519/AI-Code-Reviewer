@@ -3,6 +3,11 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+type LanguageGroup = {
+  language: string;
+  _count: number;
+};
+
 export default async function SubmissionsPage({
   searchParams,
 }: {
@@ -57,15 +62,10 @@ export default async function SubmissionsPage({
       skip: (page - 1) * perPage,
       take: perPage,
     }),
-
     prisma.codeSubmission.count({ where }),
   ]);
 
   const totalPages = Math.ceil(total / perPage);
-
-  // ---------------------------------------
-  // LANGUAGE GROUPING — PROPER TYPING
-  // ---------------------------------------
 
   const languagesRaw = await prisma.codeSubmission.groupBy({
     by: ["language"],
@@ -73,10 +73,12 @@ export default async function SubmissionsPage({
     _count: { language: true },
   });
 
-  const languages = languagesRaw.map((item) => ({
-    language: item.language,
-    _count: item._count.language,
-  }));
+  const languages: LanguageGroup[] = languagesRaw.map(
+    (item: (typeof languagesRaw)[number]) => ({
+      language: item.language,
+      _count: item._count.language,
+    })
+  );
 
   const getStatusBadge = (status: string) => {
     const styles = {
@@ -104,7 +106,6 @@ export default async function SubmissionsPage({
             {total} submission{total !== 1 ? "s" : ""}
           </p>
         </div>
-
         <Link
           href="/dashboard/new"
           className="px-4 py-2 bg-linear-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition"
@@ -138,7 +139,6 @@ export default async function SubmissionsPage({
               className="w-full px-4 py-2 border border-[#ececec] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">All Languages</option>
-
               {languages.map((lang) => (
                 <option key={lang.language} value={lang.language}>
                   {lang.language.charAt(0).toUpperCase() +
@@ -156,7 +156,6 @@ export default async function SubmissionsPage({
             >
               Filter
             </button>
-
             <Link
               href="/dashboard/submissions"
               className="px-4 py-2 border border-[#ececec] rounded-lg font-medium text-[#15192c] hover:bg-[#f9f9fa] transition"
@@ -169,7 +168,20 @@ export default async function SubmissionsPage({
 
       {submissions.length === 0 ? (
         <div className="bg-white rounded-lg border border-[#ececec] p-12 text-center shadow-sm">
-          <p>No submissions found.</p>
+          <p className="text-[#6c7681] font-medium mb-2">
+            No submissions found
+          </p>
+          <p className="text-[#b2b5be] text-sm mb-4">
+            {search || language
+              ? "Try adjusting your filters"
+              : "Start your first code review"}
+          </p>
+          <Link
+            href="/dashboard/new"
+            className="inline-block px-4 py-2 bg-linear-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition"
+          >
+            New Review
+          </Link>
         </div>
       ) : (
         <>
@@ -206,22 +218,23 @@ export default async function SubmissionsPage({
                       className="hover:bg-[#f9f9fa] transition"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {submission.fileName}
+                        {submission.fileName || "Untitled"}
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">
+                        <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs">
                           {submission.language}
                         </span>
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`px-2 py-1 rounded text-xs border ${getStatusBadge(
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadge(
                             submission.status
                           )}`}
                         >
-                          {submission.status}
+                          {submission.status.charAt(0).toUpperCase() +
+                            submission.status.slice(1)}
                         </span>
                       </td>
 
@@ -235,18 +248,25 @@ export default async function SubmissionsPage({
                             {submission.analysis.overallScore}%
                           </span>
                         ) : (
-                          <span className="text-gray-400">Pending</span>
+                          <span className="text-[#b2b5be]">Pending</span>
                         )}
                       </td>
 
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {new Date(submission.createdAt).toLocaleDateString()}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#6c7681]">
+                        {new Date(submission.createdAt).toLocaleDateString(
+                          "en-US",
+                          {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          }
+                        )}
                       </td>
 
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                         <Link
                           href={`/dashboard/submissions/${submission.id}`}
-                          className="text-blue-600"
+                          className="text-[#007fff] hover:text-[#005ecb] font-medium transition"
                         >
                           View →
                         </Link>
@@ -270,7 +290,7 @@ export default async function SubmissionsPage({
                     href={`/dashboard/submissions?page=${page - 1}${
                       language ? `&language=${language}` : ""
                     }${search ? `&search=${search}` : ""}`}
-                    className="px-4 py-2 border border-[#ececec] rounded-lg text-sm"
+                    className="px-4 py-2 border border-[#ececec] rounded-lg text-sm font-medium text-[#15192c] hover:bg-[#f9f9fa] transition"
                   >
                     Previous
                   </Link>
@@ -281,7 +301,7 @@ export default async function SubmissionsPage({
                     href={`/dashboard/submissions?page=${page + 1}${
                       language ? `&language=${language}` : ""
                     }${search ? `&search=${search}` : ""}`}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
+                    className="px-4 py-2 bg-[#007fff] text-white rounded-lg text-sm font-medium hover:bg-[#2b89ff] transition"
                   >
                     Next
                   </Link>
