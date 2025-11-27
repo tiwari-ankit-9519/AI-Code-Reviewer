@@ -1,8 +1,16 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
+
+type SubmissionWhere = {
+  userId: string;
+  language?: string;
+  OR?: Array<{
+    fileName?: { contains: string; mode: "insensitive" };
+    code?: { contains: string; mode: "insensitive" };
+  }>;
+};
 
 export default async function SubmissionsPage({
   searchParams,
@@ -21,10 +29,10 @@ export default async function SubmissionsPage({
   const search = params.search;
   const perPage = 10;
 
-  const where: Prisma.CodeSubmissionWhereInput = {
+  // ---------- FIXED WHERE CLAUSE (NO PRISMA IMPORT NEEDED) ----------
+  const where: SubmissionWhere = {
     userId: session.user.id,
   };
-
   if (language) {
     where.language = language;
   }
@@ -35,6 +43,7 @@ export default async function SubmissionsPage({
       { code: { contains: search, mode: "insensitive" } },
     ];
   }
+  // -----------------------------------------------------------------
 
   const [submissions, total] = await Promise.all([
     prisma.codeSubmission.findMany({
@@ -87,7 +96,7 @@ export default async function SubmissionsPage({
         <div>
           <h1 className="text-3xl font-bold text-[#15192c]">Review History</h1>
           <p className="text-[#6c7681] mt-2">
-            {total} submission{total !== 1 ? "s" : ""} total
+            {total} submission{total !== 1 ? "s" : ""}
           </p>
         </div>
         <Link
