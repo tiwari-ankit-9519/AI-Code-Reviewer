@@ -22,7 +22,7 @@ type SubmissionItem = {
   linesOfCode: number;
   fileSize: number;
   status: string;
-  createdAt: string;
+  createdAt: Date;
   analysis: AnalysisSummary;
 };
 
@@ -46,10 +46,10 @@ export default async function SubmissionsPage({
   const where: {
     userId: string;
     language?: string;
-    OR?: {
+    OR?: Array<{
       fileName?: { contains: string; mode: "insensitive" };
       code?: { contains: string; mode: "insensitive" };
-    }[];
+    }>;
   } = { userId: session.user.id };
 
   if (language) {
@@ -90,7 +90,7 @@ export default async function SubmissionsPage({
     linesOfCode: s.linesOfCode ?? 0,
     fileSize: s.fileSize ?? 0,
     status: s.status,
-    createdAt: s.createdAt.toISOString(),
+    createdAt: s.createdAt,
     analysis: s.analysis
       ? {
           overallScore: s.analysis.overallScore,
@@ -142,7 +142,7 @@ export default async function SubmissionsPage({
         </div>
         <Link
           href="/dashboard/new"
-          className="px-4 py-2 bg-linear-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition"
+          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition"
         >
           New Review
         </Link>
@@ -157,7 +157,7 @@ export default async function SubmissionsPage({
             <input
               type="text"
               name="search"
-              defaultValue={search}
+              defaultValue={search || ""}
               placeholder="Search by filename or code..."
               className="w-full px-4 py-2 border border-[#ececec] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
@@ -225,7 +225,7 @@ export default async function SubmissionsPage({
           </p>
           <Link
             href="/dashboard/new"
-            className="inline-block px-4 py-2 bg-linear-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition"
+            className="inline-block px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition"
           >
             New Review
           </Link>
@@ -259,7 +259,7 @@ export default async function SubmissionsPage({
                 </thead>
 
                 <tbody className="divide-y divide-[#ececec]">
-                  {submissions.map((submission: SubmissionItem) => (
+                  {submissions.map((submission) => (
                     <tr
                       key={submission.id}
                       className="hover:bg-[#f9f9fa] transition"
@@ -327,14 +327,11 @@ export default async function SubmissionsPage({
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-[#6c7681]">
-                        {new Date(submission.createdAt).toLocaleDateString(
-                          "en-US",
-                          {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          }
-                        )}
+                        {submission.createdAt.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
