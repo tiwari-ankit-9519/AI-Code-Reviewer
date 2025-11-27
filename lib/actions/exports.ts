@@ -1,7 +1,6 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { Issue } from "@prisma/client";
 import { auth } from "@/lib/auth";
 
 interface Recommendation {
@@ -11,6 +10,8 @@ interface Recommendation {
   impact: string;
   effort: "low" | "medium" | "high";
 }
+
+type IssueType = Awaited<ReturnType<typeof prisma.issue.findMany>>[number];
 
 export async function exportAnalysisJSON(submissionId: string) {
   const session = await auth();
@@ -64,7 +65,7 @@ export async function exportAnalysisMarkdown(submissionId: string) {
     throw new Error("Analysis not available");
   }
 
-  const groupedIssues = submission.issues.reduce<Record<string, Issue[]>>(
+  const groupedIssues = submission.issues.reduce<Record<string, IssueType[]>>(
     (acc, issue) => {
       if (!acc[issue.severity]) acc[issue.severity] = [];
       acc[issue.severity].push(issue);
