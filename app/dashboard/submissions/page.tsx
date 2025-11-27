@@ -83,23 +83,27 @@ export default async function SubmissionsPage({
     prisma.codeSubmission.count({ where }),
   ]);
 
-  const submissions: SubmissionItem[] = submissionsRaw.map((s) => ({
-    id: s.id,
-    fileName: s.fileName,
-    language: s.language,
-    linesOfCode: s.linesOfCode ?? 0,
-    fileSize: s.fileSize ?? 0,
-    status: s.status,
-    createdAt: s.createdAt,
-    analysis: s.analysis
-      ? {
-          overallScore: s.analysis.overallScore,
-          securityScore: s.analysis.securityScore,
-          performanceScore: s.analysis.performanceScore,
-          qualityScore: s.analysis.qualityScore,
-        }
-      : null,
-  }));
+  type SubmissionRaw = (typeof submissionsRaw)[number];
+
+  const submissions: SubmissionItem[] = submissionsRaw.map(
+    (s: SubmissionRaw) => ({
+      id: s.id,
+      fileName: s.fileName,
+      language: s.language,
+      linesOfCode: s.linesOfCode ?? 0,
+      fileSize: s.fileSize ?? 0,
+      status: s.status,
+      createdAt: s.createdAt,
+      analysis: s.analysis
+        ? {
+            overallScore: s.analysis.overallScore,
+            securityScore: s.analysis.securityScore,
+            performanceScore: s.analysis.performanceScore,
+            qualityScore: s.analysis.qualityScore,
+          }
+        : null,
+    })
+  );
 
   const totalPages = Math.ceil(total / perPage);
 
