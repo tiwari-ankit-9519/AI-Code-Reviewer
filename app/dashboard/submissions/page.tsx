@@ -113,7 +113,9 @@ export default async function SubmissionsPage({
     _count: { language: true },
   });
 
-  const languages: LanguageGroup[] = languagesRaw.map((item) => ({
+  type LanguageRaw = (typeof languagesRaw)[number];
+
+  const languages: LanguageGroup[] = languagesRaw.map((item: LanguageRaw) => ({
     language: item.language,
     _count: item._count.language,
   }));
