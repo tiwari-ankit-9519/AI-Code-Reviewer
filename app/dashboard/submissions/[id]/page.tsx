@@ -11,9 +11,9 @@ export const dynamic = "force-dynamic";
 export default async function SubmissionDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const { id } = await params;
+  const { id } = params;
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -78,13 +78,17 @@ export default async function SubmissionDetailPage({
   };
 
   const severityOrder = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
-  const groupedIssues = submission.issues.reduce((acc, issue) => {
-    if (!acc[issue.severity]) {
-      acc[issue.severity] = [];
-    }
-    acc[issue.severity].push(issue);
-    return acc;
-  }, {} as Record<string, typeof submission.issues>);
+
+  const groupedIssues = submission.issues.reduce(
+    (acc: Record<string, typeof submission.issues>, issue) => {
+      if (!acc[issue.severity]) {
+        acc[issue.severity] = [];
+      }
+      acc[issue.severity].push(issue);
+      return acc;
+    },
+    {} as Record<string, typeof submission.issues>
+  );
 
   return (
     <div className="space-y-6">
@@ -344,6 +348,7 @@ export default async function SubmissionDetailPage({
             {submission.fileName || `untitled.${submission.language}`}
           </span>
         </div>
+
         <div className="max-h-[600px] overflow-auto">
           <SyntaxHighlighter
             language={submission.language}
