@@ -11,9 +11,9 @@ export const dynamic = "force-dynamic";
 export default async function SubmissionDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = params;
+  const { id } = await params;
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -77,18 +77,25 @@ export default async function SubmissionDetailPage({
     return styles[severity as keyof typeof styles] || styles.info;
   };
 
-  const severityOrder = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
+  // -----------------------------
+  // ✅ FIXED FULLY TYPED GROUPING
+  // -----------------------------
 
   type IssueItem = (typeof submission.issues)[number];
   type IssueGroup = Record<string, IssueItem[]>;
 
-  const groupedIssues = submission.issues.reduce<IssueGroup>((acc, issue) => {
-    if (!acc[issue.severity]) {
-      acc[issue.severity] = [];
-    }
-    acc[issue.severity].push(issue);
-    return acc;
-  }, {});
+  const groupedIssues: IssueGroup = submission.issues.reduce(
+    (acc: IssueGroup, issue: IssueItem) => {
+      if (!acc[issue.severity]) {
+        acc[issue.severity] = [];
+      }
+      acc[issue.severity].push(issue);
+      return acc;
+    },
+    {} as IssueGroup
+  );
+
+  const severityOrder = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
 
   return (
     <div className="space-y-6">
@@ -348,7 +355,6 @@ export default async function SubmissionDetailPage({
             {submission.fileName || `untitled.${submission.language}`}
           </span>
         </div>
-
         <div className="max-h-[600px] overflow-auto">
           <SyntaxHighlighter
             language={submission.language}
