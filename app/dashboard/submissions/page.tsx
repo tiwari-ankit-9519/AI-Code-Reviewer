@@ -8,6 +8,24 @@ type LanguageGroup = {
   _count: number;
 };
 
+type AnalysisSummary = {
+  overallScore: number;
+  securityScore?: number;
+  performanceScore?: number;
+  qualityScore?: number;
+} | null;
+
+type SubmissionItem = {
+  id: string;
+  fileName: string | null;
+  language: string;
+  linesOfCode: number;
+  fileSize: number;
+  status: string;
+  createdAt: string;
+  analysis: AnalysisSummary;
+};
+
 export default async function SubmissionsPage({
   searchParams,
 }: {
@@ -45,7 +63,7 @@ export default async function SubmissionsPage({
     ];
   }
 
-  const [submissions, total] = await Promise.all([
+  const [submissionsRaw, total] = await Promise.all([
     prisma.codeSubmission.findMany({
       where,
       include: {
@@ -65,6 +83,24 @@ export default async function SubmissionsPage({
     prisma.codeSubmission.count({ where }),
   ]);
 
+  const submissions: SubmissionItem[] = submissionsRaw.map((s) => ({
+    id: s.id,
+    fileName: s.fileName,
+    language: s.language,
+    linesOfCode: s.linesOfCode ?? 0,
+    fileSize: s.fileSize ?? 0,
+    status: s.status,
+    createdAt: s.createdAt.toISOString(),
+    analysis: s.analysis
+      ? {
+          overallScore: s.analysis.overallScore,
+          securityScore: s.analysis.securityScore,
+          performanceScore: s.analysis.performanceScore,
+          qualityScore: s.analysis.qualityScore,
+        }
+      : null,
+  }));
+
   const totalPages = Math.ceil(total / perPage);
 
   const languagesRaw = await prisma.codeSubmission.groupBy({
@@ -73,12 +109,10 @@ export default async function SubmissionsPage({
     _count: { language: true },
   });
 
-  const languages: LanguageGroup[] = languagesRaw.map(
-    (item: (typeof languagesRaw)[number]) => ({
-      language: item.language,
-      _count: item._count.language,
-    })
-  );
+  const languages: LanguageGroup[] = languagesRaw.map((item) => ({
+    language: item.language,
+    _count: item._count.language,
+  }));
 
   const getStatusBadge = (status: string) => {
     const styles = {
@@ -168,6 +202,19 @@ export default async function SubmissionsPage({
 
       {submissions.length === 0 ? (
         <div className="bg-white rounded-lg border border-[#ececec] p-12 text-center shadow-sm">
+          <svg
+            className="w-16 h-16 text-[#b2b5be] mx-auto mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
           <p className="text-[#6c7681] font-medium mb-2">
             No submissions found
           </p>
@@ -212,17 +259,40 @@ export default async function SubmissionsPage({
                 </thead>
 
                 <tbody className="divide-y divide-[#ececec]">
-                  {submissions.map((submission) => (
+                  {submissions.map((submission: SubmissionItem) => (
                     <tr
                       key={submission.id}
                       className="hover:bg-[#f9f9fa] transition"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {submission.fileName || "Untitled"}
+                        <div className="flex items-center">
+                          <svg
+                            className="w-5 h-5 text-[#6c7681] mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                          </svg>
+                          <div>
+                            <p className="text-sm font-medium text-[#15192c]">
+                              {submission.fileName || "Untitled"}
+                            </p>
+                            <p className="text-xs text-[#b2b5be]">
+                              {submission.linesOfCode} lines •{" "}
+                              {(submission.fileSize / 1024).toFixed(1)}KB
+                            </p>
+                          </div>
+                        </div>
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           {submission.language}
                         </span>
                       </td>
@@ -240,15 +310,19 @@ export default async function SubmissionsPage({
 
                       <td className="px-6 py-4 whitespace-nowrap">
                         {submission.analysis ? (
-                          <span
-                            className={`font-bold ${getScoreColor(
-                              submission.analysis.overallScore
-                            )}`}
-                          >
-                            {submission.analysis.overallScore}%
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`text-lg font-bold ${getScoreColor(
+                                submission.analysis.overallScore
+                              )}`}
+                            >
+                              {submission.analysis.overallScore}%
+                            </span>
+                          </div>
                         ) : (
-                          <span className="text-[#b2b5be]">Pending</span>
+                          <span className="text-sm text-[#b2b5be]">
+                            Pending
+                          </span>
                         )}
                       </td>
 
@@ -268,7 +342,7 @@ export default async function SubmissionsPage({
                           href={`/dashboard/submissions/${submission.id}`}
                           className="text-[#007fff] hover:text-[#005ecb] font-medium transition"
                         >
-                          View →
+                          View Details →
                         </Link>
                       </td>
                     </tr>
