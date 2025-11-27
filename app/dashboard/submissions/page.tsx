@@ -3,6 +3,12 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+type SearchParams = {
+  page?: string;
+  language?: string;
+  search?: string;
+};
+
 type SubmissionWhere = {
   userId: string;
   language?: string;
@@ -12,10 +18,15 @@ type SubmissionWhere = {
   }>;
 };
 
+type LanguageGroup = {
+  language: string;
+  _count: number;
+};
+
 export default async function SubmissionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; language?: string; search?: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
   const session = await auth();
@@ -29,10 +40,10 @@ export default async function SubmissionsPage({
   const search = params.search;
   const perPage = 10;
 
-  // ---------- FIXED WHERE CLAUSE (NO PRISMA IMPORT NEEDED) ----------
   const where: SubmissionWhere = {
     userId: session.user.id,
   };
+
   if (language) {
     where.language = language;
   }
@@ -43,7 +54,6 @@ export default async function SubmissionsPage({
       { code: { contains: search, mode: "insensitive" } },
     ];
   }
-  // -----------------------------------------------------------------
 
   const [submissions, total] = await Promise.all([
     prisma.codeSubmission.findMany({
@@ -67,11 +77,16 @@ export default async function SubmissionsPage({
 
   const totalPages = Math.ceil(total / perPage);
 
-  const languages = await prisma.codeSubmission.groupBy({
+  const languagesRaw = await prisma.codeSubmission.groupBy({
     by: ["language"],
     where: { userId: session.user.id },
     _count: true,
   });
+
+  const languages: LanguageGroup[] = languagesRaw.map((item) => ({
+    language: item.language,
+    _count: item._count,
+  }));
 
   const getStatusBadge = (status: string) => {
     const styles = {
@@ -132,7 +147,7 @@ export default async function SubmissionsPage({
               className="w-full px-4 py-2 border border-[#ececec] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">All Languages</option>
-              {languages.map((lang) => (
+              {languages.map((lang: LanguageGroup) => (
                 <option key={lang.language} value={lang.language}>
                   {lang.language.charAt(0).toUpperCase() +
                     lang.language.slice(1)}{" "}
@@ -216,6 +231,7 @@ export default async function SubmissionsPage({
                     </th>
                   </tr>
                 </thead>
+
                 <tbody className="divide-y divide-[#ececec]">
                   {submissions.map((submission) => (
                     <tr
@@ -268,15 +284,13 @@ export default async function SubmissionsPage({
 
                       <td className="px-6 py-4 whitespace-nowrap">
                         {submission.analysis ? (
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`text-lg font-bold ${getScoreColor(
-                                submission.analysis.overallScore
-                              )}`}
-                            >
-                              {submission.analysis.overallScore}%
-                            </span>
-                          </div>
+                          <span
+                            className={`text-lg font-bold ${getScoreColor(
+                              submission.analysis.overallScore
+                            )}`}
+                          >
+                            {submission.analysis.overallScore}%
+                          </span>
                         ) : (
                           <span className="text-sm text-[#b2b5be]">
                             Pending
