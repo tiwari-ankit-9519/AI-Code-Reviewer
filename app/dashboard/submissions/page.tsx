@@ -3,30 +3,10 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-type SearchParams = {
-  page?: string;
-  language?: string;
-  search?: string;
-};
-
-type SubmissionWhere = {
-  userId: string;
-  language?: string;
-  OR?: Array<{
-    fileName?: { contains: string; mode: "insensitive" };
-    code?: { contains: string; mode: "insensitive" };
-  }>;
-};
-
-type LanguageGroup = {
-  language: string;
-  _count: number;
-};
-
 export default async function SubmissionsPage({
   searchParams,
 }: {
-  searchParams: Promise<SearchParams>;
+  searchParams: Promise<{ page?: string; language?: string; search?: string }>;
 }) {
   const params = await searchParams;
   const session = await auth();
@@ -35,14 +15,19 @@ export default async function SubmissionsPage({
     redirect("/login");
   }
 
-  const page = parseInt(params.page || "1");
+  const page = Number(params.page || 1);
   const language = params.language;
   const search = params.search;
   const perPage = 10;
 
-  const where: SubmissionWhere = {
-    userId: session.user.id,
-  };
+  const where: {
+    userId: string;
+    language?: string;
+    OR?: {
+      fileName?: { contains: string; mode: "insensitive" };
+      code?: { contains: string; mode: "insensitive" };
+    }[];
+  } = { userId: session.user.id };
 
   if (language) {
     where.language = language;
@@ -72,20 +57,25 @@ export default async function SubmissionsPage({
       skip: (page - 1) * perPage,
       take: perPage,
     }),
+
     prisma.codeSubmission.count({ where }),
   ]);
 
   const totalPages = Math.ceil(total / perPage);
 
+  // ---------------------------------------
+  // LANGUAGE GROUPING — PROPER TYPING
+  // ---------------------------------------
+
   const languagesRaw = await prisma.codeSubmission.groupBy({
     by: ["language"],
     where: { userId: session.user.id },
-    _count: true,
+    _count: { language: true },
   });
 
-  const languages: LanguageGroup[] = languagesRaw.map((item) => ({
+  const languages = languagesRaw.map((item) => ({
     language: item.language,
-    _count: item._count,
+    _count: item._count.language,
   }));
 
   const getStatusBadge = (status: string) => {
@@ -114,6 +104,7 @@ export default async function SubmissionsPage({
             {total} submission{total !== 1 ? "s" : ""}
           </p>
         </div>
+
         <Link
           href="/dashboard/new"
           className="px-4 py-2 bg-linear-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition"
@@ -147,7 +138,8 @@ export default async function SubmissionsPage({
               className="w-full px-4 py-2 border border-[#ececec] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">All Languages</option>
-              {languages.map((lang: LanguageGroup) => (
+
+              {languages.map((lang) => (
                 <option key={lang.language} value={lang.language}>
                   {lang.language.charAt(0).toUpperCase() +
                     lang.language.slice(1)}{" "}
@@ -164,6 +156,7 @@ export default async function SubmissionsPage({
             >
               Filter
             </button>
+
             <Link
               href="/dashboard/submissions"
               className="px-4 py-2 border border-[#ececec] rounded-lg font-medium text-[#15192c] hover:bg-[#f9f9fa] transition"
@@ -176,33 +169,7 @@ export default async function SubmissionsPage({
 
       {submissions.length === 0 ? (
         <div className="bg-white rounded-lg border border-[#ececec] p-12 text-center shadow-sm">
-          <svg
-            className="w-16 h-16 text-[#b2b5be] mx-auto mb-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-          <p className="text-[#6c7681] font-medium mb-2">
-            No submissions found
-          </p>
-          <p className="text-[#b2b5be] text-sm mb-4">
-            {search || language
-              ? "Try adjusting your filters"
-              : "Start your first code review"}
-          </p>
-          <Link
-            href="/dashboard/new"
-            className="inline-block px-4 py-2 bg-linear-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition"
-          >
-            New Review
-          </Link>
+          <p>No submissions found.</p>
         </div>
       ) : (
         <>
@@ -239,82 +206,49 @@ export default async function SubmissionsPage({
                       className="hover:bg-[#f9f9fa] transition"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <svg
-                            className="w-5 h-5 text-[#6c7681] mr-2"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                            />
-                          </svg>
-                          <div>
-                            <p className="text-sm font-medium text-[#15192c]">
-                              {submission.fileName || "Untitled"}
-                            </p>
-                            <p className="text-xs text-[#b2b5be]">
-                              {submission.linesOfCode} lines •{" "}
-                              {(submission.fileSize / 1024).toFixed(1)}KB
-                            </p>
-                          </div>
-                        </div>
+                        {submission.fileName}
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <span className="px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">
                           {submission.language}
                         </span>
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadge(
+                          className={`px-2 py-1 rounded text-xs border ${getStatusBadge(
                             submission.status
                           )}`}
                         >
-                          {submission.status.charAt(0).toUpperCase() +
-                            submission.status.slice(1)}
+                          {submission.status}
                         </span>
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap">
                         {submission.analysis ? (
                           <span
-                            className={`text-lg font-bold ${getScoreColor(
+                            className={`font-bold ${getScoreColor(
                               submission.analysis.overallScore
                             )}`}
                           >
                             {submission.analysis.overallScore}%
                           </span>
                         ) : (
-                          <span className="text-sm text-[#b2b5be]">
-                            Pending
-                          </span>
+                          <span className="text-gray-400">Pending</span>
                         )}
                       </td>
 
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#6c7681]">
-                        {new Date(submission.createdAt).toLocaleDateString(
-                          "en-US",
-                          {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          }
-                        )}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {new Date(submission.createdAt).toLocaleDateString()}
                       </td>
 
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
                         <Link
                           href={`/dashboard/submissions/${submission.id}`}
-                          className="text-[#007fff] hover:text-[#005ecb] font-medium transition"
+                          className="text-blue-600"
                         >
-                          View Details →
+                          View →
                         </Link>
                       </td>
                     </tr>
@@ -329,23 +263,25 @@ export default async function SubmissionsPage({
               <div className="text-sm text-[#6c7681]">
                 Page {page} of {totalPages}
               </div>
+
               <div className="flex gap-2">
                 {page > 1 && (
                   <Link
                     href={`/dashboard/submissions?page=${page - 1}${
                       language ? `&language=${language}` : ""
                     }${search ? `&search=${search}` : ""}`}
-                    className="px-4 py-2 border border-[#ececec] rounded-lg text-sm font-medium text-[#15192c] hover:bg-[#f9f9fa] transition"
+                    className="px-4 py-2 border border-[#ececec] rounded-lg text-sm"
                   >
                     Previous
                   </Link>
                 )}
+
                 {page < totalPages && (
                   <Link
                     href={`/dashboard/submissions?page=${page + 1}${
                       language ? `&language=${language}` : ""
                     }${search ? `&search=${search}` : ""}`}
-                    className="px-4 py-2 bg-[#007fff] text-white rounded-lg text-sm font-medium hover:bg-[#2b89ff] transition"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
                   >
                     Next
                   </Link>
