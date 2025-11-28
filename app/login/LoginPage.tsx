@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { signIn } from "next-auth/react";
+import { signIn } from "@/lib/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -47,10 +47,9 @@ export default function LoginPage() {
         email,
         password,
         redirect: false,
-        redirectTo: callbackUrl,
       });
 
-      if (result?.error) {
+      if (result.error) {
         if (result.error === "EMAIL_NOT_VERIFIED") {
           setError("");
           setInfo(
@@ -67,7 +66,8 @@ export default function LoginPage() {
       }
 
       if (result?.ok && result.url) {
-        router.replace(result.url);
+        router.push("/dashboard");
+        // router.replace(result.url);
         return;
       }
     } catch (err) {
