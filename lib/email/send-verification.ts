@@ -8,7 +8,7 @@ export async function sendVerificationEmail(
   token: string
 ) {
   // const verificationUrl = `${process.env.AUTH_URL}/verify-email?token=${token}`;
-  const verificationUrl = `https://ai-code-reviewer-lo9u.vercel.app/verify-email?token=${token}`;
+  const verificationUrl = `https://ai-code-reviewer-gamma-vert.vercel.app/verify-email?token=${token}`;
 
   try {
     const { data, error } = await resend.emails.send({
