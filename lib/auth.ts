@@ -11,7 +11,7 @@ import { passwordSchema } from "@/lib/security/password-validation";
 import { z } from "zod";
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().email(),
   password: passwordSchema,
 });
 
@@ -30,15 +30,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         try {
           const { email, password } = loginSchema.parse(credentials);
-
           const identifier = email.toLowerCase();
-          const rateLimit = await checkRateLimit(loginLimiter, identifier);
 
-          if (!rateLimit.success) {
-            throw new Error(
-              `Too many login attempts. Try again after ${rateLimit.reset.toLocaleTimeString()}`
-            );
-          }
+          const rateLimit = await checkRateLimit(loginLimiter, identifier);
+          if (!rateLimit.success) return { error: "RATE_LIMITED" };
 
           const user = await prisma.user.findUnique({
             where: { email: identifier },
@@ -52,22 +47,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             },
           });
 
-          if (!user) {
-            throw new Error("Invalid credentials");
-          }
-
-          if (!user.emailVerified) {
-            throw new Error("EMAIL_NOT_VERIFIED");
-          }
+          if (!user) return null;
+          if (!user.emailVerified) return { error: "EMAIL_NOT_VERIFIED" };
 
           const isPasswordValid = await verifyPassword(
             password,
             user.passwordHash
           );
-
-          if (!isPasswordValid) {
-            throw new Error("Invalid credentials");
-          }
+          if (!isPasswordValid) return null;
 
           if (await needsRehash(user.passwordHash)) {
             const newHash = await hashPassword(password);
@@ -84,12 +71,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
           return {
             id: user.id,
-            email: user.email || "",
-            name: user.name || "",
-            image: user.avatar || null,
+            email: user.email,
+            name: user.name,
+            image: user.avatar,
           };
         } catch (error) {
-          console.error("Auth error:", error);
+          console.error(error);
           return null;
         }
       },
@@ -103,15 +90,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
   callbacks: {
     async jwt({ token, user }) {
-      if (user?.id) {
-        token.id = user.id;
-      }
-      if (user?.email) {
-        token.email = user.email;
-      }
+      if (user?.id) token.id = user.id;
+      if (user?.email) token.email = user.email;
       return token;
     },
-
     async session({ session, token }) {
       if (session.user && token.id && token.email) {
         session.user.id = token.id as string;
