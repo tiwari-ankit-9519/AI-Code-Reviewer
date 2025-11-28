@@ -49,7 +49,6 @@ export default function LoginPage() {
         redirect: false,
         redirectTo: callbackUrl,
       });
-      console.log(result);
 
       if (result?.error) {
         if (result.error === "EMAIL_NOT_VERIFIED") {
@@ -60,16 +59,17 @@ export default function LoginPage() {
           return;
         }
         if (result.error === "TWO_FACTOR_REQUIRED") {
-          router.push(`/two-factor?email=${encodeURIComponent(email)}`);
+          router.replace(`/two-factor?email=${encodeURIComponent(email)}`);
           return;
         }
         setError("Invalid email or password");
         return;
       }
 
-      // Success: go to callbackUrl
-      router.push(callbackUrl);
-      router.refresh();
+      if (result?.ok && result.url) {
+        router.replace(result.url);
+        return;
+      }
     } catch (err) {
       console.error(err);
       setError("An error occurred. Please try again.");
