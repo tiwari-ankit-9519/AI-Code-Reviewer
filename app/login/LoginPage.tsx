@@ -47,8 +47,9 @@ export default function LoginPage() {
         email,
         password,
         redirect: false,
-        callbackUrl,
+        redirectTo: callbackUrl,
       });
+      console.log(result);
 
       if (result?.error) {
         if (result.error === "EMAIL_NOT_VERIFIED") {
