@@ -38,11 +38,16 @@ export default function LoginPage() {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
+    // Take callbackUrl from query (?callbackUrl=/dashboard), fallback to /dashboard
+    const callbackUrl =
+      (searchParams.get("callbackUrl") as string | null) || "/dashboard";
+
     try {
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
+        callbackUrl,
       });
 
       if (result?.error) {
@@ -61,10 +66,11 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/dashboard");
+      // Success: go to callbackUrl
+      router.push(callbackUrl);
       router.refresh();
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       setError("An error occurred. Please try again.");
     } finally {
       setLoading(false);
