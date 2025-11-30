@@ -1,9 +1,24 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { signIn } from "@/lib/auth";
+import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+
+const logToConsole = (
+  level: string,
+  message: string,
+  data?: Record<string, unknown> | string
+) => {
+  const timestamp = new Date().toISOString();
+  const logMessage = `[${timestamp}] [${level}] ${message}`;
+
+  if (data) {
+    console.log(logMessage, data);
+  } else {
+    console.log(logMessage);
+  }
+};
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,9 +53,7 @@ export default function LoginPage() {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    // Take callbackUrl from query (?callbackUrl=/dashboard), fallback to /dashboard
-    const callbackUrl =
-      (searchParams.get("callbackUrl") as string | null) || "/dashboard";
+    logToConsole("INFO", "Login attempt started", { email });
 
     try {
       const result = await signIn("credentials", {
@@ -49,7 +62,16 @@ export default function LoginPage() {
         redirect: false,
       });
 
-      if (result.error) {
+      logToConsole("INFO", "SignIn result received", {
+        ok: result?.ok || false,
+        error: result?.error || "none",
+        status: result?.status || 0,
+        url: result?.url || "none",
+      });
+
+      if (result?.error) {
+        logToConsole("ERROR", "Authentication error", { error: result.error });
+
         if (result.error === "EMAIL_NOT_VERIFIED") {
           setError("");
           setInfo(
@@ -58,19 +80,37 @@ export default function LoginPage() {
           return;
         }
         if (result.error === "TWO_FACTOR_REQUIRED") {
-          router.replace(`/two-factor?email=${encodeURIComponent(email)}`);
+          logToConsole("INFO", "2FA required, redirecting", "");
+          router.push(`/two-factor?email=${encodeURIComponent(email)}`);
           return;
         }
-        setError("Invalid email or password");
+        if (result.error === "CredentialsSignin") {
+          setError("Invalid email or password");
+          return;
+        }
+        setError(result.error);
         return;
       }
 
-      if (result?.ok && result.url) {
-        router.push("/dashboard");
-        // router.replace(result.url);
+      if (result?.ok) {
+        logToConsole(
+          "SUCCESS",
+          "Login successful, redirecting to dashboard",
+          ""
+        );
+
+        window.location.href = "/dashboard";
         return;
       }
+
+      logToConsole("ERROR", "Unexpected login state", JSON.stringify(result));
+      setError("Login failed. Please try again.");
     } catch (err) {
+      logToConsole(
+        "ERROR",
+        "Login exception",
+        err instanceof Error ? err.message : "Unknown error"
+      );
       console.error(err);
       setError("An error occurred. Please try again.");
     } finally {
