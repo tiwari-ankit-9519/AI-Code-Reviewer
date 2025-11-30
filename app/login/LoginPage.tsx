@@ -1,16 +1,31 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState, useEffect } from "react";
 import { loginAction } from "@/lib/actions/login";
 import Link from "next/link";
 
-const initialState = {
+interface LoginState {
+  success: boolean;
+  message: string;
+  redirect?: string;
+}
+
+const initialState: LoginState = {
   success: false,
   message: "",
 };
 
 export default function LoginPage() {
-  const [state, formAction] = useFormState(loginAction, initialState);
+  const [state, formAction] = useActionState<LoginState, FormData>(
+    loginAction,
+    initialState
+  );
+
+  useEffect(() => {
+    if (state.success && state.redirect) {
+      window.location.href = state.redirect;
+    }
+  }, [state.success, state.redirect]);
 
   const alertMessage = state.message;
   const alertType = state.success ? "success" : state.message ? "error" : "";

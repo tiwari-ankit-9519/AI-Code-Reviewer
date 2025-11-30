@@ -1,8 +1,11 @@
-import { signIn } from "next-auth/react";
+"use server";
+
+import { signIn } from "@/lib/auth";
 
 interface LoginState {
   success: boolean;
   message: string;
+  redirect?: string;
 }
 
 export async function loginAction(
@@ -23,6 +26,8 @@ export async function loginAction(
       redirect: false,
     });
 
+    console.log("signIn result", result);
+
     if (result?.error) {
       if (result.error === "EMAIL_NOT_VERIFIED") {
         return {
@@ -36,6 +41,7 @@ export async function loginAction(
         return {
           success: true,
           message: "Two-factor authentication required. Redirecting...",
+          redirect: "/two-factor",
         };
       }
 
@@ -46,13 +52,17 @@ export async function loginAction(
       return { success: false, message: result.error };
     }
 
-    if (result?.ok) {
-      window.location.href = "/dashboard";
-      return { success: true, message: "Login successful" };
+    if (result && !result.error) {
+      return {
+        success: true,
+        message: "Login successful",
+        redirect: "/dashboard",
+      };
     }
 
     return { success: false, message: "Login failed. Please try again." };
   } catch (err) {
+    console.error("loginAction error", err);
     return {
       success: false,
       message: err instanceof Error ? err.message : "An unknown error occurred",

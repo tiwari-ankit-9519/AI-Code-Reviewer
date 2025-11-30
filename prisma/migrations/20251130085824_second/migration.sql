@@ -44,7 +44,9 @@ CREATE TABLE "sessions" (
 CREATE TABLE "verification_tokens" (
     "identifier" TEXT NOT NULL,
     "token" TEXT NOT NULL,
-    "expires" TIMESTAMP(3) NOT NULL
+    "expires" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "verification_tokens_pkey" PRIMARY KEY ("identifier","token")
 );
 
 -- CreateTable
@@ -228,12 +230,6 @@ CREATE UNIQUE INDEX "accounts_provider_providerAccountId_key" ON "accounts"("pro
 
 -- CreateIndex
 CREATE UNIQUE INDEX "sessions_sessionToken_key" ON "sessions"("sessionToken");
-
--- CreateIndex
-CREATE UNIQUE INDEX "verification_tokens_token_key" ON "verification_tokens"("token");
-
--- CreateIndex
-CREATE UNIQUE INDEX "verification_tokens_identifier_token_key" ON "verification_tokens"("identifier", "token");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "api_keys_key_key" ON "api_keys"("key");
