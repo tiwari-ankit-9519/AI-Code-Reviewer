@@ -1,124 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useFormState } from "react-dom";
+import { loginAction } from "@/lib/actions/login";
 import Link from "next/link";
 
-const logToConsole = (
-  level: string,
-  message: string,
-  data?: Record<string, unknown> | string
-) => {
-  const timestamp = new Date().toISOString();
-  const logMessage = `[${timestamp}] [${level}] ${message}`;
-
-  if (data) {
-    console.log(logMessage, data);
-  } else {
-    console.log(logMessage);
-  }
+const initialState = {
+  success: false,
+  message: "",
 };
 
 export default function LoginPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [error, setError] = useState("");
-  const [info, setInfo] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [state, formAction] = useFormState(loginAction, initialState);
 
-  useEffect(() => {
-    const registered = searchParams.get("registered");
-    const reset = searchParams.get("reset");
-    const verified = searchParams.get("verified");
-
-    if (registered === "true") {
-      setInfo("Account created successfully. Please sign in.");
-    } else if (reset === "true") {
-      setInfo(
-        "Password reset successful. Please sign in with your new password."
-      );
-    } else if (verified === "true") {
-      setInfo("Email verified successfully. You can now sign in.");
-    }
-  }, [searchParams]);
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    setError("");
-    setInfo("");
-    setLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-
-    logToConsole("INFO", "Login attempt started", { email });
-
-    try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
-
-      logToConsole("INFO", "SignIn result received", {
-        ok: result?.ok || false,
-        error: result?.error || "none",
-        status: result?.status || 0,
-        url: result?.url || "none",
-      });
-
-      if (result?.error) {
-        logToConsole("ERROR", "Authentication error", { error: result.error });
-
-        if (result.error === "EMAIL_NOT_VERIFIED") {
-          setError("");
-          setInfo(
-            "Please verify your email address. Check your inbox or request a new verification link."
-          );
-          return;
-        }
-        if (result.error === "TWO_FACTOR_REQUIRED") {
-          logToConsole("INFO", "2FA required, redirecting", "");
-          router.push(`/two-factor?email=${encodeURIComponent(email)}`);
-          return;
-        }
-        if (result.error === "CredentialsSignin") {
-          setError("Invalid email or password");
-          return;
-        }
-        setError(result.error);
-        return;
-      }
-
-      if (result?.ok) {
-        logToConsole(
-          "SUCCESS",
-          "Login successful, redirecting to dashboard",
-          ""
-        );
-
-        window.location.href = "/dashboard";
-        return;
-      }
-
-      logToConsole("ERROR", "Unexpected login state", JSON.stringify(result));
-      setError("Login failed. Please try again.");
-    } catch (err) {
-      logToConsole(
-        "ERROR",
-        "Login exception",
-        err instanceof Error ? err.message : "Unknown error"
-      );
-      console.error(err);
-      setError("An error occurred. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const alertMessage = state.message;
+  const alertType = state.success ? "success" : state.message ? "error" : "";
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
@@ -186,21 +81,16 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-5"
-            method="POST"
-            action="#"
-          >
-            {info && !error && (
+          <form action={formAction} className="space-y-5">
+            {alertMessage && alertType === "success" && (
               <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg text-sm">
-                {info}
+                {alertMessage}
               </div>
             )}
 
-            {error && (
+            {alertMessage && alertType === "error" && (
               <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
-                {error}
+                {alertMessage}
               </div>
             )}
 
@@ -250,36 +140,9 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
-              className="w-full bg-linear-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+              className="w-full bg-linear-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all shadow-lg hover:shadow-xl"
             >
-              {loading ? (
-                <span className="flex items-center justify-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Signing in...
-                </span>
-              ) : (
-                "Sign in"
-              )}
+              Sign in
             </button>
 
             <div className="relative my-6">
