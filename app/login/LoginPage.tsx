@@ -3,7 +3,7 @@
 import { useActionState, useEffect } from "react";
 import { loginAction } from "@/lib/actions/login";
 import Link from "next/link";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 interface LoginState {
   success: boolean;
