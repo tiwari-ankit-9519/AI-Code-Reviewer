@@ -51,7 +51,6 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Email verification error:", error);
 
-    // Type guard for Prisma error
     if (error instanceof Error && "code" in error && error.code === "P2025") {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }

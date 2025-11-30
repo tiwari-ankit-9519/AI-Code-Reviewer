@@ -3,6 +3,7 @@
 import { useActionState, useEffect } from "react";
 import { loginAction } from "@/lib/actions/login";
 import Link from "next/link";
+import { useRouter } from "next/router";
 
 interface LoginState {
   success: boolean;
@@ -16,6 +17,8 @@ const initialState: LoginState = {
 };
 
 export default function LoginPage() {
+  const router = useRouter();
+
   const [state, formAction] = useActionState<LoginState, FormData>(
     loginAction,
     initialState
@@ -23,9 +26,10 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (state.success && state.redirect) {
-      window.location.href = state.redirect;
+      // window.location.href = state.redirect;
+      router.push("/dashboard");
     }
-  }, [state.success, state.redirect]);
+  }, [state.success, state.redirect, router]);
 
   const alertMessage = state.message;
   const alertType = state.success ? "success" : state.message ? "error" : "";
