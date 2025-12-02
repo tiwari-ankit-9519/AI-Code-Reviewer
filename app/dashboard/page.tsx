@@ -4,6 +4,9 @@ import Link from "next/link";
 
 export default async function DashboardPage() {
   const session = await auth();
+
+  console.log(session);
+  console.table(session);
   if (!session?.user?.id) {
     return null;
   }

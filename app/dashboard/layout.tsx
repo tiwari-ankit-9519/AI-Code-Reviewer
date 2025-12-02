@@ -8,6 +8,11 @@ export default async function DashboardLayout({
 }) {
   const session = await auth();
 
+  console.log(session);
+  console.table(session);
+
+  console.log(session?.user);
+  console.table(session?.user);
   if (!session?.user) {
     return null;
   }
