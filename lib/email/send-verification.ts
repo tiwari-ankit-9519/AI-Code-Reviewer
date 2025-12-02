@@ -11,7 +11,7 @@ export async function sendVerificationEmail(
 
   try {
     const { data, error } = await resend.emails.send({
-      from: "Code Review Assistant <noreply@resend.dev>",
+      from: "Code Review Assistant <onboarding@resend.dev>",
       to: [email],
       subject: "Verify your email address",
       html: `
