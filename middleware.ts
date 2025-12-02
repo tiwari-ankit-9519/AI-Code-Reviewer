@@ -1,93 +1,43 @@
-// import { NextResponse } from "next/server";
-// import type { NextRequest } from "next/server";
-// import { getToken } from "next-auth/jwt";
+import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
 
-// // Simple production logging
-// const log = (
-//   level: string,
-//   message: string,
-//   data?: Record<string, unknown>
-// ) => {
-//   const timestamp = new Date().toISOString();
-//   console.log(`[${timestamp}] [MIDDLEWARE] [${level}] ${message}`, data || "");
-// };
+export default auth((req) => {
+  const path = req.nextUrl.pathname;
+  const isLoggedIn = !!req.auth;
 
-// export async function middleware(request: NextRequest) {
-//   const path = request.nextUrl.pathname;
+  // const isAuthPage =
+  //   path.startsWith("/login") ||
+  //   path.startsWith("/register") ||
+  //   path.startsWith("/forgot-password") ||
+  //   path.startsWith("/verify-email");
 
-//   log("INFO", "Middleware invoked", {
-//     path,
-//     method: request.method,
-//     origin: request.headers.get("origin"),
-//   });
+  // const isProtected =
+  //   path.startsWith("/dashboard") ||
+  //   path.startsWith("/api/profile") ||
+  //   path.startsWith("/api/submissions");
 
-//   try {
-//     const token = await getToken({
-//       req: request,
-//       secret: process.env.NEXTAUTH_SECRET,
-//     });
+  // if (isProtected && !isLoggedIn) {
+  //   const loginUrl = new URL("/login", req.url);
+  //   loginUrl.searchParams.set("callbackUrl", path);
+  //   return NextResponse.redirect(loginUrl);
+  // }
 
-//     log("INFO", "Token retrieved", {
-//       path,
-//       hasToken: !!token,
-//       userId: token?.id || "none",
-//       email: token?.email || "none",
-//     });
+  // // Authenticated user trying to access login/register pages
+  // if (isAuthPage && isLoggedIn) {
+  //   return NextResponse.redirect(new URL("/dashboard", req.url));
+  // }
 
-//     const isAuthPage =
-//       path.startsWith("/login") ||
-//       path.startsWith("/register") ||
-//       path.startsWith("/verify-email") ||
-//       path.startsWith("/forgot-password") ||
-//       path.startsWith("/resend-verification");
+  return NextResponse.next();
+});
 
-//     const isProtectedRoute =
-//       path.startsWith("/dashboard") ||
-//       path.startsWith("/api/submissions") ||
-//       path.startsWith("/api/profile");
-
-//     // Protected routes without token -> redirect to login
-//     if (isProtectedRoute && !token) {
-//       log(
-//         "WARN",
-//         "Protected route accessed without token, redirecting to login",
-//         { path }
-//       );
-//       const loginUrl = new URL("/login", request.url);
-//       loginUrl.searchParams.set("callbackUrl", path);
-//       return NextResponse.redirect(loginUrl);
-//     }
-
-//     // Auth pages with token -> redirect to dashboard
-//     if (isAuthPage && token) {
-//       log("INFO", "Auth page accessed with token, redirecting to dashboard", {
-//         path,
-//       });
-//       return NextResponse.redirect(new URL("/dashboard", request.url));
-//     }
-
-//     log("INFO", "Middleware allowing request", { path });
-//     return NextResponse.next();
-//   } catch (error) {
-//     log("ERROR", "Middleware error", {
-//       path,
-//       error: error instanceof Error ? error.message : "Unknown error",
-//     });
-
-//     return NextResponse.next();
-//   }
-// }
-
-// export const config = {
-//   matcher: [
-//     "/dashboard/:path*",
-//     "/api/submissions/:path*",
-//     "/api/profile/:path*",
-//     "/login",
-//     "/register",
-//     "/verify-email",
-//     "/forgot-password",
-//     "/resend-verification",
-//   ],
-//   runtime: "nodejs",
-// };
+export const config = {
+  matcher: [
+    // "/dashboard/:path*",
+    // "/api/profile/:path*",
+    // "/api/submissions/:path*",
+    // "/login",
+    // "/register",
+    // "/forgot-password",
+    // "/verify-email",
+  ],
+};
