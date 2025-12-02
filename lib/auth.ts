@@ -158,8 +158,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           userId: token.id as string,
           email: token.email as string,
         });
-        session.user.id = token.id as string;
-        session.user.email = token.email as string;
+        session.user = {
+          ...session.user,
+          id: token.id as string,
+          email: token.email as string,
+        };
       } else {
         log(
           "WARN",

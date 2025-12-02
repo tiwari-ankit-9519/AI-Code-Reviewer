@@ -1,13 +1,11 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 
 export default async function DashboardPage() {
   const session = await auth();
-
   if (!session?.user?.id) {
-    redirect("/login");
+    return null;
   }
 
   const submissions = await prisma.codeSubmission.findMany({

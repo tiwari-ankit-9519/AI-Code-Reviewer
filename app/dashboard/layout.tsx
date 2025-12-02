@@ -1,5 +1,4 @@
 import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import DashboardNav from "@/components/dashboard-nav"; // adjust path as needed
 
 export default async function DashboardLayout({
@@ -10,7 +9,7 @@ export default async function DashboardLayout({
   const session = await auth();
 
   if (!session?.user) {
-    redirect("/login");
+    return null;
   }
 
   return (
