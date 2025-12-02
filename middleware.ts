@@ -74,7 +74,6 @@ export async function middleware(request: NextRequest) {
       error: error instanceof Error ? error.message : "Unknown error",
     });
 
-    // On error, allow the request but log it
     return NextResponse.next();
   }
 }
@@ -90,4 +89,5 @@ export const config = {
     "/forgot-password",
     "/resend-verification",
   ],
+  runtime: "nodejs",
 };
