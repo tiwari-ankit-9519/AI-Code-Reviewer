@@ -1,7 +1,9 @@
 "use server";
 
 import { signIn } from "@/lib/auth";
+import { config } from "dotenv";
 
+config();
 interface LoginState {
   success: boolean;
   message: string;
@@ -57,7 +59,7 @@ export async function loginAction(
       return {
         success: true,
         message: "Login successful",
-        redirect: "/dashboard",
+        redirect: `${process.env.NEXTAUTH_URL}/dashboard`,
       };
     }
 
