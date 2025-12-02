@@ -24,12 +24,14 @@ export default function LoginPage() {
     initialState
   );
 
+  console.log(state);
   useEffect(() => {
+    console.log(state.success);
+    console.log(state.message);
     if (state.success && state.redirect) {
-      // window.location.href = state.redirect;
       router.push("/dashboard");
     }
-  }, [state.success, state.redirect, router]);
+  }, [state.success, state.redirect, router, state.message]);
 
   const alertMessage = state.message;
   const alertType = state.success ? "success" : state.message ? "error" : "";

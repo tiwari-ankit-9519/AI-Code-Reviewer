@@ -53,6 +53,7 @@ export async function loginAction(
     }
 
     if (result && !result.error) {
+      console.log(result);
       return {
         success: true,
         message: "Login successful",
