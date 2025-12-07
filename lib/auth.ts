@@ -15,15 +15,6 @@ const loginSchema = z.object({
   password: passwordSchema,
 });
 
-const log = (
-  level: string,
-  message: string,
-  data?: Record<string, unknown> | string
-) => {
-  const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] [AUTH] [${level}] ${message}`, data || "");
-};
-
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: {
     strategy: "jwt",
@@ -39,16 +30,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         try {
-          log("INFO", "Authorization attempt started", {
-            email: (credentials?.email as string) || "unknown",
-          });
-
           const { email, password } = loginSchema.parse(credentials);
           const identifier = email.toLowerCase();
 
           const rateLimit = await checkRateLimit(loginLimiter, identifier);
           if (!rateLimit.success) {
-            log("WARN", "Rate limit exceeded", { email: identifier });
             throw new Error("RATE_LIMITED");
           }
 
@@ -65,12 +51,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           });
 
           if (!user) {
-            log("WARN", "User not found", { email: identifier });
             return null;
           }
 
           if (!user.emailVerified) {
-            log("WARN", "Email not verified", { email: identifier });
             throw new Error("EMAIL_NOT_VERIFIED");
           }
 
@@ -79,12 +63,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             user.passwordHash
           );
           if (!isPasswordValid) {
-            log("WARN", "Invalid password", { email: identifier });
             return null;
           }
 
           if (await needsRehash(user.passwordHash)) {
-            log("INFO", "Rehashing password", { userId: user.id });
             const newHash = await hashPassword(password);
             await prisma.user.update({
               where: { id: user.id },
@@ -97,11 +79,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             data: { updatedAt: new Date() },
           });
 
-          log("SUCCESS", "User authorized successfully", {
-            userId: user.id,
-            email: user.email,
-          });
-
           return {
             id: user.id,
             email: user.email,
@@ -110,7 +87,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           };
         } catch (error) {
           if (error instanceof z.ZodError) {
-            log("ERROR", "Validation error", JSON.stringify(error.issues));
             return null;
           }
 
@@ -123,11 +99,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             }
           }
 
-          log(
-            "ERROR",
-            "Authorization error",
-            error instanceof Error ? error.message : "Unknown error"
-          );
           return null;
         }
       },
@@ -142,10 +113,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        log("INFO", "JWT callback - user present", {
-          userId: user.id || "unknown",
-          email: user.email || "unknown",
-        });
         token.id = user.id || "";
         token.email = user.email || "";
       }
@@ -154,21 +121,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
     async session({ session, token }) {
       if (token?.id && token?.email) {
-        log("INFO", "Session callback", {
-          userId: token.id as string,
-          email: token.email as string,
-        });
         session.user = {
           ...session.user,
           id: token.id as string,
           email: token.email as string,
         };
       } else {
-        log(
-          "WARN",
-          "Session callback - missing token data",
-          JSON.stringify(token)
-        );
       }
       return session;
     },
@@ -179,35 +137,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 
-  events: {
-    async signIn({ user, isNewUser }) {
-      log("INFO", "SignIn event", {
-        userId: user.id || "",
-        email: user.email || "",
-        isNewUser: isNewUser || false,
-      });
-    },
-    async signOut(message) {
-      if ("token" in message && message.token) {
-        log("INFO", "SignOut event", {
-          userId: (message.token.id as string) || "",
-          email: (message.token.email as string) || "",
-        });
-      } else {
-        log("INFO", "SignOut event", "{}");
-      }
-    },
-    async session(message) {
-      if ("token" in message && message.token) {
-        log("INFO", "Session event", {
-          userId: (message.token.id as string) || "",
-          email: (message.token.email as string) || "",
-        });
-      } else {
-        log("INFO", "Session event", "{}");
-      }
-    },
-  },
+  // events: {
+  //   async signIn({ user, isNewUser }) {},
+  //   async signOut(message) {
+  //     if ("token" in message && message.token) {
+  //     } else {
+  //     }
+  //   },
+  //   async session(message) {
+  //     if ("token" in message && message.token) {
+  //     } else {
+  //     }
+  //   },
+  // },
 
   trustHost: true,
 });

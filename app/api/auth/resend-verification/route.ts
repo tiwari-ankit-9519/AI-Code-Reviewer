@@ -64,14 +64,28 @@ export async function POST(request: Request) {
       },
     });
 
-    await sendVerificationEmail(user.email, user.name, verificationToken);
+    const emailResult = await sendVerificationEmail(
+      user.email,
+      user.name,
+      verificationToken
+    );
+
+    if (!emailResult.success) {
+      return NextResponse.json(
+        {
+          error: "Failed to send verification email",
+          details: emailResult.error,
+        },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(
       { message: "Verification email sent. Please check your inbox." },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Resend verification error:", error);
+    console.error(error);
     return NextResponse.json(
       { error: "Failed to resend verification email" },
       { status: 500 }

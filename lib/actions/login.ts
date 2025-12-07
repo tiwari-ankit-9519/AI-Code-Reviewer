@@ -28,8 +28,6 @@ export async function loginAction(
       redirect: false,
     });
 
-    console.log("signIn result", result);
-
     if (result?.error) {
       if (result.error === "EMAIL_NOT_VERIFIED") {
         return {
@@ -55,7 +53,6 @@ export async function loginAction(
     }
 
     if (result && !result.error) {
-      console.log(result);
       return {
         success: true,
         message: "Login successful",

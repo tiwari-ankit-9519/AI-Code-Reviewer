@@ -3,21 +3,19 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
   try {
-    const { token, identifier } = await request.json(); // Need both!
-
-    if (!token || !identifier) {
+    const { token, email } = await request.json();
+    if (!token || !email) {
       return NextResponse.json(
-        { error: "Token and identifier (email) are required" },
+        { error: "Token and email are required" },
         { status: 400 }
       );
     }
 
-    // Use findFirst() since no single-field unique index exists
     const verificationToken = await prisma.verificationToken.findFirst({
       where: {
-        identifier,
+        identifier: email,
         token,
-        expires: { gt: new Date() }, // Check expiration upfront
+        expires: { gt: new Date() },
       },
     });
 
@@ -28,18 +26,16 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verify user's email
     await prisma.user.update({
-      where: { email: verificationToken.identifier },
+      where: { email },
       data: { emailVerified: new Date() },
     });
 
-    // Delete using compound key
     await prisma.verificationToken.delete({
       where: {
         identifier_token: {
-          identifier: verificationToken.identifier,
-          token: verificationToken.token,
+          identifier: email,
+          token,
         },
       },
     });
@@ -49,12 +45,7 @@ export async function POST(request: Request) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Email verification error:", error);
-
-    if (error instanceof Error && "code" in error && error.code === "P2025") {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
+    console.log(error);
     return NextResponse.json({ error: "Verification failed" }, { status: 500 });
   }
 }

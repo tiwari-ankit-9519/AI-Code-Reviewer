@@ -95,7 +95,23 @@ export async function POST(request: Request) {
       },
     });
 
-    await sendVerificationEmail(user.email, user.name, verificationToken);
+    const emailResult = await sendVerificationEmail(
+      user.email,
+      user.name,
+      verificationToken
+    );
+
+    if (!emailResult.success) {
+      console.error("Email send failed:", emailResult.error);
+
+      return NextResponse.json(
+        {
+          error: "Failed to send verification email",
+          details: emailResult.error,
+        },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(
       {

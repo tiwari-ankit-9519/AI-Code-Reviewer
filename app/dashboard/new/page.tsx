@@ -86,7 +86,7 @@ export default function NewSubmissionPage() {
       });
 
       if (result.success) {
-        toast.success("Code submitted successfully", {
+        toast.success("Quest started!", {
           description: "Analysis is in progress...",
         });
         router.push(`/dashboard/submissions/${result.id}`);
@@ -95,7 +95,7 @@ export default function NewSubmissionPage() {
       const errorMessage =
         err instanceof Error ? err.message : "An error occurred";
       setError(errorMessage);
-      toast.error("Submission failed", {
+      toast.error("Quest failed", {
         description: errorMessage,
       });
     } finally {
@@ -104,44 +104,49 @@ export default function NewSubmissionPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-[#15192c]">New Code Review</h1>
-        <p className="text-[#6c7681] mt-2">
-          Submit your code for AI-powered analysis
+        <h1
+          className="text-4xl md:text-5xl font-black text-white font-mono uppercase"
+          style={{ textShadow: "0 0 20px rgba(255,255,255,0.3)" }}
+        >
+          ⚔️ New Quest
+        </h1>
+        <p className="text-gray-400 mt-2 font-mono text-lg">
+          Submit your code for AI-powered battle analysis
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-8">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
-            {error}
+          <div className="bg-red-500/20 border-2 border-red-400 text-red-300 px-6 py-4 rounded-xl font-mono shadow-lg shadow-red-500/20">
+            ✗ {error}
           </div>
         )}
 
-        <div className="bg-white rounded-lg border border-[#ececec] p-6 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 p-6 shadow-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-medium text-[#21242c] mb-2">
-                File Name (Optional)
+              <label className="block text-sm font-black text-gray-300 mb-2 font-mono uppercase">
+                📄 File Name (Optional)
               </label>
               <input
                 type="text"
                 value={fileName}
                 onChange={(e) => setFileName(e.target.value)}
                 placeholder="example.js"
-                className="w-full px-4 py-2 border border-[#ececec] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-[#0a0e27] border-2 border-purple-500/30 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition font-mono"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#21242c] mb-2">
-                Language
+              <label className="block text-sm font-black text-gray-300 mb-2 font-mono uppercase">
+                💻 Language
               </label>
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
-                className="w-full px-4 py-2 border border-[#ececec] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-[#0a0e27] border-2 border-purple-500/30 rounded-xl text-white focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition font-mono"
               >
                 {SUPPORTED_LANGUAGES.map((lang) => (
                   <option key={lang.value} value={lang.value}>
@@ -159,31 +164,37 @@ export default function NewSubmissionPage() {
             }}
             onDragLeave={() => setIsDragging(false)}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-lg p-8 text-center transition ${
+            className={`border-4 border-dashed rounded-2xl p-8 text-center transition-all ${
               isDragging
-                ? "border-blue-500 bg-blue-50"
-                : "border-[#ececec] hover:border-blue-300"
+                ? "border-yellow-400 bg-yellow-500/10 shadow-lg shadow-yellow-500/50"
+                : "border-purple-500/50 hover:border-yellow-400/50 hover:bg-purple-500/5"
             }`}
           >
-            <svg
-              className="w-12 h-12 text-[#b2b5be] mx-auto mb-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+            <div
+              className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center transition-all ${
+                isDragging ? "bg-yellow-500 scale-110" : "bg-purple-500"
+              }`}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-              />
-            </svg>
-            <p className="text-[#6c7681] font-medium mb-2">
+              <svg
+                className="w-8 h-8 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                />
+              </svg>
+            </div>
+            <p className="text-white font-black mb-2 font-mono text-lg">
               Drop your code file here
             </p>
-            <p className="text-sm text-[#b2b5be] mb-4">or</p>
-            <label className="inline-block px-4 py-2 bg-[#f9f9fa] border border-[#ececec] rounded-lg text-sm font-medium text-[#15192c] hover:bg-gray-100 cursor-pointer transition">
-              Browse Files
+            <p className="text-sm text-gray-400 mb-4 font-mono">or</p>
+            <label className="inline-block px-6 py-3 bg-linear-to-r from-blue-500 to-cyan-500 text-white rounded-xl font-black hover:from-blue-400 hover:to-cyan-400 cursor-pointer transition-all shadow-lg shadow-blue-500/50 hover:shadow-blue-500/70 hover:-translate-y-1 font-mono uppercase border-4 border-blue-600">
+              📁 Browse Files
               <input
                 type="file"
                 className="hidden"
@@ -194,23 +205,25 @@ export default function NewSubmissionPage() {
                 }}
               />
             </label>
-            <p className="text-xs text-[#b2b5be] mt-4">
+            <p className="text-xs text-gray-500 mt-6 font-mono">
               Supports: JavaScript, TypeScript, Python, Java, C++, C#, Go, Rust,
               PHP, Ruby, Swift, Kotlin
             </p>
-            <p className="text-xs text-[#b2b5be]">Maximum file size: 100KB</p>
+            <p className="text-xs text-gray-500 font-mono">
+              Maximum file size: 100KB
+            </p>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-[#ececec] shadow-sm overflow-hidden">
-          <div className="bg-[#1e1e1e] px-4 py-3 flex items-center justify-between">
+        <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 shadow-2xl overflow-hidden">
+          <div className="bg-[#1e1e1e] px-4 py-3 flex items-center justify-between border-b-2 border-[#2d2d2d]">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
               <div className="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
               <div className="w-3 h-3 rounded-full bg-[#27c93f]"></div>
             </div>
-            <span className="text-xs text-gray-400 font-mono">
-              {fileName || `untitled.${language}`}
+            <span className="text-xs text-gray-400 font-mono font-bold">
+              📄 {fileName || `untitled.${language}`}
             </span>
           </div>
 
@@ -218,16 +231,18 @@ export default function NewSubmissionPage() {
             <textarea
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="Paste your code here..."
-              className="w-full h-96 p-4 font-mono text-sm bg-[#1e1e1e] text-gray-100 resize-none focus:outline-none"
+              placeholder="Paste your code here to begin your quest..."
+              className="w-full h-96 p-4 font-mono text-sm bg-[#1e1e1e] text-gray-100 resize-none focus:outline-none placeholder-gray-600"
               style={{ tabSize: 2 }}
             />
           </div>
 
           {code && (
-            <div className="border-t border-[#2d2d2d]">
+            <div className="border-t-2 border-[#2d2d2d]">
               <div className="bg-[#252526] px-4 py-2">
-                <p className="text-xs text-gray-400">Preview</p>
+                <p className="text-xs text-purple-400 font-mono font-bold uppercase">
+                  👁️ Preview
+                </p>
               </div>
               <div className="max-h-64 overflow-auto">
                 <SyntaxHighlighter
@@ -248,23 +263,23 @@ export default function NewSubmissionPage() {
           )}
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
           <button
             type="button"
             onClick={() => router.back()}
-            className="px-6 py-3 border border-[#ececec] rounded-lg font-medium text-[#15192c] hover:bg-[#f9f9fa] transition"
+            className="px-6 py-3 bg-gray-700 text-white rounded-xl font-black hover:bg-gray-600 transition-all border-4 border-gray-800 font-mono uppercase"
           >
-            Cancel
+            ← Cancel
           </button>
           <button
             type="submit"
             disabled={loading || !code.trim()}
-            className="px-6 py-3 bg-linear-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="px-8 py-4 bg-linear-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-xl font-black hover:from-yellow-300 hover:to-orange-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-2xl shadow-yellow-500/50 hover:shadow-yellow-500/70 hover:-translate-y-1 font-mono uppercase border-4 border-yellow-600"
           >
             {loading ? (
               <span className="flex items-center gap-2">
                 <svg
-                  className="animate-spin h-5 w-5"
+                  className="animate-spin h-6 w-6"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -286,7 +301,7 @@ export default function NewSubmissionPage() {
                 Submitting...
               </span>
             ) : (
-              "Submit for Review"
+              "⚔️ Start Quest"
             )}
           </button>
         </div>

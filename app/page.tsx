@@ -7,14 +7,14 @@ export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-white">
-      <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 z-50">
+    <div className="min-h-screen bg-[#0a0e27]">
+      <nav className="fixed top-0 w-full bg-[#0a0e27]/95 backdrop-blur-md border-b border-purple-500/30 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-linear-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center shadow-lg shadow-yellow-500/50">
                 <svg
-                  className="w-6 h-6 text-white"
+                  className="w-6 h-6 text-gray-900"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -27,39 +27,42 @@ export default function LandingPage() {
                   />
                 </svg>
               </div>
-              <span className="text-xl font-bold text-gray-900">
-                Code Review AI
+              <span
+                className="text-xl font-bold text-white"
+                style={{ fontFamily: "monospace" }}
+              >
+                CodeReview AI
               </span>
             </div>
 
             <div className="hidden md:flex items-center gap-8">
               <a
                 href="#features"
-                className="text-gray-600 hover:text-gray-900 transition"
+                className="text-gray-300 hover:text-yellow-400 transition font-mono"
               >
                 Features
               </a>
               <a
                 href="#how-it-works"
-                className="text-gray-600 hover:text-gray-900 transition"
+                className="text-gray-300 hover:text-yellow-400 transition font-mono"
               >
                 How It Works
               </a>
               <a
                 href="#pricing"
-                className="text-gray-600 hover:text-gray-900 transition"
+                className="text-gray-300 hover:text-yellow-400 transition font-mono"
               >
                 Pricing
               </a>
               <Link
                 href="/login"
-                className="text-gray-600 hover:text-gray-900 transition"
+                className="text-gray-300 hover:text-yellow-400 transition font-mono"
               >
                 Sign In
               </Link>
               <Link
                 href="/register"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl"
+                className="bg-yellow-400 text-gray-900 px-6 py-2 rounded-lg font-bold hover:bg-yellow-300 transition-all shadow-lg shadow-yellow-500/50 hover:shadow-xl hover:shadow-yellow-500/60 font-mono uppercase text-sm"
               >
                 Get Started
               </Link>
@@ -67,7 +70,7 @@ export default function LandingPage() {
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+              className="md:hidden p-2 rounded-lg hover:bg-purple-500/20 text-white"
             >
               <svg
                 className="w-6 h-6"
@@ -95,35 +98,35 @@ export default function LandingPage() {
           </div>
 
           {mobileMenuOpen && (
-            <div className="md:hidden py-4 border-t border-gray-100">
+            <div className="md:hidden py-4 border-t border-purple-500/30">
               <div className="flex flex-col gap-4">
                 <a
                   href="#features"
-                  className="text-gray-600 hover:text-gray-900 transition"
+                  className="text-gray-300 hover:text-yellow-400 transition font-mono"
                 >
                   Features
                 </a>
                 <a
                   href="#how-it-works"
-                  className="text-gray-600 hover:text-gray-900 transition"
+                  className="text-gray-300 hover:text-yellow-400 transition font-mono"
                 >
                   How It Works
                 </a>
                 <a
                   href="#pricing"
-                  className="text-gray-600 hover:text-gray-900 transition"
+                  className="text-gray-300 hover:text-yellow-400 transition font-mono"
                 >
                   Pricing
                 </a>
                 <Link
                   href="/login"
-                  className="text-gray-600 hover:text-gray-900 transition"
+                  className="text-gray-300 hover:text-yellow-400 transition font-mono"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/register"
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg font-medium text-center"
+                  className="bg-yellow-400 text-gray-900 px-6 py-2 rounded-lg font-bold text-center font-mono uppercase"
                 >
                   Get Started
                 </Link>
@@ -133,40 +136,62 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.1),transparent_50%)]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(139,92,246,0.1),transparent_50%)]"></div>
+      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 bg-linear-to-b from-[#0a0e27] via-[#1a1f3a] to-[#0a0e27] relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-20 left-10 w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+          <div
+            className="absolute top-40 right-20 w-2 h-2 bg-pink-400 rounded-full animate-pulse"
+            style={{ animationDelay: "0.5s" }}
+          ></div>
+          <div
+            className="absolute bottom-40 left-1/4 w-2 h-2 bg-yellow-400 rounded-full animate-pulse"
+            style={{ animationDelay: "1s" }}
+          ></div>
+          <div
+            className="absolute top-60 right-1/3 w-2 h-2 bg-green-400 rounded-full animate-pulse"
+            style={{ animationDelay: "1.5s" }}
+          ></div>
+        </div>
 
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-white/60 backdrop-blur-sm border border-blue-200 rounded-full px-4 py-2 mb-6">
-              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-gray-700">
-                Trusted by 10,000+ developers worldwide
+            <div className="inline-flex items-center gap-2 bg-green-500/20 backdrop-blur-sm border-2 border-green-400 rounded-full px-4 py-2 mb-6 shadow-lg shadow-green-500/30">
+              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
+              <span className="text-sm font-bold text-green-300 font-mono uppercase tracking-wide">
+                10,000+ Developers Online
               </span>
             </div>
 
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
-              AI-Powered Code Review in{" "}
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Seconds
-              </span>
+            <h1
+              className="text-5xl md:text-6xl lg:text-7xl font-black text-white mb-4 leading-tight tracking-tight"
+              style={{
+                fontFamily: "monospace",
+                textShadow:
+                  "0 0 20px rgba(255,255,255,0.3), 0 0 40px rgba(147,51,234,0.3)",
+              }}
+            >
+              Start Your
+            </h1>
+            <h1
+              className="text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight tracking-tight bg-linear-to-r from-yellow-400 via-pink-500 to-purple-500 bg-clip-text text-transparent"
+              style={{ fontFamily: "monospace" }}
+            >
+              Code Review Adventure
             </h1>
 
-            <p className="text-xl text-gray-600 mb-10 leading-relaxed">
-              Detect security vulnerabilities, performance issues, and code
-              smells instantly. Improve code quality with advanced AI analysis
-              and actionable recommendations.
+            <p className="text-xl text-gray-300 mb-10 leading-relaxed font-mono">
+              AI-powered code analysis • Find bugs instantly • Level up your
+              skills
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/register"
-                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-lg font-medium text-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-xl hover:shadow-2xl flex items-center justify-center gap-2"
+                className="w-full sm:w-auto bg-yellow-400 text-gray-900 px-10 py-5 rounded-xl font-black text-xl hover:bg-yellow-300 transition-all shadow-2xl shadow-yellow-500/50 hover:shadow-yellow-500/70 hover:-translate-y-1 flex items-center justify-center gap-3 border-4 border-yellow-600 font-mono uppercase"
               >
-                Start Free Trial
+                Get Started
                 <svg
-                  className="w-5 h-5"
+                  className="w-6 h-6"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -174,7 +199,7 @@ export default function LandingPage() {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
+                    strokeWidth={3}
                     d="M13 7l5 5m0 0l-5 5m5-5H6"
                   />
                 </svg>
@@ -182,10 +207,10 @@ export default function LandingPage() {
 
               <a
                 href="#demo"
-                className="w-full sm:w-auto bg-white text-gray-700 px-8 py-4 rounded-lg font-medium text-lg border-2 border-gray-200 hover:border-gray-300 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                className="w-full sm:w-auto bg-purple-600 text-white px-10 py-5 rounded-xl font-black text-xl border-4 border-purple-800 hover:bg-purple-500 transition-all shadow-2xl shadow-purple-500/50 hover:shadow-purple-500/70 hover:-translate-y-1 flex items-center justify-center gap-3 font-mono uppercase"
               >
                 <svg
-                  className="w-5 h-5"
+                  className="w-6 h-6"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -193,13 +218,13 @@ export default function LandingPage() {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
+                    strokeWidth={3}
                     d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
                   />
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
+                    strokeWidth={3}
                     d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
@@ -208,44 +233,77 @@ export default function LandingPage() {
             </div>
 
             <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-gray-900">10K+</div>
-                <div className="text-sm text-gray-600 mt-1">Active Users</div>
+              <div className="text-center bg-linear-to-br from-cyan-500/20 to-blue-500/20 p-4 rounded-xl border-2 border-cyan-400/50">
+                <div
+                  className="text-4xl font-black text-cyan-300 font-mono"
+                  style={{ textShadow: "0 0 10px rgba(34,211,238,0.5)" }}
+                >
+                  10K+
+                </div>
+                <div className="text-sm text-gray-300 mt-1 font-mono uppercase tracking-wide">
+                  Active Users
+                </div>
               </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-gray-900">1M+</div>
-                <div className="text-sm text-gray-600 mt-1">Code Reviews</div>
+              <div className="text-center bg-linear-to-br from-pink-500/20 to-red-500/20 p-4 rounded-xl border-2 border-pink-400/50">
+                <div
+                  className="text-4xl font-black text-pink-300 font-mono"
+                  style={{ textShadow: "0 0 10px rgba(236,72,153,0.5)" }}
+                >
+                  1M+
+                </div>
+                <div className="text-sm text-gray-300 mt-1 font-mono uppercase tracking-wide">
+                  Code Reviews
+                </div>
               </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-gray-900">50+</div>
-                <div className="text-sm text-gray-600 mt-1">Languages</div>
+              <div className="text-center bg-linear-to-br from-yellow-500/20 to-orange-500/20 p-4 rounded-xl border-2 border-yellow-400/50">
+                <div
+                  className="text-4xl font-black text-yellow-300 font-mono"
+                  style={{ textShadow: "0 0 10px rgba(250,204,21,0.5)" }}
+                >
+                  50+
+                </div>
+                <div className="text-sm text-gray-300 mt-1 font-mono uppercase tracking-wide">
+                  Languages
+                </div>
               </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-gray-900">99.9%</div>
-                <div className="text-sm text-gray-600 mt-1">Accuracy</div>
+              <div className="text-center bg-linear-to-br from-green-500/20 to-emerald-500/20 p-4 rounded-xl border-2 border-green-400/50">
+                <div
+                  className="text-4xl font-black text-green-300 font-mono"
+                  style={{ textShadow: "0 0 10px rgba(34,197,94,0.5)" }}
+                >
+                  99.9%
+                </div>
+                <div className="text-sm text-gray-300 mt-1 font-mono uppercase tracking-wide">
+                  Accuracy
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section
+        id="features"
+        className="py-20 px-4 sm:px-6 lg:px-8 bg-[#0a0e27]"
+      >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Powerful Features for Modern Development
+            <h2
+              className="text-5xl font-black text-white mb-4 font-mono uppercase"
+              style={{ textShadow: "0 0 20px rgba(255,255,255,0.2)" }}
+            >
+              Power-Ups & Features
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Everything you need to write better, safer, and more maintainable
-              code
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto font-mono">
+              Unlock legendary abilities for your code
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-8 rounded-2xl border border-blue-200 hover:shadow-xl transition-all">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-linear-to-br from-blue-900/50 to-blue-950/50 p-6 rounded-2xl border-4 border-blue-500 hover:shadow-2xl hover:shadow-blue-500/50 transition-all hover:-translate-y-2">
+              <div className="w-14 h-14 bg-blue-500 rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-blue-500/50">
                 <svg
-                  className="w-6 h-6 text-white"
+                  className="w-8 h-8 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -258,20 +316,19 @@ export default function LandingPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Security Analysis
+              <h3 className="text-2xl font-black text-white mb-3 font-mono uppercase">
+                Security Shield
               </h3>
-              <p className="text-gray-600 leading-relaxed">
-                Detect SQL injection, XSS, CSRF, and other vulnerabilities
-                before they reach production. Get CWE/CVE references for every
-                issue.
+              <p className="text-gray-300 leading-relaxed font-mono text-sm">
+                Detect SQL injection, XSS, CSRF vulnerabilities. Get instant
+                alerts with CWE/CVE references.
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-8 rounded-2xl border border-purple-200 hover:shadow-xl transition-all">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
+            <div className="bg-linear-to-br from-purple-900/50 to-purple-950/50 p-6 rounded-2xl border-4 border-purple-500 hover:shadow-2xl hover:shadow-purple-500/50 transition-all hover:-translate-y-2">
+              <div className="w-14 h-14 bg-purple-500 rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-purple-500/50">
                 <svg
-                  className="w-6 h-6 text-white"
+                  className="w-8 h-8 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -284,19 +341,19 @@ export default function LandingPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Performance Optimization
+              <h3 className="text-2xl font-black text-white mb-3 font-mono uppercase">
+                Speed Boost
               </h3>
-              <p className="text-gray-600 leading-relaxed">
-                Identify bottlenecks, inefficient algorithms, and memory leaks.
-                Get suggestions to optimize execution speed and resource usage.
+              <p className="text-gray-300 leading-relaxed font-mono text-sm">
+                Identify bottlenecks and memory leaks. Optimize execution speed
+                and crush performance issues.
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-8 rounded-2xl border border-emerald-200 hover:shadow-xl transition-all">
-              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center mb-4">
+            <div className="bg-linear-to-br from-emerald-900/50 to-emerald-950/50 p-6 rounded-2xl border-4 border-emerald-500 hover:shadow-2xl hover:shadow-emerald-500/50 transition-all hover:-translate-y-2">
+              <div className="w-14 h-14 bg-emerald-500 rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-emerald-500/50">
                 <svg
-                  className="w-6 h-6 text-white"
+                  className="w-8 h-8 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -309,20 +366,19 @@ export default function LandingPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Code Quality
+              <h3 className="text-2xl font-black text-white mb-3 font-mono uppercase">
+                Quality Master
               </h3>
-              <p className="text-gray-600 leading-relaxed">
-                Detect code smells, duplicate code, and style violations.
-                Maintain consistency and follow best practices across your
-                codebase.
+              <p className="text-gray-300 leading-relaxed font-mono text-sm">
+                Detect code smells and style violations. Maintain legendary code
+                quality across your codebase.
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-8 rounded-2xl border border-orange-200 hover:shadow-xl transition-all">
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center mb-4">
+            <div className="bg-linear-to-br from-orange-900/50 to-orange-950/50 p-6 rounded-2xl border-4 border-orange-500 hover:shadow-2xl hover:shadow-orange-500/50 transition-all hover:-translate-y-2">
+              <div className="w-14 h-14 bg-orange-500 rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-orange-500/50">
                 <svg
-                  className="w-6 h-6 text-white"
+                  className="w-8 h-8 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -335,19 +391,19 @@ export default function LandingPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Bug Detection
+              <h3 className="text-2xl font-black text-white mb-3 font-mono uppercase">
+                Bug Hunter
               </h3>
-              <p className="text-gray-600 leading-relaxed">
-                Find potential runtime errors, null pointer exceptions, and
-                logic bugs. Prevent crashes before they happen in production.
+              <p className="text-gray-300 leading-relaxed font-mono text-sm">
+                Find runtime errors and logic bugs before they strike. Prevent
+                production crashes.
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-pink-50 to-pink-100 p-8 rounded-2xl border border-pink-200 hover:shadow-xl transition-all">
-              <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg flex items-center justify-center mb-4">
+            <div className="bg-linear-to-br from-pink-900/50 to-pink-950/50 p-6 rounded-2xl border-4 border-pink-500 hover:shadow-2xl hover:shadow-pink-500/50 transition-all hover:-translate-y-2">
+              <div className="w-14 h-14 bg-pink-500 rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-pink-500/50">
                 <svg
-                  className="w-6 h-6 text-white"
+                  className="w-8 h-8 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -360,20 +416,19 @@ export default function LandingPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Instant Reports
+              <h3 className="text-2xl font-black text-white mb-3 font-mono uppercase">
+                Quest Reports
               </h3>
-              <p className="text-gray-600 leading-relaxed">
-                Get comprehensive reports with severity levels, line numbers,
-                and actionable fixes. Export and share with your team
-                effortlessly.
+              <p className="text-gray-300 leading-relaxed font-mono text-sm">
+                Comprehensive battle reports with severity levels. Share
+                victories with your team.
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 p-8 rounded-2xl border border-indigo-200 hover:shadow-xl transition-all">
-              <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center mb-4">
+            <div className="bg-linear-to-br from-indigo-900/50 to-indigo-950/50 p-6 rounded-2xl border-4 border-indigo-500 hover:shadow-2xl hover:shadow-indigo-500/50 transition-all hover:-translate-y-2">
+              <div className="w-14 h-14 bg-indigo-500 rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-indigo-500/50">
                 <svg
-                  className="w-6 h-6 text-white"
+                  className="w-8 h-8 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -386,13 +441,12 @@ export default function LandingPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Multi-Language Support
+              <h3 className="text-2xl font-black text-white mb-3 font-mono uppercase">
+                Multi-Verse
               </h3>
-              <p className="text-gray-600 leading-relaxed">
-                Support for 50+ programming languages including JavaScript,
-                Python, Java, Go, Rust, and more. One tool for all your
-                projects.
+              <p className="text-gray-300 leading-relaxed font-mono text-sm">
+                50+ languages supported. JavaScript, Python, Java, Go, Rust and
+                more. One tool rules them all.
               </p>
             </div>
           </div>
@@ -401,60 +455,63 @@ export default function LandingPage() {
 
       <section
         id="how-it-works"
-        className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-50 to-gray-100"
+        className="py-20 px-4 sm:px-6 lg:px-8 bg-linear-to-b from-[#0a0e27] to-[#1a1f3a]"
       >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              How It Works
+            <h2
+              className="text-5xl font-black text-white mb-4 font-mono uppercase"
+              style={{ textShadow: "0 0 20px rgba(255,255,255,0.2)" }}
+            >
+              Your Quest Path
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Get your code reviewed in three simple steps
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto font-mono">
+              Three simple steps to coding mastery
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-12">
-            <div className="relative">
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="relative group">
               <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mb-6 shadow-xl">
+                <div className="w-20 h-20 bg-linear-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center text-gray-900 text-3xl font-black mb-6 shadow-2xl shadow-yellow-500/50 border-4 border-yellow-600 group-hover:scale-110 transition-transform font-mono">
                   1
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                <h3 className="text-3xl font-black text-white mb-4 font-mono uppercase">
                   Upload Code
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Paste your code, upload a file, or integrate with your Git
-                  repository. Support for individual files or entire projects.
+                <p className="text-gray-300 leading-relaxed font-mono text-sm">
+                  Paste code, upload files, or connect your Git repository.
+                  Ready for battle.
                 </p>
               </div>
             </div>
 
-            <div className="relative">
+            <div className="relative group">
               <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mb-6 shadow-xl">
+                <div className="w-20 h-20 bg-linear-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-white text-3xl font-black mb-6 shadow-2xl shadow-purple-500/50 border-4 border-purple-700 group-hover:scale-110 transition-transform font-mono">
                   2
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                <h3 className="text-3xl font-black text-white mb-4 font-mono uppercase">
                   AI Analysis
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Our advanced AI models analyze your code for security,
-                  performance, quality, and maintainability in seconds.
+                <p className="text-gray-300 leading-relaxed font-mono text-sm">
+                  Advanced AI scans for security, performance, and quality
+                  issues in seconds.
                 </p>
               </div>
             </div>
 
-            <div className="relative">
+            <div className="relative group">
               <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mb-6 shadow-xl">
+                <div className="w-20 h-20 bg-linear-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center text-gray-900 text-3xl font-black mb-6 shadow-2xl shadow-green-500/50 border-4 border-green-600 group-hover:scale-110 transition-transform font-mono">
                   3
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                  Get Results
+                <h3 className="text-3xl font-black text-white mb-4 font-mono uppercase">
+                  Victory Report
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Review detailed findings with severity levels, code snippets,
-                  and actionable recommendations to fix issues immediately.
+                <p className="text-gray-300 leading-relaxed font-mono text-sm">
+                  Detailed findings with actionable fixes. Level up your code
+                  instantly.
                 </p>
               </div>
             </div>
@@ -462,311 +519,333 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 bg-[#0a0e27]">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Simple, Transparent Pricing
+            <h2
+              className="text-5xl font-black text-white mb-4 font-mono uppercase"
+              style={{ textShadow: "0 0 20px rgba(255,255,255,0.2)" }}
+            >
+              Choose Your Level
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Choose the plan that fits your needs. All plans include a 14-day
-              free trial.
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto font-mono">
+              All plans include 14-day free trial • No credit card required
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <div className="bg-white border-2 border-gray-200 rounded-2xl p-8 hover:shadow-xl transition-all">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Free</h3>
-              <p className="text-gray-600 mb-6">Perfect for trying out</p>
+            <div className="bg-linear-to-br from-gray-800/50 to-gray-900/50 border-4 border-gray-600 rounded-2xl p-8 hover:shadow-2xl hover:shadow-gray-500/30 transition-all hover:-translate-y-2">
+              <h3 className="text-3xl font-black text-white mb-2 font-mono uppercase">
+                Starter
+              </h3>
+              <p className="text-gray-400 mb-6 font-mono">Try the basics</p>
               <div className="mb-6">
-                <span className="text-4xl font-bold text-gray-900">$0</span>
-                <span className="text-gray-600">/month</span>
+                <span className="text-5xl font-black text-white font-mono">
+                  $0
+                </span>
+                <span className="text-gray-400 font-mono">/month</span>
               </div>
               <ul className="space-y-3 mb-8 min-h-[200px]">
                 <li className="flex items-start gap-3">
-                  <svg
-                    className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="text-gray-600 text-sm">
-                    5 reviews per month
+                  <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center shrink-0 mt-0.5">
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <span className="text-gray-300 text-sm font-mono">
+                    5 reviews/month
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <svg
-                    className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="text-gray-600 text-sm">
-                    Basic security checks
+                  <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center shrink-0 mt-0.5">
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <span className="text-gray-300 text-sm font-mono">
+                    Basic security
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <svg
-                    className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="text-gray-600 text-sm">
+                  <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center shrink-0 mt-0.5">
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <span className="text-gray-300 text-sm font-mono">
                     Community support
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <svg
-                    className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="text-gray-600 text-sm">
-                    Up to 5KB file size
                   </span>
                 </li>
               </ul>
               <Link
                 href="/register"
-                className="block w-full text-center bg-gray-100 text-gray-900 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-all"
+                className="block w-full text-center bg-gray-700 text-white px-6 py-4 rounded-xl font-black hover:bg-gray-600 transition-all border-4 border-gray-900 font-mono uppercase"
               >
-                Get Started
+                Start Free
               </Link>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl p-8 text-white relative hover:shadow-2xl transition-all transform hover:-translate-y-1">
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-emerald-400 text-emerald-900 px-4 py-1 rounded-full text-sm font-bold">
-                POPULAR
+            <div className="bg-linear-to-br from-purple-600 to-pink-600 rounded-2xl p-8 text-white relative hover:shadow-2xl hover:shadow-purple-500/50 transition-all transform hover:-translate-y-2 border-4 border-purple-800">
+              <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-gray-900 px-6 py-2 rounded-xl text-sm font-black shadow-lg font-mono uppercase border-2 border-yellow-600">
+                ⭐ Popular
               </div>
-              <h3 className="text-2xl font-bold mb-2">Pro</h3>
-              <p className="text-blue-100 mb-6">For professional developers</p>
+              <h3 className="text-3xl font-black mb-2 font-mono uppercase">
+                Hero
+              </h3>
+              <p className="text-purple-100 mb-6 font-mono">For champions</p>
               <div className="mb-6">
-                <span className="text-4xl font-bold">$29</span>
-                <span className="text-blue-100">/month</span>
+                <span className="text-5xl font-black font-mono">$29</span>
+                <span className="text-purple-100 font-mono">/month</span>
               </div>
               <ul className="space-y-3 mb-8 min-h-[200px]">
                 <li className="flex items-start gap-3">
-                  <svg
-                    className="w-5 h-5 text-emerald-300 flex-shrink-0 mt-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="text-sm">Unlimited reviews</span>
+                  <div className="w-6 h-6 bg-yellow-400 rounded flex items-center justify-center shrink-0 mt-0.5">
+                    <svg
+                      className="w-4 h-4 text-gray-900"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-mono">Unlimited reviews</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <svg
-                    className="w-5 h-5 text-emerald-300 flex-shrink-0 mt-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="text-sm">
+                  <div className="w-6 h-6 bg-yellow-400 rounded flex items-center justify-center shrink-0 mt-0.5">
+                    <svg
+                      className="w-4 h-4 text-gray-900"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-mono">
                     Advanced security & performance
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <svg
-                    className="w-5 h-5 text-emerald-300 flex-shrink-0 mt-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="text-sm">Priority support</span>
+                  <div className="w-6 h-6 bg-yellow-400 rounded flex items-center justify-center shrink-0 mt-0.5">
+                    <svg
+                      className="w-4 h-4 text-gray-900"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-mono">Priority support</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <svg
-                    className="w-5 h-5 text-emerald-300 flex-shrink-0 mt-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="text-sm">API access</span>
+                  <div className="w-6 h-6 bg-yellow-400 rounded flex items-center justify-center shrink-0 mt-0.5">
+                    <svg
+                      className="w-4 h-4 text-gray-900"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-mono">API access</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <svg
-                    className="w-5 h-5 text-emerald-300 flex-shrink-0 mt-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="text-sm">Up to 100KB file size</span>
+                  <div className="w-6 h-6 bg-yellow-400 rounded flex items-center justify-center shrink-0 mt-0.5">
+                    <svg
+                      className="w-4 h-4 text-gray-900"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-mono">
+                    Up to 100KB file size
+                  </span>
                 </li>
               </ul>
               <Link
                 href="/register"
-                className="block w-full text-center bg-white text-purple-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-all shadow-lg"
+                className="block w-full text-center bg-white text-purple-600 px-6 py-4 rounded-xl font-black hover:bg-gray-100 transition-all shadow-xl border-4 border-white font-mono uppercase"
               >
-                Start Free Trial
+                Start Trial
               </Link>
             </div>
 
-            <div className="bg-white border-2 border-gray-200 rounded-2xl p-8 hover:shadow-xl transition-all">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                Enterprise
+            <div className="bg-linear-to-br from-gray-800/50 to-gray-900/50 border-4 border-gray-600 rounded-2xl p-8 hover:shadow-2xl hover:shadow-gray-500/30 transition-all hover:-translate-y-2">
+              <h3 className="text-3xl font-black text-white mb-2 font-mono uppercase">
+                Legend
               </h3>
-              <p className="text-gray-600 mb-6">For large teams</p>
+              <p className="text-gray-400 mb-6 font-mono">For elite teams</p>
               <div className="mb-6">
-                <span className="text-4xl font-bold text-gray-900">Custom</span>
+                <span className="text-5xl font-black text-white font-mono">
+                  Custom
+                </span>
               </div>
               <ul className="space-y-3 mb-8 min-h-[200px]">
                 <li className="flex items-start gap-3">
-                  <svg
-                    className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="text-gray-600 text-sm">
-                    Everything in Pro
+                  <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center shrink-0 mt-0.5">
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <span className="text-gray-300 text-sm font-mono">
+                    Everything in Hero
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <svg
-                    className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="text-gray-600 text-sm">
+                  <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center shrink-0 mt-0.5">
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <span className="text-gray-300 text-sm font-mono">
                     Dedicated support
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <svg
-                    className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="text-gray-600 text-sm">
+                  <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center shrink-0 mt-0.5">
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <span className="text-gray-300 text-sm font-mono">
                     Custom integrations
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <svg
-                    className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="text-gray-600 text-sm">SLA guarantee</span>
+                  <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center shrink-0 mt-0.5">
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <span className="text-gray-300 text-sm font-mono">
+                    SLA guarantee
+                  </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <svg
-                    className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="text-gray-600 text-sm">
+                  <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center shrink-0 mt-0.5">
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <span className="text-gray-300 text-sm font-mono">
                     Unlimited file size
                   </span>
                 </li>
               </ul>
               <Link
                 href="/contact"
-                className="block w-full text-center bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all"
+                className="block w-full text-center bg-linear-to-r from-yellow-400 to-orange-500 text-gray-900 px-6 py-4 rounded-xl font-black hover:from-yellow-300 hover:to-orange-400 transition-all border-4 border-yellow-600 font-mono uppercase"
               >
                 Contact Sales
               </Link>
@@ -775,28 +854,30 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 relative overflow-hidden">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-linear-to-br from-purple-600 via-pink-600 to-indigo-700 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_50%)]"></div>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(255,255,255,0.1),transparent_50%)]"></div>
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Ready to Improve Your Code Quality?
+          <h2
+            className="text-4xl md:text-5xl font-black text-white mb-6 font-mono uppercase"
+            style={{ textShadow: "0 0 30px rgba(0,0,0,0.5)" }}
+          >
+            Ready To Level Up?
           </h2>
-          <p className="text-xl text-blue-100 mb-10">
-            Join thousands of developers using AI to write better code. Start
-            your free trial today.
+          <p className="text-xl text-purple-100 mb-10 font-mono">
+            Join the coding revolution. Start your epic journey today.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/register"
-              className="w-full sm:w-auto bg-white text-purple-600 px-8 py-4 rounded-lg font-medium text-lg hover:bg-gray-100 transition-all shadow-xl hover:shadow-2xl"
+              className="w-full sm:w-auto bg-yellow-400 text-gray-900 px-10 py-5 rounded-xl font-black text-xl hover:bg-yellow-300 transition-all shadow-2xl hover:shadow-3xl hover:-translate-y-1 border-4 border-yellow-600 font-mono uppercase"
             >
               Start Free Trial
             </Link>
             <Link
               href="/login"
-              className="w-full sm:w-auto bg-transparent text-white border-2 border-white px-8 py-4 rounded-lg font-medium text-lg hover:bg-white/10 transition-all"
+              className="w-full sm:w-auto bg-transparent text-white border-4 border-white px-10 py-5 rounded-xl font-black text-xl hover:bg-white/20 transition-all font-mono uppercase"
             >
               Sign In
             </Link>
@@ -804,14 +885,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="bg-gray-900 text-gray-300 py-12 px-4 sm:px-6 lg:px-8">
+      <footer className="bg-[#0a0e27] border-t-4 border-purple-500/30 text-gray-300 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-linear-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center shadow-lg shadow-yellow-500/50">
                   <svg
-                    className="w-5 h-5 text-white"
+                    className="w-5 h-5 text-gray-900"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -824,35 +905,43 @@ export default function LandingPage() {
                     />
                   </svg>
                 </div>
-                <span className="text-lg font-bold text-white">
-                  Code Review AI
+                <span className="text-lg font-black text-white font-mono">
+                  CodeReview AI
                 </span>
               </div>
-              <p className="text-sm text-gray-400">
-                AI-powered code review platform for modern developers.
+              <p className="text-sm text-gray-400 font-mono">
+                Level up your code with AI-powered reviews
               </p>
             </div>
 
             <div>
-              <h4 className="text-white font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-sm">
+              <h4 className="text-white font-black mb-4 font-mono uppercase">
+                Product
+              </h4>
+              <ul className="space-y-2 text-sm font-mono">
                 <li>
-                  <a href="#features" className="hover:text-white transition">
+                  <a
+                    href="#features"
+                    className="hover:text-yellow-400 transition"
+                  >
                     Features
                   </a>
                 </li>
                 <li>
-                  <a href="#pricing" className="hover:text-white transition">
+                  <a
+                    href="#pricing"
+                    className="hover:text-yellow-400 transition"
+                  >
                     Pricing
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="#" className="hover:text-yellow-400 transition">
                     Integrations
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="#" className="hover:text-yellow-400 transition">
                     API
                   </a>
                 </li>
@@ -860,25 +949,27 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h4 className="text-white font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-sm">
+              <h4 className="text-white font-black mb-4 font-mono uppercase">
+                Company
+              </h4>
+              <ul className="space-y-2 text-sm font-mono">
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="#" className="hover:text-yellow-400 transition">
                     About
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="#" className="hover:text-yellow-400 transition">
                     Blog
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="#" className="hover:text-yellow-400 transition">
                     Careers
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="#" className="hover:text-yellow-400 transition">
                     Contact
                   </a>
                 </li>
@@ -886,20 +977,22 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h4 className="text-white font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm">
+              <h4 className="text-white font-black mb-4 font-mono uppercase">
+                Legal
+              </h4>
+              <ul className="space-y-2 text-sm font-mono">
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="#" className="hover:text-yellow-400 transition">
                     Privacy
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="#" className="hover:text-yellow-400 transition">
                     Terms
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="#" className="hover:text-yellow-400 transition">
                     Security
                   </a>
                 </li>
@@ -907,12 +1000,15 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-gray-400">
-              © 2024 Code Review AI. All rights reserved.
+          <div className="border-t border-purple-500/30 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-gray-400 font-mono">
+              © 2024 CodeReview AI. Game on. All rights reserved.
             </p>
             <div className="flex items-center gap-6">
-              <a href="#" className="text-gray-400 hover:text-white transition">
+              <a
+                href="#"
+                className="text-gray-400 hover:text-yellow-400 transition"
+              >
                 <svg
                   className="w-5 h-5"
                   fill="currentColor"
@@ -921,7 +1017,10 @@ export default function LandingPage() {
                   <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
                 </svg>
               </a>
-              <a href="#" className="text-gray-400 hover:text-white transition">
+              <a
+                href="#"
+                className="text-gray-400 hover:text-yellow-400 transition"
+              >
                 <svg
                   className="w-5 h-5"
                   fill="currentColor"
@@ -930,7 +1029,10 @@ export default function LandingPage() {
                   <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                 </svg>
               </a>
-              <a href="#" className="text-gray-400 hover:text-white transition">
+              <a
+                href="#"
+                className="text-gray-400 hover:text-yellow-400 transition"
+              >
                 <svg
                   className="w-5 h-5"
                   fill="currentColor"

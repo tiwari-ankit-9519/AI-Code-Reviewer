@@ -130,11 +130,11 @@ export function ExportButtons({ submissionId }: { submissionId: string }) {
       <button
         onClick={handleExportJSON}
         disabled={loading !== null}
-        className="flex items-center gap-2 px-4 py-2 border border-[#ececec] rounded-lg font-medium text-[#15192c] hover:bg-[#f9f9fa] disabled:opacity-50 disabled:cursor-not-allowed transition"
+        className="flex items-center gap-2 px-5 py-3 bg-linear-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-black hover:from-cyan-500 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-cyan-500/50 hover:shadow-cyan-500/70 hover:-translate-y-1 font-mono uppercase border-4 border-cyan-700"
       >
         {loading === "json" ? (
           <svg
-            className="animate-spin h-4 w-4"
+            className="animate-spin h-5 w-5"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -154,7 +154,12 @@ export function ExportButtons({ submissionId }: { submissionId: string }) {
             />
           </svg>
         ) : (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor">
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -163,17 +168,17 @@ export function ExportButtons({ submissionId }: { submissionId: string }) {
             />
           </svg>
         )}
-        JSON
+        <span>📄 JSON</span>
       </button>
 
       <button
         onClick={handleExportMarkdown}
         disabled={loading !== null}
-        className="flex items-center gap-2 px-4 py-2 border border-[#ececec] rounded-lg font-medium text-[#15192c] hover:bg-[#f9f9fa] disabled:opacity-50 disabled:cursor-not-allowed transition"
+        className="flex items-center gap-2 px-5 py-3 bg-linear-to-r from-purple-600 to-pink-600 text-white rounded-xl font-black hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 hover:-translate-y-1 font-mono uppercase border-4 border-purple-700"
       >
         {loading === "markdown" ? (
           <svg
-            className="animate-spin h-4 w-4"
+            className="animate-spin h-5 w-5"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -193,7 +198,12 @@ export function ExportButtons({ submissionId }: { submissionId: string }) {
             />
           </svg>
         ) : (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor">
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -202,17 +212,17 @@ export function ExportButtons({ submissionId }: { submissionId: string }) {
             />
           </svg>
         )}
-        Markdown
+        <span>📝 Markdown</span>
       </button>
 
       <button
         onClick={handleExportPDF}
         disabled={loading !== null}
-        className="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
+        className="flex items-center gap-2 px-5 py-3 bg-linear-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-xl font-black hover:from-yellow-300 hover:to-orange-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-yellow-500/50 hover:shadow-yellow-500/70 hover:-translate-y-1 font-mono uppercase border-4 border-yellow-600"
       >
         {loading === "pdf" ? (
           <svg
-            className="animate-spin h-4 w-4"
+            className="animate-spin h-5 w-5"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -232,7 +242,12 @@ export function ExportButtons({ submissionId }: { submissionId: string }) {
             />
           </svg>
         ) : (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor">
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -241,7 +256,7 @@ export function ExportButtons({ submissionId }: { submissionId: string }) {
             />
           </svg>
         )}
-        PDF
+        <span>📋 PDF</span>
       </button>
     </div>
   );

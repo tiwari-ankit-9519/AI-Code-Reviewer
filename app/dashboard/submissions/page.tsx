@@ -122,61 +122,66 @@ export default async function SubmissionsPage({
 
   const getStatusBadge = (status: string) => {
     const styles = {
-      pending: "bg-gray-100 text-gray-700 border-gray-200",
-      analyzing: "bg-blue-100 text-blue-700 border-blue-200",
-      completed: "bg-green-100 text-green-700 border-green-200",
-      failed: "bg-red-100 text-red-700 border-red-200",
+      pending: "bg-gray-500/20 text-gray-300 border-gray-400/50",
+      analyzing: "bg-blue-500/20 text-blue-300 border-blue-400/50",
+      completed: "bg-green-500/20 text-green-300 border-green-400/50",
+      failed: "bg-red-500/20 text-red-300 border-red-400/50",
     };
     return styles[status as keyof typeof styles] || styles.pending;
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-600";
-    if (score >= 60) return "text-blue-600";
-    if (score >= 40) return "text-yellow-600";
-    return "text-red-600";
+    if (score >= 80) return "text-green-400";
+    if (score >= 60) return "text-blue-400";
+    if (score >= 40) return "text-yellow-400";
+    return "text-red-400";
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-[#15192c]">Review History</h1>
-          <p className="text-[#6c7681] mt-2">
-            {total} submission{total !== 1 ? "s" : ""}
+          <h1
+            className="text-4xl md:text-5xl font-black text-white font-mono uppercase"
+            style={{ textShadow: "0 0 20px rgba(255,255,255,0.3)" }}
+          >
+            📜 Battle History
+          </h1>
+          <p className="text-gray-400 mt-2 font-mono text-lg">
+            {total} quest{total !== 1 ? "s" : ""} completed
           </p>
         </div>
         <Link
           href="/dashboard/new"
-          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition"
+          className="px-6 py-3 bg-linear-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-xl font-black hover:from-yellow-300 hover:to-orange-400 transition-all shadow-lg shadow-yellow-500/50 hover:shadow-yellow-500/70 hover:-translate-y-1 font-mono uppercase border-4 border-yellow-600"
         >
-          New Review
+          ⚔️ New Quest
         </Link>
       </div>
 
-      <div className="bg-white rounded-lg border border-[#ececec] p-4 shadow-sm">
+      <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 p-6 shadow-2xl">
         <form className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-[#21242c] mb-2">
-              Search
+            <label className="block text-sm font-black text-gray-300 mb-2 font-mono uppercase">
+              🔍 Search
             </label>
             <input
               type="text"
               name="search"
               defaultValue={search || ""}
               placeholder="Search by filename or code..."
-              className="w-full px-4 py-2 border border-[#ececec] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-[#0a0e27] border-2 border-purple-500/30 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition font-mono"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#21242c] mb-2">
-              Language
+            <label className="block text-sm font-black text-gray-300 mb-2 font-mono uppercase">
+              💻 Language
             </label>
             <select
               name="language"
               defaultValue={language || ""}
-              className="w-full px-4 py-2 border border-[#ececec] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-[#0a0e27] border-2 border-purple-500/30 rounded-xl text-white focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition font-mono"
             >
               <option value="">All Languages</option>
               {languages.map((lang) => (
@@ -192,13 +197,13 @@ export default async function SubmissionsPage({
           <div className="flex items-end gap-2">
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-[#007fff] text-white rounded-lg font-medium hover:bg-[#2b89ff] transition"
+              className="flex-1 px-5 py-3 bg-linear-to-r from-blue-500 to-cyan-500 text-white rounded-xl font-black hover:from-blue-400 hover:to-cyan-400 transition-all shadow-lg shadow-blue-500/50 hover:-translate-y-1 font-mono uppercase border-4 border-blue-600"
             >
               Filter
             </button>
             <Link
               href="/dashboard/submissions"
-              className="px-4 py-2 border border-[#ececec] rounded-lg font-medium text-[#15192c] hover:bg-[#f9f9fa] transition"
+              className="px-5 py-3 bg-gray-700 text-white rounded-xl font-black hover:bg-gray-600 transition-all border-4 border-gray-800 font-mono uppercase"
             >
               Clear
             </Link>
@@ -207,9 +212,9 @@ export default async function SubmissionsPage({
       </div>
 
       {submissions.length === 0 ? (
-        <div className="bg-white rounded-lg border border-[#ececec] p-12 text-center shadow-sm">
+        <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 p-12 text-center shadow-2xl">
           <svg
-            className="w-16 h-16 text-[#b2b5be] mx-auto mb-4"
+            className="w-20 h-20 text-purple-400 mx-auto mb-6"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -221,75 +226,77 @@ export default async function SubmissionsPage({
               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             />
           </svg>
-          <p className="text-[#6c7681] font-medium mb-2">
-            No submissions found
+          <p className="text-gray-300 font-black font-mono text-xl mb-2">
+            No Quests Found
           </p>
-          <p className="text-[#b2b5be] text-sm mb-4">
+          <p className="text-gray-500 font-mono mb-6">
             {search || language
               ? "Try adjusting your filters"
-              : "Start your first code review"}
+              : "Begin your coding adventure"}
           </p>
           <Link
             href="/dashboard/new"
-            className="inline-block px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition"
+            className="inline-block px-8 py-4 bg-linear-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-xl font-black hover:from-yellow-300 hover:to-orange-400 transition-all shadow-2xl shadow-yellow-500/50 hover:shadow-yellow-500/70 hover:-translate-y-1 font-mono uppercase border-4 border-yellow-600"
           >
-            New Review
+            ⚔️ Start Quest
           </Link>
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-lg border border-[#ececec] shadow-sm overflow-hidden">
+          <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 shadow-2xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-[#f9f9fa] border-b border-[#ececec]">
+                <thead className="bg-linear-to-r from-purple-900/20 to-pink-900/20 border-b-4 border-purple-500/30">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#6c7681] uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-black text-gray-300 uppercase tracking-wider font-mono">
                       File
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#6c7681] uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-black text-gray-300 uppercase tracking-wider font-mono">
                       Language
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#6c7681] uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-black text-gray-300 uppercase tracking-wider font-mono">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#6c7681] uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-black text-gray-300 uppercase tracking-wider font-mono">
                       Score
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#6c7681] uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-black text-gray-300 uppercase tracking-wider font-mono">
                       Date
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-[#6c7681] uppercase tracking-wider">
+                    <th className="px-6 py-4 text-right text-xs font-black text-gray-300 uppercase tracking-wider font-mono">
                       Actions
                     </th>
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-[#ececec]">
+                <tbody className="divide-y-2 divide-purple-500/20">
                   {submissions.map((submission) => (
                     <tr
                       key={submission.id}
-                      className="hover:bg-[#f9f9fa] transition"
+                      className="hover:bg-purple-500/10 transition"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <svg
-                            className="w-5 h-5 text-[#6c7681] mr-2"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                            />
-                          </svg>
+                          <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center mr-3 border-2 border-blue-400/50">
+                            <svg
+                              className="w-5 h-5 text-blue-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                              />
+                            </svg>
+                          </div>
                           <div>
-                            <p className="text-sm font-medium text-[#15192c]">
+                            <p className="text-sm font-black text-white font-mono">
                               {submission.fileName || "Untitled"}
                             </p>
-                            <p className="text-xs text-[#b2b5be]">
+                            <p className="text-xs text-gray-400 font-mono">
                               {submission.linesOfCode} lines •{" "}
                               {(submission.fileSize / 1024).toFixed(1)}KB
                             </p>
@@ -298,14 +305,14 @@ export default async function SubmissionsPage({
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-black bg-blue-500/20 text-blue-300 border-2 border-blue-400/50 font-mono">
                           {submission.language}
                         </span>
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadge(
+                          className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-black border-2 font-mono ${getStatusBadge(
                             submission.status
                           )}`}
                         >
@@ -318,21 +325,24 @@ export default async function SubmissionsPage({
                         {submission.analysis ? (
                           <div className="flex items-center gap-2">
                             <span
-                              className={`text-lg font-bold ${getScoreColor(
+                              className={`text-2xl font-black font-mono ${getScoreColor(
                                 submission.analysis.overallScore
                               )}`}
+                              style={{
+                                textShadow: "0 0 10px rgba(255,255,255,0.3)",
+                              }}
                             >
                               {submission.analysis.overallScore}%
                             </span>
                           </div>
                         ) : (
-                          <span className="text-sm text-[#b2b5be]">
+                          <span className="text-sm text-gray-500 font-mono">
                             Pending
                           </span>
                         )}
                       </td>
 
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#6c7681]">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400 font-mono">
                         {submission.createdAt.toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
@@ -343,9 +353,9 @@ export default async function SubmissionsPage({
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                         <Link
                           href={`/dashboard/submissions/${submission.id}`}
-                          className="text-[#007fff] hover:text-[#005ecb] font-medium transition"
+                          className="text-yellow-400 hover:text-yellow-300 font-black transition font-mono"
                         >
-                          View Details →
+                          View →
                         </Link>
                       </td>
                     </tr>
@@ -356,20 +366,20 @@ export default async function SubmissionsPage({
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between bg-white rounded-lg border border-[#ececec] px-6 py-4 shadow-sm">
-              <div className="text-sm text-[#6c7681]">
+            <div className="flex items-center justify-between bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 px-6 py-4 shadow-2xl">
+              <div className="text-sm text-gray-400 font-mono font-bold">
                 Page {page} of {totalPages}
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 {page > 1 && (
                   <Link
                     href={`/dashboard/submissions?page=${page - 1}${
                       language ? `&language=${language}` : ""
                     }${search ? `&search=${search}` : ""}`}
-                    className="px-4 py-2 border border-[#ececec] rounded-lg text-sm font-medium text-[#15192c] hover:bg-[#f9f9fa] transition"
+                    className="px-5 py-3 bg-gray-700 text-white rounded-xl font-black hover:bg-gray-600 transition-all border-4 border-gray-800 font-mono uppercase"
                   >
-                    Previous
+                    ← Previous
                   </Link>
                 )}
 
@@ -378,9 +388,9 @@ export default async function SubmissionsPage({
                     href={`/dashboard/submissions?page=${page + 1}${
                       language ? `&language=${language}` : ""
                     }${search ? `&search=${search}` : ""}`}
-                    className="px-4 py-2 bg-[#007fff] text-white rounded-lg text-sm font-medium hover:bg-[#2b89ff] transition"
+                    className="px-5 py-3 bg-linear-to-r from-blue-500 to-cyan-500 text-white rounded-xl font-black hover:from-blue-400 hover:to-cyan-400 transition-all shadow-lg shadow-blue-500/50 hover:-translate-y-1 font-mono uppercase border-4 border-blue-600"
                   >
-                    Next
+                    Next →
                   </Link>
                 )}
               </div>

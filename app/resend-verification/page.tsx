@@ -25,7 +25,10 @@ export default function ResendVerificationPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage(data.message);
+        setMessage(
+          data.message ||
+            "Verification email sent! Check your inbox to activate your warrior account."
+        );
       } else {
         setError(data.error || "Failed to resend verification email");
       }
@@ -38,13 +41,30 @@ export default function ResendVerificationPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f6f7f9]">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-xl shadow-lg border border-[#ececec] p-8">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-[#0a0e27] via-[#1a1f3a] to-[#0a0e27] p-4 relative overflow-hidden">
+      {/* Animated background particles */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-20 left-10 w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+        <div
+          className="absolute top-40 right-20 w-2 h-2 bg-pink-400 rounded-full animate-pulse"
+          style={{ animationDelay: "0.5s" }}
+        ></div>
+        <div
+          className="absolute bottom-40 left-1/4 w-2 h-2 bg-yellow-400 rounded-full animate-pulse"
+          style={{ animationDelay: "1s" }}
+        ></div>
+        <div
+          className="absolute top-60 right-1/3 w-2 h-2 bg-green-400 rounded-full animate-pulse"
+          style={{ animationDelay: "1.5s" }}
+        ></div>
+      </div>
+
+      <div className="w-full max-w-md relative z-10">
+        <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl shadow-2xl shadow-purple-500/20 border-4 border-purple-500/50 p-8">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-14 h-14 bg-[#e5f0ff] rounded-full mb-4">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-linear-to-br from-blue-500 to-cyan-500 rounded-full mb-6 shadow-lg shadow-blue-500/50 border-4 border-blue-600">
               <svg
-                className="w-7 h-7 text-[#007fff]"
+                className="w-10 h-10 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -57,30 +77,33 @@ export default function ResendVerificationPage() {
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-semibold text-[#15192c] mb-1">
-              Resend Verification
+            <h2
+              className="text-3xl font-black text-white mb-3 font-mono uppercase"
+              style={{ textShadow: "0 0 20px rgba(255,255,255,0.3)" }}
+            >
+              📧 Resend Verification
             </h2>
-            <p className="text-[#6c7681] text-sm">
-              Enter your email to receive a new verification link
+            <p className="text-gray-400 font-mono">
+              Reactivate your warrior account link
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {message && (
-              <div className="bg-[#e5fae7] border border-[#bae2bf] text-[#1d6f3a] p-3 rounded text-sm">
-                {message}
+              <div className="bg-green-500/20 border-2 border-green-400 text-green-300 p-4 rounded-xl font-mono text-sm shadow-lg shadow-green-500/20">
+                ✓ {message}
               </div>
             )}
             {error && (
-              <div className="bg-[#ffe6e7] border border-[#f9c1c8] text-[#b7263d] p-3 rounded text-sm">
-                {error}
+              <div className="bg-red-500/20 border-2 border-red-400 text-red-300 p-4 rounded-xl font-mono text-sm shadow-lg shadow-red-500/20">
+                ✗ {error}
               </div>
             )}
 
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-[#21242c] mb-1"
+                className="block text-sm font-black text-gray-300 mb-2 font-mono uppercase"
               >
                 Email Address
               </label>
@@ -91,7 +114,7 @@ export default function ResendVerificationPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-[#f9f9fa] border border-[#ececec] rounded-lg text-[#21242c] placeholder-[#b2b5be] focus:outline-none focus:ring-2 focus:ring-[#007fff] focus:border-transparent transition"
+                className="w-full px-4 py-3 bg-[#0a0e27] border-2 border-purple-500/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition font-mono"
                 placeholder="you@example.com"
               />
             </div>
@@ -99,17 +122,43 @@ export default function ResendVerificationPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#007fff] text-white py-3 px-4 rounded-lg font-medium hover:bg-[#2b89ff] focus:outline-none focus:ring-2 focus:ring-[#2b89ff] focus:ring-offset-2 focus:ring-offset-[#f6f7f9] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="w-full bg-linear-to-r from-blue-500 to-cyan-500 text-white py-4 px-6 rounded-xl font-black hover:from-blue-400 hover:to-cyan-400 focus:outline-none focus:ring-4 focus:ring-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/50 hover:shadow-blue-500/70 hover:-translate-y-1 font-mono uppercase border-4 border-blue-600"
             >
-              {loading ? "Sending..." : "Resend Verification Email"}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg
+                    className="animate-spin h-5 w-5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
+                  </svg>
+                  Sending...
+                </span>
+              ) : (
+                "📨 Resend Verification"
+              )}
             </button>
 
             <div className="text-center">
               <Link
                 href="/login"
-                className="text-sm text-[#007fff] hover:text-[#005ecb] transition"
+                className="text-sm text-yellow-400 hover:text-yellow-300 transition font-mono font-bold"
               >
-                Back to Login
+                ← Back to Login
               </Link>
             </div>
           </form>

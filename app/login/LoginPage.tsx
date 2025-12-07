@@ -24,10 +24,7 @@ export default function LoginPage() {
     initialState
   );
 
-  console.log(state);
   useEffect(() => {
-    console.log(state.success);
-    console.log(state.message);
     if (state.success && state.redirect) {
       router.push("/dashboard");
     }
@@ -37,46 +34,13 @@ export default function LoginPage() {
   const alertType = state.success ? "success" : state.message ? "error" : "";
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
-      <div className="hidden lg:flex bg-linear-to-br from-[#1a1d29] via-[#2d1b3d] to-[#1a1d29] items-center justify-center p-12 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(76,29,149,0.3),transparent_50%)]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(139,92,246,0.15),transparent_50%)]"></div>
-        <div className="relative z-10 max-w-md text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-linear-to-br from-blue-500 to-purple-600 rounded-2xl mb-8 shadow-2xl">
-            <svg
-              className="w-10 h-10 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
-              />
-            </svg>
-          </div>
-          <h1 className="text-4xl font-bold text-white mb-4">
-            AI-Powered Code Review
-          </h1>
-          <p className="text-gray-300 text-lg leading-relaxed">
-            Analyze your code for security vulnerabilities, performance issues,
-            and best practices using advanced AI technology.
-          </p>
-          <div className="mt-12 flex items-center justify-center gap-2 text-sm text-gray-400">
-            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-            <span>Trusted by 10,000+ developers</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-center p-8 bg-white">
+    <div className="min-h-screen grid lg:grid-cols-2 bg-[#0a0e27]">
+      <div className="flex items-center justify-center p-8 bg-[#0a0e27]">
         <div className="w-full max-w-md">
           <div className="mb-8">
             <Link
               href="/"
-              className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-8"
+              className="inline-flex items-center text-sm text-gray-400 hover:text-yellow-400 mb-8 font-mono transition-colors"
             >
               <svg
                 className="w-4 h-4 mr-2"
@@ -94,33 +58,36 @@ export default function LoginPage() {
               Back to Home
             </Link>
 
-            <h2 className="text-3xl font-bold text-gray-900 mt-4">
-              Welcome back
+            <h2
+              className="text-4xl font-black text-white mt-4 font-mono uppercase"
+              style={{ textShadow: "0 0 20px rgba(255,255,255,0.2)" }}
+            >
+              Welcome Back
             </h2>
-            <p className="text-gray-600 mt-2">
-              Sign in to your account to continue
+            <p className="text-gray-400 mt-2 font-mono">
+              Continue your epic journey
             </p>
           </div>
 
           <form action={formAction} className="space-y-5">
             {alertMessage && alertType === "success" && (
-              <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg text-sm">
-                {alertMessage}
+              <div className="bg-green-500/20 border-2 border-green-400 text-green-300 px-4 py-3 rounded-xl text-sm font-mono shadow-lg shadow-green-500/20">
+                ✓ {alertMessage}
               </div>
             )}
 
             {alertMessage && alertType === "error" && (
-              <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
-                {alertMessage}
+              <div className="bg-red-500/20 border-2 border-red-400 text-red-300 px-4 py-3 rounded-xl text-sm font-mono shadow-lg shadow-red-500/20">
+                ✗ {alertMessage}
               </div>
             )}
 
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-black text-gray-300 mb-2 font-mono uppercase"
               >
-                Email
+                Email Address
               </label>
               <input
                 id="email"
@@ -128,7 +95,7 @@ export default function LoginPage() {
                 type="email"
                 required
                 autoComplete="email"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="w-full px-4 py-3 bg-[#1a1f3a] border-2 border-purple-500/30 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition text-white font-mono placeholder-gray-500"
                 placeholder="you@example.com"
               />
             </div>
@@ -137,15 +104,15 @@ export default function LoginPage() {
               <div className="flex items-center justify-between mb-2">
                 <label
                   htmlFor="password"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-black text-gray-300 font-mono uppercase"
                 >
                   Password
                 </label>
                 <Link
                   href="/forgot-password"
-                  className="text-sm text-blue-600 hover:text-blue-700"
+                  className="text-sm text-yellow-400 hover:text-yellow-300 font-mono font-bold transition-colors"
                 >
-                  Forgot password?
+                  Forgot?
                 </Link>
               </div>
               <input
@@ -154,45 +121,101 @@ export default function LoginPage() {
                 type="password"
                 required
                 autoComplete="current-password"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="w-full px-4 py-3 bg-[#1a1f3a] border-2 border-purple-500/30 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition text-white font-mono placeholder-gray-500"
                 placeholder="Enter your password"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full bg-linear-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all shadow-lg hover:shadow-xl"
+              className="w-full bg-linear-to-r from-yellow-400 to-orange-500 text-gray-900 py-4 px-4 rounded-xl font-black hover:from-yellow-300 hover:to-orange-400 focus:outline-none focus:ring-4 focus:ring-yellow-500/50 transition-all shadow-2xl shadow-yellow-500/50 hover:shadow-yellow-500/70 hover:-translate-y-1 font-mono uppercase text-lg border-4 border-yellow-600"
             >
-              Sign in
+              Enter Game
             </button>
 
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200"></div>
+                <div className="w-full border-t-2 border-purple-500/30"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500">Need help?</span>
+                <span className="px-4 bg-[#0a0e27] text-gray-400 font-mono font-bold uppercase">
+                  Need Help?
+                </span>
               </div>
             </div>
 
-            <div className="text-center space-y-2">
+            <div className="text-center space-y-3">
               <Link
                 href="/resend-verification"
-                className="block text-sm text-gray-600 hover:text-gray-900"
+                className="block text-sm text-gray-400 hover:text-yellow-400 font-mono transition-colors"
               >
-                Resend verification email
+                → Resend verification email
               </Link>
-              <p className="text-sm text-gray-600">
-                Don&apos;t have an account?{" "}
+              <p className="text-sm text-gray-400 font-mono">
+                New player?{" "}
                 <Link
                   href="/register"
-                  className="text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-yellow-400 hover:text-yellow-300 font-black transition-colors"
                 >
-                  Sign up
+                  Create Account →
                 </Link>
               </p>
             </div>
           </form>
+        </div>
+      </div>
+      <div className="hidden lg:flex bg-linear-to-br from-[#0a0e27] via-[#1a1f3a] to-[#0a0e27] items-center justify-center p-12 relative overflow-hidden border-r-4 border-purple-500/30">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(147,51,234,0.2),transparent_50%)]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(236,72,153,0.15),transparent_50%)]"></div>
+
+        <div className="absolute top-20 left-10 w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+        <div
+          className="absolute top-40 right-20 w-2 h-2 bg-pink-400 rounded-full animate-pulse"
+          style={{ animationDelay: "0.5s" }}
+        ></div>
+        <div
+          className="absolute bottom-40 left-1/4 w-2 h-2 bg-yellow-400 rounded-full animate-pulse"
+          style={{ animationDelay: "1s" }}
+        ></div>
+        <div
+          className="absolute top-60 right-1/3 w-2 h-2 bg-green-400 rounded-full animate-pulse"
+          style={{ animationDelay: "1.5s" }}
+        ></div>
+
+        <div className="relative z-10 max-w-md text-center">
+          <div className="inline-flex items-center justify-center w-24 h-24 bg-linear-to-br from-blue-500 to-purple-600 rounded-2xl mb-8 shadow-2xl shadow-purple-500/50 border-4 border-purple-700">
+            <svg
+              className="w-12 h-12 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+              />
+            </svg>
+          </div>
+          <h1
+            className="text-5xl font-black text-white mb-6 font-mono uppercase"
+            style={{ textShadow: "0 0 20px rgba(255,255,255,0.3)" }}
+          >
+            AI Code Review
+          </h1>
+          <p className="text-gray-300 text-lg leading-relaxed font-mono">
+            Analyze your code for bugs, vulnerabilities, and performance. Level
+            up with advanced AI technology.
+          </p>
+          <div className="mt-12 flex items-center justify-center gap-3 text-sm">
+            <div className="inline-flex items-center gap-2 bg-green-500/20 border-2 border-green-400 rounded-full px-4 py-2 shadow-lg shadow-green-500/20">
+              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
+              <span className="text-green-300 font-mono font-bold">
+                10,000+ Warriors Online
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -35,7 +35,7 @@ export function SettingsForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-[#21242c] mb-2">
+        <label className="block text-sm font-medium text-white mb-2">
           Name
         </label>
         <input
@@ -49,7 +49,7 @@ export function SettingsForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[#21242c] mb-2">
+        <label className="block text-sm font-medium text-white mb-2">
           Email
         </label>
         <input

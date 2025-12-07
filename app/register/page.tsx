@@ -86,14 +86,29 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
-      <div className="hidden lg:flex bg-linear-to-br from-[#1a1d29] via-[#2d1b3d] to-[#1a1d29] items-center justify-center p-12 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(76,29,149,0.3),transparent_50%)]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(139,92,246,0.15),transparent_50%)]"></div>
+    <div className="min-h-screen grid lg:grid-cols-2 bg-[#0a0e27]">
+      <div className="hidden lg:flex bg-linear-to-br from-[#0a0e27] via-[#1a1f3a] to-[#0a0e27] items-center justify-center p-12 relative overflow-hidden border-r-4 border-purple-500/30">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(147,51,234,0.2),transparent_50%)]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(236,72,153,0.15),transparent_50%)]"></div>
+
+        <div className="absolute top-20 left-10 w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+        <div
+          className="absolute top-40 right-20 w-2 h-2 bg-pink-400 rounded-full animate-pulse"
+          style={{ animationDelay: "0.5s" }}
+        ></div>
+        <div
+          className="absolute bottom-40 left-1/4 w-2 h-2 bg-yellow-400 rounded-full animate-pulse"
+          style={{ animationDelay: "1s" }}
+        ></div>
+        <div
+          className="absolute top-60 right-1/3 w-2 h-2 bg-green-400 rounded-full animate-pulse"
+          style={{ animationDelay: "1.5s" }}
+        ></div>
+
         <div className="relative z-10 max-w-md text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-linear-to-br from-blue-500 to-purple-600 rounded-2xl mb-8 shadow-2xl">
+          <div className="inline-flex items-center justify-center w-24 h-24 bg-linear-to-br from-yellow-400 to-orange-500 rounded-2xl mb-8 shadow-2xl shadow-yellow-500/50 border-4 border-yellow-600">
             <svg
-              className="w-10 h-10 text-white"
+              className="w-12 h-12 text-gray-900"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -106,36 +121,60 @@ export default function RegisterPage() {
               />
             </svg>
           </div>
-          <h1 className="text-4xl font-bold text-white mb-4">
-            Start Your Journey
+          <h1
+            className="text-5xl font-black text-white mb-6 font-mono uppercase"
+            style={{ textShadow: "0 0 20px rgba(255,255,255,0.3)" }}
+          >
+            Begin Your Quest
           </h1>
-          <p className="text-gray-300 text-lg leading-relaxed">
-            Join thousands of developers using AI to write better, more secure
-            code. Get instant feedback and actionable insights.
+          <p className="text-gray-300 text-lg leading-relaxed font-mono">
+            Join 10,000+ developers using AI to level up their code. Get instant
+            feedback and legendary insights.
           </p>
-          <div className="mt-12 grid grid-cols-3 gap-4 text-center">
-            <div>
-              <div className="text-3xl font-bold text-white mb-1">10k+</div>
-              <div className="text-sm text-gray-400">Developers</div>
+          <div className="mt-12 grid grid-cols-3 gap-6 text-center">
+            <div className="bg-linear-to-br from-cyan-500/20 to-blue-500/20 p-4 rounded-xl border-2 border-cyan-400/50">
+              <div
+                className="text-4xl font-black text-cyan-300 mb-1 font-mono"
+                style={{ textShadow: "0 0 10px rgba(34,211,238,0.5)" }}
+              >
+                10k+
+              </div>
+              <div className="text-xs text-gray-300 font-mono uppercase">
+                Players
+              </div>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-white mb-1">50k+</div>
-              <div className="text-sm text-gray-400">Code Reviews</div>
+            <div className="bg-linear-to-br from-pink-500/20 to-red-500/20 p-4 rounded-xl border-2 border-pink-400/50">
+              <div
+                className="text-4xl font-black text-pink-300 mb-1 font-mono"
+                style={{ textShadow: "0 0 10px rgba(236,72,153,0.5)" }}
+              >
+                50k+
+              </div>
+              <div className="text-xs text-gray-300 font-mono uppercase">
+                Quests
+              </div>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-white mb-1">99%</div>
-              <div className="text-sm text-gray-400">Accuracy</div>
+            <div className="bg-linear-to-br from-green-500/20 to-emerald-500/20 p-4 rounded-xl border-2 border-green-400/50">
+              <div
+                className="text-4xl font-black text-green-300 mb-1 font-mono"
+                style={{ textShadow: "0 0 10px rgba(34,197,94,0.5)" }}
+              >
+                99%
+              </div>
+              <div className="text-xs text-gray-300 font-mono uppercase">
+                Success
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-center p-8 bg-white">
+      <div className="flex items-center justify-center p-8 bg-[#0a0e27]">
         <div className="w-full max-w-md">
           <div className="mb-8">
             <Link
               href="/"
-              className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-8"
+              className="inline-flex items-center text-sm text-gray-400 hover:text-yellow-400 mb-8 font-mono transition-colors"
             >
               <svg
                 className="w-4 h-4 mr-2"
@@ -152,32 +191,35 @@ export default function RegisterPage() {
               </svg>
               Back to Home
             </Link>
-            <h2 className="text-3xl font-bold text-gray-900 mt-4">
-              Create an account
+            <h2
+              className="text-4xl font-black text-white mt-4 font-mono uppercase"
+              style={{ textShadow: "0 0 20px rgba(255,255,255,0.2)" }}
+            >
+              Create Account
             </h2>
-            <p className="text-gray-600 mt-2">
-              Get started with your free account today
+            <p className="text-gray-400 mt-2 font-mono">
+              Start your free journey today
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {info && !error && (
-              <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg text-sm">
-                {info}
+              <div className="bg-green-500/20 border-2 border-green-400 text-green-300 px-4 py-3 rounded-xl text-sm font-mono shadow-lg shadow-green-500/20">
+                ✓ {info}
               </div>
             )}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
-                {error}
+              <div className="bg-red-500/20 border-2 border-red-400 text-red-300 px-4 py-3 rounded-xl text-sm font-mono shadow-lg shadow-red-500/20">
+                ✗ {error}
               </div>
             )}
 
             <div>
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-black text-gray-300 mb-2 font-mono uppercase"
               >
-                Full Name
+                Player Name
               </label>
               <input
                 id="name"
@@ -185,17 +227,17 @@ export default function RegisterPage() {
                 type="text"
                 required
                 autoComplete="name"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                placeholder="John Doe"
+                className="w-full px-4 py-3 bg-[#1a1f3a] border-2 border-purple-500/30 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition text-white font-mono placeholder-gray-500"
+                placeholder="Enter your name"
               />
             </div>
 
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-black text-gray-300 mb-2 font-mono uppercase"
               >
-                Email
+                Email Address
               </label>
               <input
                 id="email"
@@ -203,7 +245,7 @@ export default function RegisterPage() {
                 type="email"
                 required
                 autoComplete="email"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="w-full px-4 py-3 bg-[#1a1f3a] border-2 border-purple-500/30 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition text-white font-mono placeholder-gray-500"
                 placeholder="you@example.com"
               />
             </div>
@@ -211,7 +253,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-black text-gray-300 mb-2 font-mono uppercase"
               >
                 Password
               </label>
@@ -224,7 +266,7 @@ export default function RegisterPage() {
                 value={password}
                 onChange={handlePasswordChange}
                 autoComplete="new-password"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="w-full px-4 py-3 bg-[#1a1f3a] border-2 border-purple-500/30 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition text-white font-mono placeholder-gray-500"
                 placeholder="Create a strong password"
               />
               {password && (
@@ -233,37 +275,37 @@ export default function RegisterPage() {
                     {[0, 1, 2, 3, 4].map((level) => (
                       <div
                         key={level}
-                        className={`h-1.5 flex-1 rounded-full transition-all ${
+                        className={`h-2 flex-1 rounded-full transition-all ${
                           level <= passwordStrength
                             ? getStrengthColor(passwordStrength)
-                            : "bg-gray-200"
+                            : "bg-gray-700"
                         }`}
                       />
                     ))}
                   </div>
-                  <p className="text-xs text-gray-600">
-                    Password strength:{" "}
-                    <span className="font-medium">
+                  <p className="text-xs text-gray-400 font-mono">
+                    Power Level:{" "}
+                    <span className="font-black text-white">
                       {getStrengthText(passwordStrength)}
                     </span>
                   </p>
                 </div>
               )}
-              <p className="mt-2 text-xs text-gray-500">
-                Minimum 12 characters with uppercase, lowercase, number, and
-                special character
+              <p className="mt-2 text-xs text-gray-500 font-mono">
+                Min 12 characters • Uppercase • Lowercase • Number • Special
+                char
               </p>
             </div>
 
             <button
               type="submit"
               disabled={loading || passwordStrength < 2}
-              className="w-full bg-linear-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+              className="w-full bg-linear-to-r from-yellow-400 to-orange-500 text-gray-900 py-4 px-4 rounded-xl font-black hover:from-yellow-300 hover:to-orange-400 focus:outline-none focus:ring-4 focus:ring-yellow-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-2xl shadow-yellow-500/50 hover:shadow-yellow-500/70 hover:-translate-y-1 font-mono uppercase text-lg border-4 border-yellow-600"
             >
               {loading ? (
                 <span className="flex items-center justify-center">
                   <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    className="animate-spin -ml-1 mr-3 h-6 w-6 text-gray-900"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -282,17 +324,17 @@ export default function RegisterPage() {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  Creating account...
+                  Spawning...
                 </span>
               ) : (
-                "Create account"
+                "Start Adventure"
               )}
             </button>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <div className="flex items-start gap-2">
+            <div className="bg-blue-500/20 border-2 border-blue-400 rounded-xl p-4">
+              <div className="flex items-start gap-3">
                 <svg
-                  className="w-5 h-5 text-blue-600 mt-0.5 shrink-0"
+                  className="w-6 h-6 text-blue-400 mt-0.5 shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -304,20 +346,20 @@ export default function RegisterPage() {
                     d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                <p className="text-xs text-blue-800">
-                  You&apos;ll receive a verification email. Please verify your
-                  email address before signing in.
+                <p className="text-xs text-blue-300 font-mono">
+                  You&apos;ll receive a verification email. Verify your address
+                  before your first login to unlock full powers.
                 </p>
               </div>
             </div>
 
-            <p className="text-sm text-center text-gray-600">
-              Already have an account?{" "}
+            <p className="text-sm text-center text-gray-400 font-mono">
+              Already registered?{" "}
               <Link
                 href="/login"
-                className="text-blue-600 hover:text-blue-700 font-medium"
+                className="text-yellow-400 hover:text-yellow-300 font-black transition-colors"
               >
-                Sign in
+                Sign In →
               </Link>
             </p>
           </form>
