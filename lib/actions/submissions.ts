@@ -5,6 +5,15 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { analyzeCode } from "@/lib/ai/code-analyzer";
 import { revalidatePath } from "next/cache";
+import {
+  canUserSubmit,
+  checkAndResetIfNeeded,
+  getUserSubscription,
+  getTierLimits,
+  incrementSubmissionCount,
+  checkSubmissionThreshold,
+} from "@/lib/subscription/subscription-utils";
+import { SubmissionLimitError } from "@/lib/errors/submission-errors";
 
 export async function submitCode(formData: {
   code: string;
@@ -17,18 +26,39 @@ export async function submitCode(formData: {
     throw new Error("Unauthorized");
   }
 
+  const submissionCheck = await canUserSubmit(session.user.id);
+
+  if (!submissionCheck.allowed) {
+    throw new SubmissionLimitError({
+      message: submissionCheck.reason || "Submission limit reached",
+      currentCount: submissionCheck.currentCount,
+      limit: submissionCheck.limit,
+      tier: submissionCheck.tier,
+      isInTrial: submissionCheck.isInTrial,
+    });
+  }
+
+  await checkAndResetIfNeeded(session.user.id);
+
   const { code, language, fileName } = formData;
 
   if (!code || !code.trim()) {
     throw new Error("Code is required");
   }
 
-  if (code.length > 100000) {
-    throw new Error("Code must be less than 100KB");
+  const subscription = await getUserSubscription(session.user.id);
+  const tierLimits = getTierLimits(subscription.subscriptionTier);
+  const fileSize = new TextEncoder().encode(code).length;
+
+  if (tierLimits.maxFileSize !== -1 && fileSize > tierLimits.maxFileSize) {
+    throw new Error(
+      `File size exceeds ${tierLimits.maxFileSize / 1024}KB limit for ${
+        subscription.subscriptionTier
+      } tier`
+    );
   }
 
   const linesOfCode = code.split("\n").length;
-  const fileSize = new TextEncoder().encode(code).length;
 
   const submission = await prisma.codeSubmission.create({
     data: {
@@ -41,6 +71,16 @@ export async function submitCode(formData: {
       userId: session.user.id,
     },
   });
+
+  await incrementSubmissionCount(session.user.id);
+
+  const threshold = await checkSubmissionThreshold(session.user.id);
+  if (threshold.shouldNotify) {
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { submissionLimitNotified: true },
+    });
+  }
 
   await runAnalysisAndRevalidate(submission.id, code, language);
 

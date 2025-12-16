@@ -72,18 +72,27 @@ export async function POST(request: Request) {
 
     const verificationToken = crypto.randomBytes(32).toString("hex");
     const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     const user = await prisma.user.create({
       data: {
         name,
         email: email.toLowerCase(),
         passwordHash,
+        subscriptionTier: "HERO",
+        subscriptionStatus: "TRIALING",
+        trialEndsAt,
+        isTrialUsed: false,
+        monthlySubmissionCount: 0,
+        lastSubmissionReset: new Date(),
+        submissionLimitNotified: false,
       },
       select: {
         id: true,
         name: true,
         email: true,
         createdAt: true,
+        trialEndsAt: true,
       },
     });
 
@@ -92,6 +101,18 @@ export async function POST(request: Request) {
         identifier: user.email,
         token: verificationToken,
         expires: tokenExpiry,
+      },
+    });
+
+    await prisma.subscriptionHistory.create({
+      data: {
+        userId: user.id,
+        action: "TRIAL_STARTED",
+        toTier: "HERO",
+        metadata: {
+          trialEndsAt: trialEndsAt.toISOString(),
+          trialDuration: "7_days",
+        },
       },
     });
 
@@ -116,8 +137,18 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         message:
-          "Account created successfully. Check your email to verify your account.",
-        user,
+          "Account created successfully. Check your email to verify your account. Your 7-day Hero trial has started!",
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          createdAt: user.createdAt,
+        },
+        trial: {
+          tier: "HERO",
+          endsAt: user.trialEndsAt,
+          daysRemaining: 7,
+        },
         requiresVerification: true,
       },
       { status: 201 }

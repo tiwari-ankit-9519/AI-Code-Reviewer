@@ -6,24 +6,61 @@ datasource db {
   provider = "postgresql"
 }
 
+enum SubscriptionTier {
+  STARTER
+  HERO
+  LEGEND
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  CANCELLED
+  EXPIRED
+  PAST_DUE
+}
+
+enum PaymentProvider {
+  STRIPE
+  PADDLE
+  MANUAL
+}
+
 model User {
-  id            String            @id @default(uuid())
-  email         String            @unique
+  id            String    @id @default(uuid())
+  email         String    @unique
   name          String
   passwordHash  String
   avatar        String?
   emailVerified DateTime?
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  submissions   CodeSubmission[]
-  apiKeys       ApiKey[]
-  accounts      Account[]
-  sessions      Session[]
-  settings      UserSettings?
-  usageRecords  UsageRecord[]
-  rateLimits    RateLimitBucket[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  subscriptionTier        SubscriptionTier   @default(STARTER)
+  subscriptionStatus      SubscriptionStatus @default(ACTIVE)
+  subscriptionStartDate   DateTime?
+  subscriptionEndDate     DateTime?
+  trialEndsAt             DateTime?
+  isTrialUsed             Boolean            @default(false)
+  monthlySubmissionCount  Int                @default(0)
+  lastSubmissionReset     DateTime           @default(now())
+  submissionLimitNotified Boolean            @default(false)
+  stripeCustomerId        String?            @unique
+
+  submissions         CodeSubmission[]
+  apiKeys             ApiKey[]
+  accounts            Account[]
+  sessions            Session[]
+  settings            UserSettings?
+  usageRecords        UsageRecord[]
+  rateLimits          RateLimitBucket[]
+  subscriptions       Subscription[]
+  subscriptionHistory SubscriptionHistory[]
 
   @@index([email])
+  @@index([subscriptionTier])
+  @@index([subscriptionStatus])
+  @@index([stripeCustomerId])
   @@map("users")
 }
 
@@ -172,6 +209,76 @@ model Issue {
   @@index([severity])
   @@index([submissionId, severity])
   @@map("issues")
+}
+
+model Subscription {
+  id     String             @id @default(uuid())
+  userId String
+  user   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tier   SubscriptionTier
+  status SubscriptionStatus
+
+  paymentProvider      PaymentProvider
+  stripeCustomerId     String?
+  stripeSubscriptionId String?         @unique
+  stripePriceId        String?
+
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean   @default(false)
+  canceledAt         DateTime?
+
+  amount   Int
+  currency String @default("usd")
+
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([stripeSubscriptionId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+model SubscriptionHistory {
+  id       String            @id @default(uuid())
+  userId   String
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action   String
+  fromTier SubscriptionTier?
+  toTier   SubscriptionTier
+  amount   Int?
+  reason   String?
+  metadata Json              @default("{}")
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([action])
+  @@map("subscription_history")
+}
+
+model TierUsageAnalytics {
+  id                    String           @id @default(uuid())
+  tier                  SubscriptionTier
+  totalUsers            Int
+  activeUsers           Int
+  totalSubmissions      Int
+  avgSubmissionsPerUser Float
+  conversionRate        Float?
+  churnRate             Float?
+  mrr                   Int?
+
+  periodStart DateTime
+  periodEnd   DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([tier])
+  @@index([periodStart, periodEnd])
+  @@index([createdAt])
+  @@map("tier_usage_analytics")
 }
 
 model AnalyticsSnapshot {

@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { submitCode } from "@/lib/actions/submissions";
+import { getUserUsage } from "@/lib/actions/usage";
 import { toast } from "sonner";
+import { SubmissionLimitError } from "@/lib/errors/submission-errors";
 
 const SUPPORTED_LANGUAGES = [
   { value: "javascript", label: "JavaScript", extensions: [".js", ".jsx"] },
@@ -23,6 +25,14 @@ const SUPPORTED_LANGUAGES = [
   { value: "kotlin", label: "Kotlin", extensions: [".kt"] },
 ];
 
+interface UsageInfo {
+  currentCount: number;
+  limit: number | string;
+  percentage: number;
+  tier: string;
+  isInTrial: boolean;
+}
+
 export default function NewSubmissionPage() {
   const router = useRouter();
   const [code, setCode] = useState("");
@@ -31,6 +41,22 @@ export default function NewSubmissionPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [usageInfo, setUsageInfo] = useState<UsageInfo | null>(null);
+  const [loadingUsage, setLoadingUsage] = useState(true);
+
+  useEffect(() => {
+    async function checkUsage() {
+      try {
+        const data = await getUserUsage();
+        setUsageInfo(data);
+      } catch (err) {
+        console.error("Failed to fetch usage:", err);
+      } finally {
+        setLoadingUsage(false);
+      }
+    }
+    checkUsage();
+  }, []);
 
   const detectLanguage = (filename: string): string => {
     const ext = filename.substring(filename.lastIndexOf(".")).toLowerCase();
@@ -92,12 +118,23 @@ export default function NewSubmissionPage() {
         router.push(`/dashboard/submissions/${result.id}`);
       }
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "An error occurred";
-      setError(errorMessage);
-      toast.error("Quest failed", {
-        description: errorMessage,
-      });
+      if (err instanceof SubmissionLimitError) {
+        setError(err.message);
+        toast.error("Submission Limit Reached", {
+          description: err.message,
+          action: {
+            label: "Upgrade",
+            onClick: () => router.push("/pricing"),
+          },
+        });
+      } else {
+        const errorMessage =
+          err instanceof Error ? err.message : "An error occurred";
+        setError(errorMessage);
+        toast.error("Quest failed", {
+          description: errorMessage,
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -116,6 +153,61 @@ export default function NewSubmissionPage() {
           Submit your code for AI-powered battle analysis
         </p>
       </div>
+
+      {!loadingUsage && usageInfo && usageInfo.limit !== "unlimited" && (
+        <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 p-6 shadow-2xl">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-black text-white font-mono uppercase">
+                📊 Usage This Month
+              </h3>
+              <p className="text-sm text-gray-400 font-mono mt-1">
+                {usageInfo.currentCount} / {usageInfo.limit} submissions used
+                {usageInfo.isInTrial && (
+                  <span className="ml-2 px-2 py-1 bg-yellow-400/20 border border-yellow-400 rounded text-yellow-300 text-xs font-bold">
+                    🎉 TRIAL
+                  </span>
+                )}
+              </p>
+            </div>
+            <span className="text-3xl font-black text-white font-mono">
+              {usageInfo.percentage}%
+            </span>
+          </div>
+
+          <div className="w-full bg-gray-800 rounded-full h-4 overflow-hidden border-2 border-purple-500/50">
+            <div
+              className={`h-full transition-all duration-500 ${
+                usageInfo.percentage >= 100
+                  ? "bg-red-500"
+                  : usageInfo.percentage >= 80
+                  ? "bg-yellow-400"
+                  : "bg-green-500"
+              }`}
+              style={{ width: `${Math.min(usageInfo.percentage, 100)}%` }}
+            />
+          </div>
+
+          {usageInfo.percentage >= 80 && usageInfo.percentage < 100 && (
+            <div className="mt-4 bg-yellow-500/20 border-2 border-yellow-400 text-yellow-300 px-4 py-3 rounded-xl font-mono text-sm">
+              ⚠️ You&apos;ve used {usageInfo.currentCount}/{usageInfo.limit}{" "}
+              submissions. Consider upgrading to Hero for unlimited reviews!
+            </div>
+          )}
+
+          {usageInfo.percentage >= 100 && (
+            <div className="mt-4 bg-red-500/20 border-2 border-red-400 text-red-300 px-4 py-3 rounded-xl font-mono text-sm">
+              🚫 Monthly limit reached. Upgrade to continue submitting code.
+              <button
+                onClick={() => router.push("/pricing")}
+                className="block w-full mt-3 px-4 py-2 bg-yellow-400 text-gray-900 rounded-lg font-bold hover:bg-yellow-300 transition"
+              >
+                Upgrade to Hero - $29/month
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {error && (
