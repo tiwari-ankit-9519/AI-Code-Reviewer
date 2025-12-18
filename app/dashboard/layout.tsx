@@ -1,5 +1,7 @@
 import { auth } from "@/lib/auth";
 import DashboardNav from "@/components/dashboard-nav";
+import { TrialBanner } from "@/components/trial-banner";
+import { checkTrialStatus } from "@/lib/subscription/subscription-utils";
 
 export default async function DashboardLayout({
   children,
@@ -12,17 +14,18 @@ export default async function DashboardLayout({
     return null;
   }
 
+  const trialStatus = await checkTrialStatus(session.user.id);
+
   return (
     <div className="min-h-screen bg-[#0a0e27] relative">
-      {/* Navigation - handled by DashboardNav component */}
       <DashboardNav user={session.user} />
 
-      {/* Main Content Area */}
+      {trialStatus.isInTrial && <TrialBanner trialStatus={trialStatus} />}
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         {children}
       </main>
 
-      {/* Decorative Background Elements */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-20 left-10 w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
         <div

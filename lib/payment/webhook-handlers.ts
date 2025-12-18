@@ -1,338 +1,318 @@
 import { prisma } from "@/lib/prisma";
-import { SubscriptionTier } from "@prisma/client";
-import type Stripe from "stripe";
+import { SubscriptionTier, SubscriptionStatus } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
+import type Stripe from "stripe";
 
-export async function handleCheckoutCompleted(
-  session: Stripe.Checkout.Session
-) {
-  const userId = session.metadata?.userId;
-  const tier = session.metadata?.tier as SubscriptionTier;
+type ExpandedSubscription = Stripe.Subscription & {
+  current_period_start: number;
+  current_period_end: number;
+};
 
-  if (!userId || !tier) {
-    console.error("Missing userId or tier in checkout session metadata");
-    return;
+type ExpandedInvoice = Stripe.Invoice & {
+  subscription?: string | ExpandedSubscription | null;
+};
+
+async function retry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (retries <= 0) throw err;
+    return retry(fn, retries - 1);
   }
+}
 
-  const stripeSubscription = await prisma.subscription.findFirst({
-    where: { stripeSubscriptionId: session.subscription as string },
+async function atomic<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>) {
+  return prisma.$transaction(async (tx) => fn(tx), {
+    isolationLevel: "Serializable",
   });
+}
 
-  if (stripeSubscription) {
-    console.log("Subscription already exists, skipping");
-    return;
-  }
+async function findSubscription(id: string, tx: Prisma.TransactionClient) {
+  return tx.subscription.findFirst({
+    where: { stripeSubscriptionId: id },
+  });
+}
 
-  const customerId =
-    typeof session.customer === "string"
-      ? session.customer
-      : session.customer?.id || "";
+async function updateUserStatus(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  status: SubscriptionStatus
+) {
+  return tx.user.update({
+    where: { id: userId },
+    data: { subscriptionStatus: status },
+  });
+}
 
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: userId },
-      data: {
-        subscriptionTier: tier,
-        subscriptionStatus: "ACTIVE",
-        subscriptionStartDate: new Date(),
-        monthlySubmissionCount: 0,
-        submissionLimitNotified: false,
-        trialEndsAt: null,
-      },
-    }),
+async function createHistory(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  data: Omit<Prisma.SubscriptionHistoryCreateInput, "user">
+) {
+  return tx.subscriptionHistory.create({
+    data: {
+      user: { connect: { id: userId } },
+      ...data,
+    },
+  });
+}
 
-    prisma.subscription.create({
-      data: {
-        userId,
-        tier,
-        status: "ACTIVE",
-        paymentProvider: "STRIPE",
-        stripeCustomerId: customerId,
-        stripeSubscriptionId: session.subscription as string,
-        stripePriceId: session.line_items?.data[0]?.price?.id || null,
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        amount: session.amount_total || 2900,
-        currency: session.currency || "usd",
-      },
-    }),
+export async function onCheckoutCompleted(session: Stripe.Checkout.Session) {
+  await retry(async () => {
+    const userId = session.metadata?.userId;
+    const tier = session.metadata?.tier as SubscriptionTier;
+    if (!userId || !tier) return;
 
-    prisma.subscriptionHistory.create({
-      data: {
-        userId,
+    await atomic(async (tx) => {
+      const exists = await findSubscription(session.subscription as string, tx);
+      if (exists) return;
+
+      const customerId =
+        typeof session.customer === "string"
+          ? session.customer
+          : session.customer?.id || "";
+
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          subscriptionTier: tier,
+          subscriptionStatus: SubscriptionStatus.ACTIVE,
+          subscriptionStartDate: new Date(),
+          monthlySubmissionCount: 0,
+          submissionLimitNotified: false,
+          trialEndsAt: null,
+        },
+      });
+
+      await tx.subscription.create({
+        data: {
+          userId,
+          tier,
+          status: SubscriptionStatus.ACTIVE,
+          paymentProvider: "STRIPE",
+          stripeCustomerId: customerId,
+          stripeSubscriptionId: session.subscription as string,
+          stripePriceId: session.line_items?.data[0]?.price?.id || null,
+          currentPeriodStart: new Date(),
+          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          amount: session.amount_total || 2900,
+          currency: session.currency || "usd",
+        },
+      });
+
+      await createHistory(tx, userId, {
         action: "UPGRADED",
         toTier: tier,
-        amount: session.amount_total,
+        amount: session.amount_total || 0,
         metadata: {
           sessionId: session.id,
-          customerId: customerId,
+          customerId,
         } as Prisma.JsonObject,
-      },
-    }),
-  ]);
-
-  console.log(`Checkout completed for user ${userId}, tier: ${tier}`);
-}
-
-export async function handleSubscriptionCreated(
-  subscription: Stripe.Subscription
-) {
-  const userId = subscription.metadata?.userId;
-
-  if (!userId) {
-    console.error("Missing userId in subscription metadata");
-    return;
-  }
-
-  const existingSubscription = await prisma.subscription.findFirst({
-    where: { stripeSubscriptionId: subscription.id },
-  });
-
-  if (existingSubscription) {
-    console.log("Subscription already exists");
-    return;
-  }
-
-  const customerId =
-    typeof subscription.customer === "string"
-      ? subscription.customer
-      : subscription.customer?.id || "";
-
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: userId },
-      data: {
-        subscriptionStatus: "ACTIVE",
-        subscriptionStartDate: new Date(
-          subscription.current_period_start * 1000
-        ),
-      },
-    }),
-
-    prisma.subscription.create({
-      data: {
-        userId,
-        tier: "HERO",
-        status: "ACTIVE",
-        paymentProvider: "STRIPE",
-        stripeCustomerId: customerId,
-        stripeSubscriptionId: subscription.id,
-        stripePriceId: subscription.items.data[0]?.price.id || null,
-        currentPeriodStart: new Date(subscription.current_period_start * 1000),
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-        amount: subscription.items.data[0]?.price.unit_amount || 2900,
-        currency: subscription.currency,
-      },
-    }),
-  ]);
-
-  console.log(`Subscription created for user ${userId}`);
-}
-
-export async function handleSubscriptionUpdated(
-  subscription: Stripe.Subscription
-) {
-  const sub = await prisma.subscription.findFirst({
-    where: { stripeSubscriptionId: subscription.id },
-  });
-
-  if (!sub) {
-    console.error(`Subscription not found: ${subscription.id}`);
-    return;
-  }
-
-  const newStatus = subscription.status === "active" ? "ACTIVE" : "PAST_DUE";
-  const cancelAtPeriodEnd = subscription.cancel_at_period_end;
-
-  await prisma.$transaction([
-    prisma.subscription.update({
-      where: { id: sub.id },
-      data: {
-        status: newStatus,
-        currentPeriodStart: new Date(subscription.current_period_start * 1000),
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-        cancelAtPeriodEnd,
-      },
-    }),
-
-    prisma.user.update({
-      where: { id: sub.userId },
-      data: {
-        subscriptionStatus: newStatus,
-      },
-    }),
-  ]);
-
-  if (cancelAtPeriodEnd) {
-    await prisma.subscriptionHistory.create({
-      data: {
-        userId: sub.userId,
-        action: "CANCELLED",
-        fromTier: sub.tier,
-        toTier: sub.tier,
-        reason: "scheduled_cancellation",
-      },
+      });
     });
-  }
-
-  console.log(`Subscription updated: ${subscription.id}, status: ${newStatus}`);
+  });
 }
 
-export async function handleSubscriptionDeleted(
-  subscription: Stripe.Subscription
-) {
-  const sub = await prisma.subscription.findFirst({
-    where: { stripeSubscriptionId: subscription.id },
+export async function onSubscriptionCreated(sub: ExpandedSubscription) {
+  await retry(async () => {
+    const userId = sub.metadata?.userId;
+    if (!userId) return;
+
+    await atomic(async (tx) => {
+      const exists = await findSubscription(sub.id, tx);
+      if (exists) return;
+
+      const customerId =
+        typeof sub.customer === "string"
+          ? sub.customer
+          : sub.customer?.id || "";
+
+      await updateUserStatus(tx, userId, SubscriptionStatus.ACTIVE);
+
+      await tx.subscription.create({
+        data: {
+          userId,
+          tier: "HERO",
+          status: SubscriptionStatus.ACTIVE,
+          paymentProvider: "STRIPE",
+          stripeCustomerId: customerId,
+          stripeSubscriptionId: sub.id,
+          stripePriceId: sub.items.data[0]?.price.id || null,
+          currentPeriodStart: new Date(sub.current_period_start * 1000),
+          currentPeriodEnd: new Date(sub.current_period_end * 1000),
+          amount: sub.items.data[0]?.price.unit_amount || 2900,
+          currency: sub.currency,
+        },
+      });
+    });
   });
+}
 
-  if (!sub) {
-    console.error(`Subscription not found: ${subscription.id}`);
-    return;
-  }
+export async function onSubscriptionUpdated(sub: ExpandedSubscription) {
+  await retry(async () => {
+    await atomic(async (tx) => {
+      const found = await findSubscription(sub.id, tx);
+      if (!found) return;
 
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: sub.userId },
-      data: {
-        subscriptionTier: "STARTER",
-        subscriptionStatus: "EXPIRED",
-        subscriptionEndDate: new Date(),
-        monthlySubmissionCount: 0,
-        submissionLimitNotified: false,
-      },
-    }),
+      const newStatus =
+        sub.status === "active"
+          ? SubscriptionStatus.ACTIVE
+          : SubscriptionStatus.PAST_DUE;
 
-    prisma.subscription.update({
-      where: { id: sub.id },
-      data: {
-        status: "EXPIRED",
-        canceledAt: new Date(),
-      },
-    }),
+      const cancelAt = sub.cancel_at_period_end || false;
 
-    prisma.subscriptionHistory.create({
-      data: {
-        userId: sub.userId,
+      await tx.subscription.update({
+        where: { id: found.id },
+        data: {
+          status: newStatus,
+          currentPeriodStart: new Date(sub.current_period_start * 1000),
+          currentPeriodEnd: new Date(sub.current_period_end * 1000),
+          cancelAtPeriodEnd: cancelAt,
+        },
+      });
+
+      await updateUserStatus(tx, found.userId, newStatus);
+
+      if (cancelAt) {
+        await createHistory(tx, found.userId, {
+          action: "CANCELLED",
+          fromTier: found.tier,
+          toTier: found.tier,
+          reason: "scheduled_cancellation",
+        });
+      }
+    });
+  });
+}
+
+export async function onSubscriptionDeleted(sub: ExpandedSubscription) {
+  await retry(async () => {
+    await atomic(async (tx) => {
+      const found = await findSubscription(sub.id, tx);
+      if (!found) return;
+
+      await tx.user.update({
+        where: { id: found.userId },
+        data: {
+          subscriptionTier: "STARTER",
+          subscriptionStatus: SubscriptionStatus.EXPIRED,
+          subscriptionEndDate: new Date(),
+          monthlySubmissionCount: 0,
+          submissionLimitNotified: false,
+        },
+      });
+
+      await tx.subscription.update({
+        where: { id: found.id },
+        data: {
+          status: SubscriptionStatus.EXPIRED,
+          canceledAt: new Date(),
+        },
+      });
+
+      await createHistory(tx, found.userId, {
         action: "CANCELLED",
-        fromTier: sub.tier,
+        fromTier: found.tier,
         toTier: "STARTER",
         reason: "subscription_cancelled",
-      },
-    }),
-  ]);
-
-  console.log(`Subscription deleted for user ${sub.userId}`);
+      });
+    });
+  });
 }
 
-export async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
-  const subscriptionId =
-    typeof invoice.subscription === "string"
-      ? invoice.subscription
-      : invoice.subscription?.id;
+export async function onPaymentSucceeded(invoice: ExpandedInvoice) {
+  await retry(async () => {
+    const subscription =
+      typeof invoice.subscription === "string"
+        ? invoice.subscription
+        : invoice.subscription?.id;
 
-  if (!subscriptionId) {
-    console.log("No subscription ID in invoice");
-    return;
-  }
+    if (!subscription) return;
 
-  const sub = await prisma.subscription.findFirst({
-    where: { stripeSubscriptionId: subscriptionId },
-  });
+    await atomic(async (tx) => {
+      const found = await findSubscription(subscription, tx);
+      if (!found) return;
 
-  if (!sub) {
-    console.error(`Subscription not found for invoice: ${invoice.id}`);
-    return;
-  }
+      const line = invoice.lines.data[0];
+      const start = line?.period?.start || Math.floor(Date.now() / 1000);
+      const end =
+        line?.period?.end || Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60;
 
-  await prisma.$transaction([
-    prisma.subscription.update({
-      where: { id: sub.id },
-      data: {
-        status: "ACTIVE",
-        currentPeriodStart: new Date(
-          (invoice.lines.data[0]?.period?.start || 0) * 1000
-        ),
-        currentPeriodEnd: new Date(
-          (invoice.lines.data[0]?.period?.end || 0) * 1000
-        ),
-      },
-    }),
+      await tx.subscription.update({
+        where: { id: found.id },
+        data: {
+          status: SubscriptionStatus.ACTIVE,
+          currentPeriodStart: new Date(start * 1000),
+          currentPeriodEnd: new Date(end * 1000),
+        },
+      });
 
-    prisma.user.update({
-      where: { id: sub.userId },
-      data: {
-        subscriptionStatus: "ACTIVE",
-      },
-    }),
+      await updateUserStatus(tx, found.userId, SubscriptionStatus.ACTIVE);
 
-    prisma.subscriptionHistory.create({
-      data: {
-        userId: sub.userId,
+      await createHistory(tx, found.userId, {
         action: "RENEWED",
-        toTier: sub.tier,
+        toTier: found.tier,
         amount: invoice.amount_paid,
         metadata: {
           invoiceId: invoice.id,
-          invoiceNumber: invoice.number || "",
+          invoiceNumber: invoice.number,
         } as Prisma.JsonObject,
-      },
-    }),
-  ]);
-
-  console.log(
-    `Payment succeeded for user ${sub.userId}, invoice: ${invoice.id}`
-  );
+      });
+    });
+  });
 }
 
-export async function handlePaymentFailed(invoice: Stripe.Invoice) {
-  const subscriptionId =
-    typeof invoice.subscription === "string"
-      ? invoice.subscription
-      : invoice.subscription?.id;
+export async function onPaymentFailed(invoice: ExpandedInvoice) {
+  await retry(async () => {
+    const subscription =
+      typeof invoice.subscription === "string"
+        ? invoice.subscription
+        : invoice.subscription?.id;
 
-  if (!subscriptionId) {
-    console.log("No subscription ID in invoice");
-    return;
-  }
+    if (!subscription) return;
 
-  const sub = await prisma.subscription.findFirst({
-    where: { stripeSubscriptionId: subscriptionId },
-  });
+    await atomic(async (tx) => {
+      const found = await findSubscription(subscription, tx);
+      if (!found) return;
 
-  if (!sub) {
-    console.error(`Subscription not found for invoice: ${invoice.id}`);
-    return;
-  }
+      await tx.subscription.update({
+        where: { id: found.id },
+        data: {
+          status: SubscriptionStatus.PAST_DUE,
+        },
+      });
 
-  await prisma.$transaction([
-    prisma.subscription.update({
-      where: { id: sub.id },
-      data: {
-        status: "PAST_DUE",
-      },
-    }),
+      await updateUserStatus(tx, found.userId, SubscriptionStatus.PAST_DUE);
 
-    prisma.user.update({
-      where: { id: sub.userId },
-      data: {
-        subscriptionStatus: "PAST_DUE",
-      },
-    }),
-
-    prisma.subscriptionHistory.create({
-      data: {
-        userId: sub.userId,
+      await createHistory(tx, found.userId, {
         action: "PAYMENT_FAILED",
-        toTier: sub.tier,
+        toTier: found.tier,
         amount: invoice.amount_due,
         reason: "payment_failed",
         metadata: {
           invoiceId: invoice.id,
           attemptCount: invoice.attempt_count || 0,
         } as Prisma.JsonObject,
-      },
-    }),
-  ]);
+      });
+    });
+  });
+}
 
-  console.log(`Payment failed for user ${sub.userId}, invoice: ${invoice.id}`);
+export async function stripeWebhookRouter(event: Stripe.Event) {
+  switch (event.type) {
+    case "checkout.session.completed":
+      return onCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+    case "customer.subscription.created":
+      return onSubscriptionCreated(event.data.object as ExpandedSubscription);
+    case "customer.subscription.updated":
+      return onSubscriptionUpdated(event.data.object as ExpandedSubscription);
+    case "customer.subscription.deleted":
+      return onSubscriptionDeleted(event.data.object as ExpandedSubscription);
+    case "invoice.payment_succeeded":
+      return onPaymentSucceeded(event.data.object as ExpandedInvoice);
+    case "invoice.payment_failed":
+      return onPaymentFailed(event.data.object as ExpandedInvoice);
+    default:
+      return;
+  }
 }

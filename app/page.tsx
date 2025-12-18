@@ -529,7 +529,7 @@ export default function LandingPage() {
               Choose Your Level
             </h2>
             <p className="text-xl text-gray-300 max-w-2xl mx-auto font-mono">
-              All plans include 14-day free trial • No credit card required
+              All plans include 7-day free trial • No credit card required
             </p>
           </div>
 
@@ -541,7 +541,7 @@ export default function LandingPage() {
               <p className="text-gray-400 mb-6 font-mono">Try the basics</p>
               <div className="mb-6">
                 <span className="text-5xl font-black text-white font-mono">
-                  $0
+                  ₹0
                 </span>
                 <span className="text-gray-400 font-mono">/month</span>
               </div>
@@ -624,7 +624,7 @@ export default function LandingPage() {
               </h3>
               <p className="text-purple-100 mb-6 font-mono">For champions</p>
               <div className="mb-6">
-                <span className="text-5xl font-black font-mono">$29</span>
+                <span className="text-5xl font-black font-mono">₹2999</span>
                 <span className="text-purple-100 font-mono">/month</span>
               </div>
               <ul className="space-y-3 mb-8 min-h-[200px]">

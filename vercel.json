@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/check-trials",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/reset-submissions",
+      "schedule": "0 0 1 * *"
+    }
+  ]
+}
