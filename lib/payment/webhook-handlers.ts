@@ -3,13 +3,8 @@ import { SubscriptionTier, SubscriptionStatus } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
 import type Stripe from "stripe";
 
-type ExpandedSubscription = Stripe.Subscription & {
-  current_period_start: number;
-  current_period_end: number;
-};
-
 type ExpandedInvoice = Stripe.Invoice & {
-  subscription?: string | ExpandedSubscription | null;
+  subscription?: string | Stripe.Subscription | null;
 };
 
 async function retry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
@@ -113,7 +108,7 @@ export async function onCheckoutCompleted(session: Stripe.Checkout.Session) {
   });
 }
 
-export async function onSubscriptionCreated(sub: ExpandedSubscription) {
+export async function onSubscriptionCreated(sub: Stripe.Subscription) {
   await retry(async () => {
     const userId = sub.metadata?.userId;
     if (!userId) return;
@@ -137,18 +132,18 @@ export async function onSubscriptionCreated(sub: ExpandedSubscription) {
           paymentProvider: "STRIPE",
           stripeCustomerId: customerId,
           stripeSubscriptionId: sub.id,
-          stripePriceId: sub.items.data[0]?.price.id || null,
-          currentPeriodStart: new Date(sub.current_period_start * 1000),
-          currentPeriodEnd: new Date(sub.current_period_end * 1000),
-          amount: sub.items.data[0]?.price.unit_amount || 2900,
-          currency: sub.currency,
+          stripePriceId: sub.items.data[0]?.price?.id || null,
+          currentPeriodStart: new Date(),
+          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          amount: sub.items.data[0]?.price?.unit_amount || 2900,
+          currency: sub.currency || "usd",
         },
       });
     });
   });
 }
 
-export async function onSubscriptionUpdated(sub: ExpandedSubscription) {
+export async function onSubscriptionUpdated(sub: Stripe.Subscription) {
   await retry(async () => {
     await atomic(async (tx) => {
       const found = await findSubscription(sub.id, tx);
@@ -159,21 +154,19 @@ export async function onSubscriptionUpdated(sub: ExpandedSubscription) {
           ? SubscriptionStatus.ACTIVE
           : SubscriptionStatus.PAST_DUE;
 
-      const cancelAt = sub.cancel_at_period_end || false;
+      const cancelAtPeriodEnd = sub.cancel_at_period_end || false;
 
       await tx.subscription.update({
         where: { id: found.id },
         data: {
           status: newStatus,
-          currentPeriodStart: new Date(sub.current_period_start * 1000),
-          currentPeriodEnd: new Date(sub.current_period_end * 1000),
-          cancelAtPeriodEnd: cancelAt,
+          cancelAtPeriodEnd,
         },
       });
 
       await updateUserStatus(tx, found.userId, newStatus);
 
-      if (cancelAt) {
+      if (cancelAtPeriodEnd) {
         await createHistory(tx, found.userId, {
           action: "CANCELLED",
           fromTier: found.tier,
@@ -185,7 +178,7 @@ export async function onSubscriptionUpdated(sub: ExpandedSubscription) {
   });
 }
 
-export async function onSubscriptionDeleted(sub: ExpandedSubscription) {
+export async function onSubscriptionDeleted(sub: Stripe.Subscription) {
   await retry(async () => {
     await atomic(async (tx) => {
       const found = await findSubscription(sub.id, tx);
@@ -222,21 +215,20 @@ export async function onSubscriptionDeleted(sub: ExpandedSubscription) {
 
 export async function onPaymentSucceeded(invoice: ExpandedInvoice) {
   await retry(async () => {
-    const subscription =
+    const subscriptionId =
       typeof invoice.subscription === "string"
         ? invoice.subscription
         : invoice.subscription?.id;
 
-    if (!subscription) return;
+    if (!subscriptionId) return;
 
     await atomic(async (tx) => {
-      const found = await findSubscription(subscription, tx);
+      const found = await findSubscription(subscriptionId, tx);
       if (!found) return;
 
       const line = invoice.lines.data[0];
       const start = line?.period?.start || Math.floor(Date.now() / 1000);
-      const end =
-        line?.period?.end || Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60;
+      const end = line?.period?.end || start + 30 * 24 * 60 * 60;
 
       await tx.subscription.update({
         where: { id: found.id },
@@ -264,15 +256,15 @@ export async function onPaymentSucceeded(invoice: ExpandedInvoice) {
 
 export async function onPaymentFailed(invoice: ExpandedInvoice) {
   await retry(async () => {
-    const subscription =
+    const subscriptionId =
       typeof invoice.subscription === "string"
         ? invoice.subscription
         : invoice.subscription?.id;
 
-    if (!subscription) return;
+    if (!subscriptionId) return;
 
     await atomic(async (tx) => {
-      const found = await findSubscription(subscription, tx);
+      const found = await findSubscription(subscriptionId, tx);
       if (!found) return;
 
       await tx.subscription.update({
@@ -296,23 +288,4 @@ export async function onPaymentFailed(invoice: ExpandedInvoice) {
       });
     });
   });
-}
-
-export async function stripeWebhookRouter(event: Stripe.Event) {
-  switch (event.type) {
-    case "checkout.session.completed":
-      return onCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
-    case "customer.subscription.created":
-      return onSubscriptionCreated(event.data.object as ExpandedSubscription);
-    case "customer.subscription.updated":
-      return onSubscriptionUpdated(event.data.object as ExpandedSubscription);
-    case "customer.subscription.deleted":
-      return onSubscriptionDeleted(event.data.object as ExpandedSubscription);
-    case "invoice.payment_succeeded":
-      return onPaymentSucceeded(event.data.object as ExpandedInvoice);
-    case "invoice.payment_failed":
-      return onPaymentFailed(event.data.object as ExpandedInvoice);
-    default:
-      return;
-  }
 }
