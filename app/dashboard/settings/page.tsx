@@ -1,10 +1,27 @@
-import { getUserProfile } from "@/lib/actions/user";
+"use client";
+
+import { useState } from "react";
 import { SettingsForm } from "@/components/settings-form";
 import { PasswordForm } from "@/components/password-form";
 import { DeleteAccountButton } from "@/components/delete-account-button";
+import { SubscriptionTab } from "@/components/subscription-tab";
 
-export default async function SettingsPage() {
-  const user = await getUserProfile();
+interface UserProfile {
+  id: string;
+  name: string | null;
+  email: string;
+  avatar: string | null;
+  createdAt: Date;
+  emailVerified: Date | null;
+  _count: {
+    submissions: number;
+  };
+}
+
+export function SettingsClient({ user }: { user: UserProfile }) {
+  const [activeTab, setActiveTab] = useState<
+    "profile" | "security" | "subscription" | "danger"
+  >("profile");
 
   return (
     <div className="space-y-8">
@@ -20,90 +37,137 @@ export default async function SettingsPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          {/* Profile Information */}
-          <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-blue-500/50 shadow-2xl overflow-hidden">
-            <div className="px-6 py-5 border-b-4 border-blue-500/30 bg-linear-to-r from-blue-900/20 to-cyan-900/20">
-              <h2 className="text-2xl font-black text-white font-mono uppercase flex items-center gap-2">
-                <span>⚔️</span>
-                Profile Information
-              </h2>
-              <p className="text-sm text-gray-400 mt-1 font-mono">
-                Update your warrior details
-              </p>
-            </div>
-            <div className="p-6">
-              <SettingsForm user={user} />
-            </div>
-          </div>
-
-          {/* Change Password */}
-          <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 shadow-2xl overflow-hidden">
-            <div className="px-6 py-5 border-b-4 border-purple-500/30 bg-linear-to-r from-purple-900/20 to-pink-900/20">
-              <h2 className="text-2xl font-black text-white font-mono uppercase flex items-center gap-2">
-                <span>🔒</span>
-                Change Password
-              </h2>
-              <p className="text-sm text-gray-400 mt-1 font-mono">
-                Strengthen your account defenses
-              </p>
-            </div>
-            <div className="p-6">
-              <PasswordForm />
-            </div>
-          </div>
-
-          {/* Danger Zone */}
-          <div className="bg-linear-to-br from-red-900/30 to-red-950/30 rounded-2xl border-4 border-red-500 shadow-2xl overflow-hidden">
-            <div className="px-6 py-5 border-b-4 border-red-500/50 bg-linear-to-r from-red-900/40 to-orange-900/40">
-              <h2 className="text-2xl font-black text-red-400 font-mono uppercase flex items-center gap-2">
-                <span>⚠️</span>
-                Danger Zone
-              </h2>
-              <p className="text-sm text-gray-400 mt-1 font-mono">
-                Permanently delete your warrior account
-              </p>
-            </div>
-            <div className="p-6">
-              <div className="bg-red-500/10 border-2 border-red-400/50 rounded-xl p-4 mb-4">
-                <div className="flex items-start gap-3">
-                  <svg
-                    className="w-6 h-6 text-red-400 shrink-0 mt-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                    />
-                  </svg>
-                  <div>
-                    <h4 className="text-sm font-black text-red-300 mb-1 font-mono">
-                      This action cannot be undone!
-                    </h4>
-                    <p className="text-xs text-red-400 font-mono">
-                      All your quests, achievements, and data will be
-                      permanently lost.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <DeleteAccountButton />
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-1">
+          <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 p-4 shadow-xl sticky top-24">
+            <nav className="space-y-2">
+              <button
+                onClick={() => setActiveTab("profile")}
+                className={`w-full text-left px-4 py-3 rounded-lg font-bold font-mono text-sm transition-all ${
+                  activeTab === "profile"
+                    ? "bg-purple-500/20 text-purple-300 border-2 border-purple-400/50"
+                    : "hover:bg-purple-500/20 text-gray-400 hover:text-purple-300"
+                }`}
+              >
+                ⚔️ Profile
+              </button>
+              <button
+                onClick={() => setActiveTab("security")}
+                className={`w-full text-left px-4 py-3 rounded-lg font-bold font-mono text-sm transition-all ${
+                  activeTab === "security"
+                    ? "bg-purple-500/20 text-purple-300 border-2 border-purple-400/50"
+                    : "hover:bg-purple-500/20 text-gray-400 hover:text-purple-300"
+                }`}
+              >
+                🔒 Security
+              </button>
+              <button
+                onClick={() => setActiveTab("subscription")}
+                className={`w-full text-left px-4 py-3 rounded-lg font-bold font-mono text-sm transition-all ${
+                  activeTab === "subscription"
+                    ? "bg-purple-500/20 text-purple-300 border-2 border-purple-400/50"
+                    : "hover:bg-purple-500/20 text-gray-400 hover:text-purple-300"
+                }`}
+              >
+                💳 Subscription
+              </button>
+              <button
+                onClick={() => setActiveTab("danger")}
+                className={`w-full text-left px-4 py-3 rounded-lg font-bold font-mono text-sm transition-all ${
+                  activeTab === "danger"
+                    ? "bg-purple-500/20 text-purple-300 border-2 border-purple-400/50"
+                    : "hover:bg-purple-500/20 text-gray-400 hover:text-purple-300"
+                }`}
+              >
+                ⚠️ Danger Zone
+              </button>
+            </nav>
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Account Information */}
-          <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 shadow-2xl p-6">
-            <h3 className="text-lg font-black text-white mb-4 font-mono uppercase flex items-center gap-2">
-              <span>📊</span>
-              Account Stats
+        <div className="lg:col-span-3 space-y-6">
+          {activeTab === "profile" && (
+            <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-blue-500/50 shadow-2xl overflow-hidden">
+              <div className="px-6 py-5 border-b-4 border-blue-500/30 bg-linear-to-r from-blue-900/20 to-cyan-900/20">
+                <h2 className="text-2xl font-black text-white font-mono uppercase flex items-center gap-2">
+                  <span>⚔️</span>
+                  Profile Information
+                </h2>
+                <p className="text-sm text-gray-400 mt-1 font-mono">
+                  Update your warrior details
+                </p>
+              </div>
+              <div className="p-6">
+                <SettingsForm user={user} />
+              </div>
+            </div>
+          )}
+
+          {activeTab === "security" && (
+            <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 shadow-2xl overflow-hidden">
+              <div className="px-6 py-5 border-b-4 border-purple-500/30 bg-linear-to-r from-purple-900/20 to-pink-900/20">
+                <h2 className="text-2xl font-black text-white font-mono uppercase flex items-center gap-2">
+                  <span>🔒</span>
+                  Change Password
+                </h2>
+                <p className="text-sm text-gray-400 mt-1 font-mono">
+                  Strengthen your account defenses
+                </p>
+              </div>
+              <div className="p-6">
+                <PasswordForm />
+              </div>
+            </div>
+          )}
+
+          {activeTab === "subscription" && <SubscriptionTab userId={user.id} />}
+
+          {activeTab === "danger" && (
+            <div className="bg-linear-to-br from-red-900/30 to-red-950/30 rounded-2xl border-4 border-red-500 shadow-2xl overflow-hidden">
+              <div className="px-6 py-5 border-b-4 border-red-500/50 bg-linear-to-r from-red-900/40 to-orange-900/40">
+                <h2 className="text-2xl font-black text-red-400 font-mono uppercase flex items-center gap-2">
+                  <span>⚠️</span>
+                  Danger Zone
+                </h2>
+                <p className="text-sm text-gray-400 mt-1 font-mono">
+                  Permanently delete your warrior account
+                </p>
+              </div>
+              <div className="p-6">
+                <div className="bg-red-500/10 border-2 border-red-400/50 rounded-xl p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <svg
+                      className="w-6 h-6 text-red-400 shrink-0 mt-0.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      />
+                    </svg>
+                    <div>
+                      <h4 className="text-sm font-black text-red-300 mb-1 font-mono">
+                        This action cannot be undone!
+                      </h4>
+                      <p className="text-xs text-red-400 font-mono">
+                        All your quests, achievements, and data will be
+                        permanently lost.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <DeleteAccountButton />
+              </div>
+            </div>
+          )}
+
+          <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 p-6 shadow-xl">
+            <h3 className="text-lg font-black text-white mb-4 font-mono uppercase">
+              📊 Account Stats
             </h3>
             <div className="space-y-4">
               <div className="bg-cyan-500/10 border-2 border-cyan-400/50 rounded-lg p-3">
@@ -172,54 +236,6 @@ export default async function SettingsPage() {
                   )}
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Privacy & Security Info */}
-          <div className="bg-linear-to-br from-blue-900/30 to-blue-950/30 rounded-2xl border-4 border-blue-500/50 shadow-xl p-6">
-            <div className="flex items-start gap-3">
-              <svg
-                className="w-6 h-6 text-blue-400 shrink-0 mt-0.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <div>
-                <h4 className="text-sm font-black text-blue-300 mb-2 font-mono uppercase">
-                  🛡️ Privacy & Security
-                </h4>
-                <p className="text-xs text-blue-400 font-mono leading-relaxed">
-                  Your code submissions are encrypted and private. We never
-                  share your quest data with third parties. Your journey is
-                  yours alone.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="bg-linear-to-br from-purple-900/30 to-purple-950/30 rounded-2xl border-4 border-purple-500/50 shadow-xl p-6">
-            <h3 className="text-lg font-black text-white mb-4 font-mono uppercase flex items-center gap-2">
-              <span>⚡</span>
-              Quick Actions
-            </h3>
-            <div className="space-y-3">
-              <button className="w-full text-left px-4 py-3 bg-purple-500/20 hover:bg-purple-500/30 border-2 border-purple-400/50 rounded-lg transition-all font-mono text-purple-300 hover:text-white font-bold">
-                📧 Change Email
-              </button>
-              <button className="w-full text-left px-4 py-3 bg-purple-500/20 hover:bg-purple-500/30 border-2 border-purple-400/50 rounded-lg transition-all font-mono text-purple-300 hover:text-white font-bold">
-                🔔 Notifications
-              </button>
-              <button className="w-full text-left px-4 py-3 bg-purple-500/20 hover:bg-purple-500/30 border-2 border-purple-400/50 rounded-lg transition-all font-mono text-purple-300 hover:text-white font-bold">
-                🎨 Appearance
-              </button>
             </div>
           </div>
         </div>
