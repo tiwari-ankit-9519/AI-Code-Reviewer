@@ -1,11 +1,29 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { CheckSubscriptionStatus } from "@/components/subscription/subscription-status";
+import { TrialCountdown } from "@/components/subscription/trial-countdown";
 
 export default async function DashboardPage() {
   const session = await auth();
 
   if (!session?.user?.id) {
+    return null;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      id: true,
+      name: true,
+      subscriptionTier: true,
+      subscriptionStatus: true,
+      monthlySubmissionCount: true,
+      trialEndsAt: true,
+    },
+  });
+
+  if (!user) {
     return null;
   }
 
@@ -43,6 +61,10 @@ export default async function DashboardPage() {
   const totalSubmissions = stats[0];
   const avgScore = Math.round(stats[1]._avg.overallScore || 0);
 
+  const isStarter = user.subscriptionTier === "STARTER";
+  const isInTrial = user.subscriptionStatus === "TRIALING";
+  const isAtLimit = isStarter && user.monthlySubmissionCount >= 5;
+
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-green-400";
     if (score >= 60) return "text-blue-400";
@@ -72,17 +94,29 @@ export default async function DashboardPage() {
             className="text-4xl md:text-5xl font-black text-white font-mono uppercase"
             style={{ textShadow: "0 0 20px rgba(255,255,255,0.3)" }}
           >
-            Welcome Back, {session.user.name}!
+            Welcome Back, {user.name}!
           </h1>
           <p className="text-gray-400 mt-2 font-mono text-lg">
             Your epic code journey continues
           </p>
         </div>
 
+        {isInTrial && user.trialEndsAt && (
+          <TrialCountdown
+            trialEndsAt={user.trialEndsAt}
+            variant="banner"
+            showUpgradeCTA={true}
+          />
+        )}
+
+        <div className="grid grid-cols-1 gap-6">
+          <CheckSubscriptionStatus user={user} />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-linear-to-br from-blue-900/50 to-blue-950/50 rounded-2xl border-4 border-blue-500 p-6 shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50 transition-all hover:-translate-y-1">
             <div className="flex items-center justify-between">
-              <div>
+              <div className="flex-1">
                 <p className="text-blue-300 text-sm font-black font-mono uppercase tracking-wide">
                   Total Quests
                 </p>
@@ -92,6 +126,11 @@ export default async function DashboardPage() {
                 >
                   {totalSubmissions}
                 </p>
+                {isStarter && (
+                  <p className="text-xs text-blue-300 mt-2 font-mono font-bold">
+                    {user.monthlySubmissionCount}/5 this month
+                  </p>
+                )}
               </div>
               <div className="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/50">
                 <svg
@@ -161,30 +200,76 @@ export default async function DashboardPage() {
                   Quick Action
                 </p>
                 <p className="text-lg text-white mt-2 font-bold font-mono">
-                  New Quest
+                  {isAtLimit ? "Upgrade" : "New Quest"}
                 </p>
               </div>
-              <Link
-                href="/dashboard/new"
-                className="w-16 h-16 bg-linear-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center hover:from-yellow-300 hover:to-orange-400 transition-all shadow-2xl shadow-yellow-500/50 hover:shadow-yellow-500/70 hover:scale-110 border-4 border-yellow-600"
-              >
-                <svg
-                  className="w-8 h-8 text-gray-900"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              {isAtLimit ? (
+                <Link
+                  href="/pricing"
+                  className="w-16 h-16 bg-linear-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center hover:from-yellow-300 hover:to-orange-400 transition-all shadow-2xl shadow-yellow-500/50 hover:shadow-yellow-500/70 hover:scale-110 border-4 border-yellow-600"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={3}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-              </Link>
+                  <svg
+                    className="w-8 h-8 text-gray-900"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={3}
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
+                </Link>
+              ) : (
+                <Link
+                  href="/dashboard/new"
+                  className="w-16 h-16 bg-linear-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center hover:from-yellow-300 hover:to-orange-400 transition-all shadow-2xl shadow-yellow-500/50 hover:shadow-yellow-500/70 hover:scale-110 border-4 border-yellow-600"
+                >
+                  <svg
+                    className="w-8 h-8 text-gray-900"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={3}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                </Link>
+              )}
             </div>
           </div>
         </div>
+
+        {isAtLimit && (
+          <div className="bg-linear-to-br from-red-900/30 to-orange-900/30 rounded-2xl border-4 border-red-500 p-6 shadow-2xl shadow-red-500/50">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center text-2xl shrink-0 shadow-lg animate-pulse">
+                🚫
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-black text-red-300 font-mono uppercase mb-2">
+                  Monthly Limit Reached
+                </h3>
+                <p className="text-red-200 font-mono text-sm mb-4">
+                  You&apos;ve used all 5 submissions this month. Upgrade to Hero
+                  for unlimited code reviews and advanced features!
+                </p>
+                <Link
+                  href="/pricing"
+                  className="inline-block px-6 py-3 bg-linear-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-xl font-black hover:from-yellow-300 hover:to-orange-400 transition-all shadow-lg shadow-yellow-500/50 hover:shadow-yellow-500/70 hover:-translate-y-1 font-mono uppercase text-sm border-4 border-yellow-600"
+                >
+                  ⚡ Upgrade to Hero - ₹2999/month
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/30 shadow-2xl overflow-hidden">
           <div className="px-6 py-5 border-b-4 border-purple-500/30 bg-linear-to-r from-purple-900/20 to-pink-900/20">
@@ -217,12 +302,22 @@ export default async function DashboardPage() {
               <p className="text-gray-500 text-sm mt-1 font-mono">
                 Begin your first code adventure now
               </p>
-              <Link
-                href="/dashboard/new"
-                className="inline-block mt-6 px-8 py-4 bg-linear-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-xl font-black hover:from-yellow-300 hover:to-orange-400 transition-all shadow-2xl shadow-yellow-500/50 hover:shadow-yellow-500/70 hover:-translate-y-1 font-mono uppercase text-lg border-4 border-yellow-600"
-              >
-                Start Quest
-              </Link>
+              {!isAtLimit && (
+                <Link
+                  href="/dashboard/new"
+                  className="inline-block mt-6 px-8 py-4 bg-linear-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-xl font-black hover:from-yellow-300 hover:to-orange-400 transition-all shadow-2xl shadow-yellow-500/50 hover:shadow-yellow-500/70 hover:-translate-y-1 font-mono uppercase text-lg border-4 border-yellow-600"
+                >
+                  Start Quest
+                </Link>
+              )}
+              {isAtLimit && (
+                <Link
+                  href="/pricing"
+                  className="inline-block mt-6 px-8 py-4 bg-linear-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-xl font-black hover:from-yellow-300 hover:to-orange-400 transition-all shadow-2xl shadow-yellow-500/50 hover:shadow-yellow-500/70 hover:-translate-y-1 font-mono uppercase text-lg border-4 border-yellow-600"
+                >
+                  Upgrade to Hero
+                </Link>
+              )}
             </div>
           ) : (
             <div>
@@ -335,12 +430,16 @@ export default async function DashboardPage() {
                   <span className="text-gray-400 font-mono">
                     Quests Completed
                   </span>
-                  <span className="text-white font-black font-mono">7/10</span>
+                  <span className="text-white font-black font-mono">
+                    {Math.min(totalSubmissions, 10)}/10
+                  </span>
                 </div>
                 <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-linear-to-r from-pink-500 to-purple-500 rounded-full"
-                    style={{ width: "70%" }}
+                    style={{
+                      width: `${Math.min((totalSubmissions / 10) * 100, 100)}%`,
+                    }}
                   ></div>
                 </div>
               </div>

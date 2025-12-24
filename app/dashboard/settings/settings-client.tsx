@@ -167,7 +167,7 @@ export function SettingsClient({ user }: { user: UserProfile }) {
             </div>
           )}
 
-          <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 p-6 shadow-xl">
+          {/* <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 p-6 shadow-xl">
             <h3 className="text-lg font-black text-white mb-4 font-mono uppercase">
               📊 Account Stats
             </h3>
@@ -239,7 +239,7 @@ export function SettingsClient({ user }: { user: UserProfile }) {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

@@ -2,402 +2,288 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { submitCode } from "@/lib/actions/submissions";
-import { getUserUsage } from "@/lib/actions/usage";
+import Link from "next/link";
 import { toast } from "sonner";
-import { SubmissionLimitError } from "@/lib/errors/submission-errors";
-
-const SUPPORTED_LANGUAGES = [
-  { value: "javascript", label: "JavaScript", extensions: [".js", ".jsx"] },
-  { value: "typescript", label: "TypeScript", extensions: [".ts", ".tsx"] },
-  { value: "python", label: "Python", extensions: [".py"] },
-  { value: "java", label: "Java", extensions: [".java"] },
-  { value: "cpp", label: "C++", extensions: [".cpp", ".cc", ".cxx"] },
-  { value: "c", label: "C", extensions: [".c", ".h"] },
-  { value: "csharp", label: "C#", extensions: [".cs"] },
-  { value: "go", label: "Go", extensions: [".go"] },
-  { value: "rust", label: "Rust", extensions: [".rs"] },
-  { value: "php", label: "PHP", extensions: [".php"] },
-  { value: "ruby", label: "Ruby", extensions: [".rb"] },
-  { value: "swift", label: "Swift", extensions: [".swift"] },
-  { value: "kotlin", label: "Kotlin", extensions: [".kt"] },
-];
-
-interface UsageInfo {
-  currentCount: number;
-  limit: number | string;
-  percentage: number;
-  tier: string;
-  isInTrial: boolean;
-}
+import { UsageProgress } from "@/components/subscription/usage-progress";
+import { submitCode } from "@/lib/actions/submissions";
 
 export default function NewSubmissionPage() {
   const router = useRouter();
-  const [code, setCode] = useState("");
-  const [language, setLanguage] = useState("javascript");
-  const [fileName, setFileName] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [isDragging, setIsDragging] = useState(false);
-  const [usageInfo, setUsageInfo] = useState<UsageInfo | null>(null);
-  const [loadingUsage, setLoadingUsage] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [usageData, setUsageData] = useState<{
+    tier: string;
+    used: number;
+    limit: number;
+    remaining: number;
+    percentage: number;
+    nextResetDate: string;
+  } | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [formData, setFormData] = useState({
+    fileName: "",
+    language: "javascript",
+    code: "",
+  });
 
   useEffect(() => {
     async function checkUsage() {
       try {
-        const data = await getUserUsage();
-        setUsageInfo(data);
-      } catch (err) {
-        console.error("Failed to fetch usage:", err);
-      } finally {
-        setLoadingUsage(false);
+        const response = await fetch("/api/subscription/usage");
+        const data = await response.json();
+        setUsageData(data);
+      } catch (error) {
+        console.error("Failed to fetch usage data:", error);
       }
     }
     checkUsage();
   }, []);
 
-  const detectLanguage = (filename: string): string => {
-    const ext = filename.substring(filename.lastIndexOf(".")).toLowerCase();
-    const detected = SUPPORTED_LANGUAGES.find((lang) =>
-      lang.extensions.includes(ext)
-    );
-    return detected?.value || "javascript";
-  };
-
-  const handleFileUpload = async (file: File) => {
-    if (file.size > 100000) {
-      setError("File size must be less than 100KB");
-      toast.error("File too large", {
-        description: "File size must be less than 100KB",
-      });
-      return;
-    }
-
-    const text = await file.text();
-    setCode(text);
-    setFileName(file.name);
-    setLanguage(detectLanguage(file.name));
-    setError("");
-    toast.success("File loaded successfully");
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      handleFileUpload(file);
-    }
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    if (!code.trim()) {
-      setError("Please enter or upload code");
-      setLoading(false);
-      return;
-    }
+    setIsSubmitting(true);
 
     try {
       const result = await submitCode({
-        code,
-        language,
-        fileName: fileName || `untitled.${language}`,
+        code: formData.code,
+        language: formData.language,
+        fileName: formData.fileName || `untitled.${formData.language}`,
       });
 
-      if (result.success) {
-        toast.success("Quest started!", {
-          description: "Analysis is in progress...",
-        });
-        router.push(`/dashboard/submissions/${result.id}`);
-      }
-    } catch (err) {
-      if (err instanceof SubmissionLimitError) {
-        setError(err.message);
-        toast.error("Submission Limit Reached", {
-          description: err.message,
-          action: {
-            label: "Upgrade",
-            onClick: () => router.push("/pricing"),
-          },
+      toast.success("Quest submitted successfully!", {
+        description: "Your code is being reviewed by the AI warriors",
+      });
+
+      router.push(`/dashboard/submissions/${result.id}`);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to submit quest";
+      const errorName = error instanceof Error ? error.name : "";
+
+      if (
+        errorName === "SubmissionLimitError" ||
+        errorMessage.includes("limit")
+      ) {
+        setShowUpgradeModal(true);
+        toast.error("Monthly limit reached", {
+          description: "Upgrade to Hero for unlimited submissions",
         });
       } else {
-        const errorMessage =
-          err instanceof Error ? err.message : "An error occurred";
-        setError(errorMessage);
-        toast.error("Quest failed", {
-          description: errorMessage,
-        });
+        toast.error(errorMessage);
       }
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
+  const nextResetDate = usageData?.nextResetDate
+    ? new Date(usageData.nextResetDate).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "";
+
   return (
-    <div className="space-y-8">
-      <div>
-        <h1
-          className="text-4xl md:text-5xl font-black text-white font-mono uppercase"
-          style={{ textShadow: "0 0 20px rgba(255,255,255,0.3)" }}
-        >
-          ⚔️ New Quest
-        </h1>
-        <p className="text-gray-400 mt-2 font-mono text-lg">
-          Submit your code for AI-powered battle analysis
-        </p>
-      </div>
-
-      {!loadingUsage && usageInfo && usageInfo.limit !== "unlimited" && (
-        <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 p-6 shadow-2xl">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-black text-white font-mono uppercase">
-                📊 Usage This Month
-              </h3>
-              <p className="text-sm text-gray-400 font-mono mt-1">
-                {usageInfo.currentCount} / {usageInfo.limit} submissions used
-                {usageInfo.isInTrial && (
-                  <span className="ml-2 px-2 py-1 bg-yellow-400/20 border border-yellow-400 rounded text-yellow-300 text-xs font-bold">
-                    🎉 TRIAL
-                  </span>
-                )}
-              </p>
-            </div>
-            <span className="text-3xl font-black text-white font-mono">
-              {usageInfo.percentage}%
-            </span>
-          </div>
-
-          <div className="w-full bg-gray-800 rounded-full h-4 overflow-hidden border-2 border-purple-500/50">
-            <div
-              className={`h-full transition-all duration-500 ${
-                usageInfo.percentage >= 100
-                  ? "bg-red-500"
-                  : usageInfo.percentage >= 80
-                  ? "bg-yellow-400"
-                  : "bg-green-500"
-              }`}
-              style={{ width: `${Math.min(usageInfo.percentage, 100)}%` }}
-            />
-          </div>
-
-          {usageInfo.percentage >= 80 && usageInfo.percentage < 100 && (
-            <div className="mt-4 bg-yellow-500/20 border-2 border-yellow-400 text-yellow-300 px-4 py-3 rounded-xl font-mono text-sm">
-              ⚠️ You&apos;ve used {usageInfo.currentCount}/{usageInfo.limit}{" "}
-              submissions. Consider upgrading to Hero for unlimited reviews!
-            </div>
-          )}
-
-          {usageInfo.percentage >= 100 && (
-            <div className="mt-4 bg-red-500/20 border-2 border-red-400 text-red-300 px-4 py-3 rounded-xl font-mono text-sm">
-              🚫 Monthly limit reached. Upgrade to continue submitting code.
-              <button
-                onClick={() => router.push("/pricing")}
-                className="block w-full mt-3 px-4 py-2 bg-yellow-400 text-gray-900 rounded-lg font-bold hover:bg-yellow-300 transition"
-              >
-                Upgrade to Hero - $29/month
-              </button>
-            </div>
-          )}
+    <div className="min-h-screen bg-linear-to-br from-gray-900 via-purple-900 to-gray-900 p-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center text-purple-400 hover:text-purple-300 transition-colors font-mono text-sm mb-4"
+          >
+            <span className="mr-2">←</span> BACK TO DASHBOARD
+          </Link>
+          <h1 className="text-4xl font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-400 via-pink-500 to-purple-500 uppercase font-mono mb-2">
+            ⚔️ NEW QUEST
+          </h1>
+          <p className="text-gray-400 font-mono">
+            Submit your code for AI-powered review and level up your skills
+          </p>
         </div>
-      )}
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {error && (
-          <div className="bg-red-500/20 border-2 border-red-400 text-red-300 px-6 py-4 rounded-xl font-mono shadow-lg shadow-red-500/20">
-            ✗ {error}
+        {usageData?.tier === "STARTER" && usageData.remaining > 0 && (
+          <div className="bg-blue-500/20 border-2 border-blue-400 rounded-xl p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="font-black text-blue-300 mb-2 font-mono uppercase text-sm">
+                  {usageData.remaining} / {usageData.limit} quests remaining
+                </p>
+                <UsageProgress
+                  current={usageData.used}
+                  limit={usageData.limit}
+                  tier="STARTER"
+                />
+              </div>
+              {usageData.percentage >= 80 && (
+                <Link href="/pricing">
+                  <button className="bg-yellow-400 text-gray-900 px-4 py-2 rounded-lg font-black hover:bg-yellow-300 transition-all ml-4">
+                    UPGRADE
+                  </button>
+                </Link>
+              )}
+            </div>
           </div>
         )}
 
-        <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 p-6 shadow-2xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {usageData?.remaining === 0 ? (
+          <div className="bg-red-500/20 border-4 border-red-400 rounded-2xl p-8 text-center shadow-2xl shadow-red-500/20">
+            <h2 className="text-3xl font-black text-red-400 mb-4 uppercase font-mono">
+              ⚠️ QUEST LIMIT REACHED
+            </h2>
+            <p className="text-gray-300 mb-6 text-lg">
+              You&apos;ve used all 5 quests this month. Upgrade to Hero for
+              unlimited submissions!
+            </p>
+            <Link href="/pricing">
+              <button className="bg-yellow-400 text-gray-900 px-8 py-4 rounded-xl font-black hover:bg-yellow-300 transition-all shadow-lg hover:shadow-yellow-400/50 uppercase">
+                UPGRADE TO HERO - ₹2999/MONTH
+              </button>
+            </Link>
+            <p className="text-gray-500 text-sm mt-4 font-mono">
+              Or wait until {nextResetDate} for your free quests to reset
+            </p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-black text-gray-300 mb-2 font-mono uppercase">
-                📄 File Name (Optional)
+              <label
+                htmlFor="fileName"
+                className="block text-sm font-black text-purple-400 mb-2 uppercase font-mono"
+              >
+                FILE NAME *
               </label>
               <input
                 type="text"
-                value={fileName}
-                onChange={(e) => setFileName(e.target.value)}
-                placeholder="example.js"
-                className="w-full px-4 py-3 bg-[#0a0e27] border-2 border-purple-500/30 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition font-mono"
+                id="fileName"
+                name="fileName"
+                required
+                value={formData.fileName}
+                onChange={handleInputChange}
+                placeholder="e.g., MyComponent.jsx or script.py"
+                className="w-full px-4 py-3 bg-gray-900/50 border-2 border-purple-500/30 rounded-xl text-white placeholder-gray-500 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all font-mono"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-black text-gray-300 mb-2 font-mono uppercase">
-                💻 Language
+              <label
+                htmlFor="language"
+                className="block text-sm font-black text-purple-400 mb-2 uppercase font-mono"
+              >
+                PROGRAMMING LANGUAGE *
               </label>
               <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className="w-full px-4 py-3 bg-[#0a0e27] border-2 border-purple-500/30 rounded-xl text-white focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition font-mono"
+                id="language"
+                name="language"
+                required
+                value={formData.language}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 bg-gray-900/50 border-2 border-purple-500/30 rounded-xl text-white focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all font-mono cursor-pointer"
               >
-                {SUPPORTED_LANGUAGES.map((lang) => (
-                  <option key={lang.value} value={lang.value}>
-                    {lang.label}
-                  </option>
-                ))}
+                <option value="javascript">JavaScript</option>
+                <option value="typescript">TypeScript</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="cpp">C++</option>
+                <option value="csharp">C#</option>
+                <option value="go">Go</option>
+                <option value="rust">Rust</option>
+                <option value="php">PHP</option>
+                <option value="ruby">Ruby</option>
+                <option value="swift">Swift</option>
+                <option value="kotlin">Kotlin</option>
               </select>
             </div>
-          </div>
 
-          <div
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragging(true);
-            }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={handleDrop}
-            className={`border-4 border-dashed rounded-2xl p-8 text-center transition-all ${
-              isDragging
-                ? "border-yellow-400 bg-yellow-500/10 shadow-lg shadow-yellow-500/50"
-                : "border-purple-500/50 hover:border-yellow-400/50 hover:bg-purple-500/5"
-            }`}
-          >
-            <div
-              className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center transition-all ${
-                isDragging ? "bg-yellow-500 scale-110" : "bg-purple-500"
-              }`}
-            >
-              <svg
-                className="w-8 h-8 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            <div>
+              <label
+                htmlFor="code"
+                className="block text-sm font-black text-purple-400 mb-2 uppercase font-mono"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                />
-              </svg>
-            </div>
-            <p className="text-white font-black mb-2 font-mono text-lg">
-              Drop your code file here
-            </p>
-            <p className="text-sm text-gray-400 mb-4 font-mono">or</p>
-            <label className="inline-block px-6 py-3 bg-linear-to-r from-blue-500 to-cyan-500 text-white rounded-xl font-black hover:from-blue-400 hover:to-cyan-400 cursor-pointer transition-all shadow-lg shadow-blue-500/50 hover:shadow-blue-500/70 hover:-translate-y-1 font-mono uppercase border-4 border-blue-600">
-              📁 Browse Files
-              <input
-                type="file"
-                className="hidden"
-                accept=".js,.jsx,.ts,.tsx,.py,.java,.cpp,.c,.cs,.go,.rs,.php,.rb,.swift,.kt"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleFileUpload(file);
-                }}
+                CODE *
+              </label>
+              <textarea
+                id="code"
+                name="code"
+                required
+                value={formData.code}
+                onChange={handleInputChange}
+                rows={15}
+                placeholder="Paste your code here..."
+                className="w-full px-4 py-3 bg-gray-900/50 border-2 border-purple-500/30 rounded-xl text-white placeholder-gray-500 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all font-mono text-sm resize-none"
               />
-            </label>
-            <p className="text-xs text-gray-500 mt-6 font-mono">
-              Supports: JavaScript, TypeScript, Python, Java, C++, C#, Go, Rust,
-              PHP, Ruby, Swift, Kotlin
-            </p>
-            <p className="text-xs text-gray-500 font-mono">
-              Maximum file size: 100KB
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 shadow-2xl overflow-hidden">
-          <div className="bg-[#1e1e1e] px-4 py-3 flex items-center justify-between border-b-2 border-[#2d2d2d]">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
-              <div className="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
-              <div className="w-3 h-3 rounded-full bg-[#27c93f]"></div>
             </div>
-            <span className="text-xs text-gray-400 font-mono font-bold">
-              📄 {fileName || `untitled.${language}`}
-            </span>
-          </div>
 
-          <div className="relative">
-            <textarea
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              placeholder="Paste your code here to begin your quest..."
-              className="w-full h-96 p-4 font-mono text-sm bg-[#1e1e1e] text-gray-100 resize-none focus:outline-none placeholder-gray-600"
-              style={{ tabSize: 2 }}
-            />
-          </div>
+            <div className="flex gap-4 pt-4">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 bg-linear-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-xl font-black hover:from-purple-500 hover:to-pink-500 transition-all shadow-lg hover:shadow-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed uppercase font-mono"
+              >
+                {isSubmitting ? "⚔️ SUBMITTING..." : "⚔️ SUBMIT QUEST"}
+              </button>
+              <Link
+                href="/dashboard"
+                className="px-8 py-4 bg-gray-700 text-white rounded-xl font-black hover:bg-gray-600 transition-all text-center uppercase font-mono"
+              >
+                CANCEL
+              </Link>
+            </div>
+          </form>
+        )}
+      </div>
 
-          {code && (
-            <div className="border-t-2 border-[#2d2d2d]">
-              <div className="bg-[#252526] px-4 py-2">
-                <p className="text-xs text-purple-400 font-mono font-bold uppercase">
-                  👁️ Preview
-                </p>
+      {showUpgradeModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-linear-to-br from-gray-900 to-purple-900 border-4 border-yellow-400 rounded-2xl p-8 max-w-md w-full shadow-2xl shadow-yellow-400/20">
+            <h2 className="text-3xl font-black text-yellow-400 mb-4 uppercase font-mono">
+              🎮 UPGRADE TO HERO
+            </h2>
+            <p className="text-gray-300 mb-6 text-lg">
+              You&apos;ve reached your monthly limit of 5 submissions. Upgrade
+              to Hero tier for unlimited code reviews!
+            </p>
+            <div className="space-y-3 mb-6">
+              <div className="flex items-center text-green-400">
+                <span className="mr-2">✓</span>
+                <span className="font-mono">Unlimited submissions</span>
               </div>
-              <div className="max-h-64 overflow-auto">
-                <SyntaxHighlighter
-                  language={language}
-                  style={vscDarkPlus}
-                  showLineNumbers
-                  wrapLines
-                  customStyle={{
-                    margin: 0,
-                    fontSize: "13px",
-                    background: "#1e1e1e",
-                  }}
-                >
-                  {code}
-                </SyntaxHighlighter>
+              <div className="flex items-center text-green-400">
+                <span className="mr-2">✓</span>
+                <span className="font-mono">Priority AI reviews</span>
+              </div>
+              <div className="flex items-center text-green-400">
+                <span className="mr-2">✓</span>
+                <span className="font-mono">Advanced analytics</span>
               </div>
             </div>
-          )}
+            <div className="flex gap-3">
+              <Link href="/pricing" className="flex-1">
+                <button className="w-full bg-yellow-400 text-gray-900 px-6 py-3 rounded-xl font-black hover:bg-yellow-300 transition-all uppercase">
+                  UPGRADE NOW
+                </button>
+              </Link>
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                className="px-6 py-3 bg-gray-700 text-white rounded-xl font-black hover:bg-gray-600 transition-all uppercase"
+              >
+                CLOSE
+              </button>
+            </div>
+          </div>
         </div>
-
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="px-6 py-3 bg-gray-700 text-white rounded-xl font-black hover:bg-gray-600 transition-all border-4 border-gray-800 font-mono uppercase"
-          >
-            ← Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={loading || !code.trim()}
-            className="px-8 py-4 bg-linear-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-xl font-black hover:from-yellow-300 hover:to-orange-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-2xl shadow-yellow-500/50 hover:shadow-yellow-500/70 hover:-translate-y-1 font-mono uppercase border-4 border-yellow-600"
-          >
-            {loading ? (
-              <span className="flex items-center gap-2">
-                <svg
-                  className="animate-spin h-6 w-6"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Submitting...
-              </span>
-            ) : (
-              "⚔️ Start Quest"
-            )}
-          </button>
-        </div>
-      </form>
+      )}
     </div>
   );
 }
