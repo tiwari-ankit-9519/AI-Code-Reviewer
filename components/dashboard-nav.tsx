@@ -26,8 +26,6 @@ export default function DashboardNav({ user }: DashboardNavProps) {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [daysRemaining, setDaysRemaining] = useState(0);
 
-  const xpPoints = 0;
-
   useEffect(() => {
     if (user.subscriptionStatus === "TRIALING" && user.trialEndsAt) {
       const calculateDays = () => {
@@ -72,7 +70,6 @@ export default function DashboardNav({ user }: DashboardNavProps) {
     { href: "/dashboard", label: "Dashboard", icon: "📊" },
     { href: "/dashboard/submissions", label: "Submissions", icon: "📝" },
     { href: "/dashboard/new", label: "New Quest", icon: "⚔️" },
-    { href: "/pricing", label: "Pricing", icon: "💎" },
   ];
 
   const isActive = (href: string) => {
@@ -113,40 +110,6 @@ export default function DashboardNav({ user }: DashboardNavProps) {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 border-2 border-blue-400 rounded-lg">
-              <span className="text-lg">⭐</span>
-              <span className="text-sm font-black text-blue-300 font-mono">
-                {xpPoints} XP
-              </span>
-            </div>
-
-            <div
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 ${getTierColor(
-                user.subscriptionTier
-              )}`}
-            >
-              <span className="text-lg">
-                {getTierIcon(user.subscriptionTier)}
-              </span>
-              <span className="text-sm font-black font-mono uppercase">
-                {user.subscriptionTier}
-              </span>
-            </div>
-
-            {user.subscriptionStatus === "TRIALING" && (
-              <div className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-xs font-black animate-pulse">
-                🎉 TRIAL: {daysRemaining}d
-              </div>
-            )}
-
-            {user.subscriptionTier === "STARTER" && (
-              <Link href="/pricing">
-                <button className="bg-linear-to-r from-yellow-400 to-orange-500 text-gray-900 px-4 py-2 rounded-lg font-black text-sm hover:shadow-lg hover:scale-105 transition-all uppercase border-2 border-yellow-600">
-                  ⚡ UPGRADE
-                </button>
-              </Link>
-            )}
-
             <div className="relative">
               <button
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
@@ -206,17 +169,6 @@ export default function DashboardNav({ user }: DashboardNavProps) {
                       </span>
                     </Link>
 
-                    <Link
-                      href="/pricing"
-                      className="flex items-center gap-3 px-4 py-2 hover:bg-purple-500/10 transition-colors"
-                      onClick={() => setShowUserDropdown(false)}
-                    >
-                      <span className="text-lg">💎</span>
-                      <span className="text-sm font-bold text-gray-300 font-mono">
-                        Subscription
-                      </span>
-                    </Link>
-
                     <button
                       onClick={() => signOut({ callbackUrl: "/" })}
                       className="w-full flex items-center gap-3 px-4 py-2 hover:bg-red-500/10 transition-colors text-left"
@@ -261,13 +213,6 @@ export default function DashboardNav({ user }: DashboardNavProps) {
         <div className="md:hidden border-t-2 border-purple-500/30 bg-gray-900/95 backdrop-blur-sm">
           <div className="px-4 py-4 space-y-3">
             <div className="flex flex-wrap items-center gap-2 pb-3 border-b-2 border-purple-500/30">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 border-2 border-blue-400 rounded-lg">
-                <span className="text-lg">⭐</span>
-                <span className="text-sm font-black text-blue-300 font-mono">
-                  {xpPoints} XP
-                </span>
-              </div>
-
               <div
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 ${getTierColor(
                   user.subscriptionTier
@@ -287,14 +232,6 @@ export default function DashboardNav({ user }: DashboardNavProps) {
                 </div>
               )}
             </div>
-
-            {user.subscriptionTier === "STARTER" && (
-              <Link href="/pricing" onClick={() => setShowMobileMenu(false)}>
-                <button className="w-full bg-linear-to-r from-yellow-400 to-orange-500 text-gray-900 px-4 py-3 rounded-lg font-black text-sm hover:shadow-lg transition-all uppercase border-2 border-yellow-600">
-                  ⚡ UPGRADE TO HERO
-                </button>
-              </Link>
-            )}
 
             {navLinks.map((link) => (
               <Link
@@ -320,17 +257,6 @@ export default function DashboardNav({ user }: DashboardNavProps) {
               >
                 <span className="text-lg">⚙️</span>
                 <span className="text-sm font-bold font-mono">Settings</span>
-              </Link>
-
-              <Link
-                href="/pricing"
-                onClick={() => setShowMobileMenu(false)}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-purple-500/10 transition-colors text-gray-300"
-              >
-                <span className="text-lg">💎</span>
-                <span className="text-sm font-bold font-mono">
-                  Subscription
-                </span>
               </Link>
 
               <button
