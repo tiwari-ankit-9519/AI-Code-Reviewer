@@ -10,11 +10,10 @@ interface User {
   id: string;
   name: string | null;
   email: string | null;
-  image: string | null;
+  avatar: string | null;
   subscriptionTier: string;
   subscriptionStatus: string;
   trialEndsAt: Date | null;
-  xpPoints: number;
 }
 
 interface DashboardNavProps {
@@ -26,6 +25,8 @@ export default function DashboardNav({ user }: DashboardNavProps) {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [daysRemaining, setDaysRemaining] = useState(0);
+
+  const xpPoints = 0;
 
   useEffect(() => {
     if (user.subscriptionStatus === "TRIALING" && user.trialEndsAt) {
@@ -112,6 +113,26 @@ export default function DashboardNav({ user }: DashboardNavProps) {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 border-2 border-blue-400 rounded-lg">
+              <span className="text-lg">⭐</span>
+              <span className="text-sm font-black text-blue-300 font-mono">
+                {xpPoints} XP
+              </span>
+            </div>
+
+            <div
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 ${getTierColor(
+                user.subscriptionTier
+              )}`}
+            >
+              <span className="text-lg">
+                {getTierIcon(user.subscriptionTier)}
+              </span>
+              <span className="text-sm font-black font-mono uppercase">
+                {user.subscriptionTier}
+              </span>
+            </div>
+
             {user.subscriptionStatus === "TRIALING" && (
               <div className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-xs font-black animate-pulse">
                 🎉 TRIAL: {daysRemaining}d
@@ -131,10 +152,10 @@ export default function DashboardNav({ user }: DashboardNavProps) {
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
                 className="flex items-center gap-2 px-3 py-2 bg-gray-800/50 hover:bg-gray-700/50 rounded-lg border-2 border-gray-700 transition-all"
               >
-                {user.image ? (
+                {user.avatar ? (
                   <div className="relative w-8 h-8 rounded-full border-2 border-purple-400 overflow-hidden">
                     <Image
-                      src={user.image}
+                      src={user.avatar}
                       alt={user.name || "User"}
                       fill
                       className="object-cover"
@@ -185,6 +206,17 @@ export default function DashboardNav({ user }: DashboardNavProps) {
                       </span>
                     </Link>
 
+                    <Link
+                      href="/pricing"
+                      className="flex items-center gap-3 px-4 py-2 hover:bg-purple-500/10 transition-colors"
+                      onClick={() => setShowUserDropdown(false)}
+                    >
+                      <span className="text-lg">💎</span>
+                      <span className="text-sm font-bold text-gray-300 font-mono">
+                        Subscription
+                      </span>
+                    </Link>
+
                     <button
                       onClick={() => signOut({ callbackUrl: "/" })}
                       className="w-full flex items-center gap-3 px-4 py-2 hover:bg-red-500/10 transition-colors text-left"
@@ -232,7 +264,7 @@ export default function DashboardNav({ user }: DashboardNavProps) {
               <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 border-2 border-blue-400 rounded-lg">
                 <span className="text-lg">⭐</span>
                 <span className="text-sm font-black text-blue-300 font-mono">
-                  {user.xpPoints} XP
+                  {xpPoints} XP
                 </span>
               </div>
 

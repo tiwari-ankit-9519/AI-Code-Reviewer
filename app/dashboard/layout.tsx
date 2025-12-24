@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import DashboardNav from "@/components/dashboard-nav";
 import { TrialBanner } from "@/components/trial-banner";
 import { checkTrialStatus } from "@/lib/subscription/subscription-utils";
@@ -10,7 +11,24 @@ export default async function DashboardLayout({
 }) {
   const session = await auth();
 
-  if (!session?.user) {
+  if (!session?.user?.id) {
+    return null;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      avatar: true,
+      subscriptionTier: true,
+      subscriptionStatus: true,
+      trialEndsAt: true,
+    },
+  });
+
+  if (!user) {
     return null;
   }
 
@@ -18,7 +36,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-[#0a0e27] relative">
-      <DashboardNav user={session.user} />
+      <DashboardNav user={user} />
 
       {trialStatus.isInTrial && <TrialBanner trialStatus={trialStatus} />}
 
