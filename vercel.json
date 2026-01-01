@@ -7,10 +7,6 @@
     {
       "path": "/api/cron/reset-submissions",
       "schedule": "30 18 1 * *"
-    },
-    {
-      "path": "/api/cron/monthly-analytics",
-      "schedule": "0 19 2 * *"
     }
   ]
 }
