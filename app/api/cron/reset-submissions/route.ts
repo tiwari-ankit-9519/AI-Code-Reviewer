@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { expireTrials, sendTrialReminders } from "@/lib/cron/tasks";
+import { resetAllUsers } from "@/lib/subscription/reset-service";
 import { logCronExecution } from "@/lib/cron/logger";
 
 export async function GET(request: Request) {
@@ -12,22 +12,20 @@ export async function GET(request: Request) {
   const startTime = Date.now();
 
   try {
-    const trialsExpired = await expireTrials();
-    const trialsReminded = await sendTrialReminders();
+    const result = await resetAllUsers();
 
     await logCronExecution(
-      "check-trials",
+      "reset-submissions",
       {
-        trialsExpired,
-        trialsReminded,
+        resetCount: result.resetCount,
+        message: result.message,
       },
       startTime
     );
 
     return NextResponse.json({
       success: true,
-      trialsExpired,
-      trialsReminded,
+      ...result,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
@@ -35,8 +33,9 @@ export async function GET(request: Request) {
       error instanceof Error ? error.message : "Unknown error";
 
     await logCronExecution(
-      "check-trials",
+      "reset-submissions",
       {
+        resetCount: 0,
         errors: [errorMessage],
       },
       startTime

@@ -312,6 +312,20 @@ model AnalyticsSnapshot {
   @@map("analytics_snapshots")
 }
 
+model CronLog {
+  id         String   @id @default(uuid())
+  jobName    String
+  status     String
+  results    Json
+  duration   Int
+  executedAt DateTime @default(now())
+  error      String?
+
+  @@index([jobName])
+  @@index([executedAt])
+  @@map("cron_logs")
+}
+
 model CodePattern {
   id          String @id @default(uuid())
   name        String

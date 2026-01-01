@@ -14,6 +14,11 @@ import {
   checkSubmissionThreshold,
 } from "@/lib/subscription/subscription-utils";
 import { SubmissionLimitError } from "@/lib/errors/submission-errors";
+import {
+  trackSubmissionCreated,
+  trackLimitReached,
+  trackLimitWarningSent,
+} from "@/lib/analytics/subscription-events";
 
 export async function submitCode(formData: {
   code: string;
@@ -29,6 +34,8 @@ export async function submitCode(formData: {
   const submissionCheck = await canUserSubmit(session.user.id);
 
   if (!submissionCheck.allowed) {
+    await trackLimitReached(session.user.id, submissionCheck.tier || "STARTER");
+
     throw new SubmissionLimitError({
       message: submissionCheck.reason || "Submission limit reached",
       currentCount: submissionCheck.currentCount,
@@ -74,12 +81,24 @@ export async function submitCode(formData: {
 
   await incrementSubmissionCount(session.user.id);
 
+  await trackSubmissionCreated(
+    session.user.id,
+    submission.id,
+    subscription.subscriptionTier
+  );
+
   const threshold = await checkSubmissionThreshold(session.user.id);
   if (threshold.shouldNotify) {
     await prisma.user.update({
       where: { id: session.user.id },
       data: { submissionLimitNotified: true },
     });
+
+    await trackLimitWarningSent(
+      session.user.id,
+      subscription.subscriptionTier,
+      threshold.remaining || 0
+    );
   }
 
   await runAnalysisAndRevalidate(submission.id, code, language);
