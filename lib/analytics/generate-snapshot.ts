@@ -190,16 +190,29 @@ async function calculatePreviousMonthMRR(
   periodStart: Date,
   periodEnd: Date
 ): Promise<number> {
-  const activeSubscriptions = await prisma.subscription.count({
-    where: {
-      tier: "HERO",
-      status: "ACTIVE",
-      currentPeriodEnd: { gte: periodEnd },
-      createdAt: { lte: periodEnd },
-    },
-  });
+  const [heroCount, legendCount] = await Promise.all([
+    prisma.user.count({
+      where: {
+        subscriptionTier: "HERO",
+        subscriptionStatus: "ACTIVE",
+        createdAt: { lte: periodEnd },
+      },
+    }),
+    prisma.user.count({
+      where: {
+        subscriptionTier: "LEGEND",
+        subscriptionStatus: "ACTIVE",
+        createdAt: { lte: periodEnd },
+      },
+    }),
+  ]);
 
-  return activeSubscriptions * 2900;
+  const HERO_PRICE_INR = 299900;
+  const LEGEND_PRICE_INR = 999900;
+
+  const totalMRR = heroCount * HERO_PRICE_INR + legendCount * LEGEND_PRICE_INR;
+
+  return totalMRR / 100;
 }
 
 export async function getRecentSnapshots(limit: number = 12) {

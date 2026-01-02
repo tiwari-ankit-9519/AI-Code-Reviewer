@@ -31,6 +31,27 @@ enum UserRole {
   ADMIN
 }
 
+model EnterpriseLead {
+  id          String    @id @default(uuid())
+  name        String
+  email       String
+  company     String?
+  teamSize    String?
+  useCase     String    @db.Text
+  message     String?   @db.Text
+  status      String    @default("NEW")
+  notes       String?   @db.Text
+  assignedTo  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  convertedAt DateTime?
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([email])
+  @@map("enterprise_leads")
+}
+
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
