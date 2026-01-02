@@ -1,9 +1,12 @@
+// lib/actions/login.ts
 "use server";
 
 import { signIn } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { config } from "dotenv";
 
 config();
+
 interface LoginState {
   success: boolean;
   message: string;
@@ -53,10 +56,18 @@ export async function loginAction(
     }
 
     if (result && !result.error) {
+      const user = await prisma.user.findUnique({
+        where: { email: email.toLowerCase() },
+        select: { role: true },
+      });
+
+      const redirectPath =
+        user?.role === "ADMIN" ? "/dashboard/admin" : "/dashboard";
+
       return {
         success: true,
         message: "Login successful",
-        redirect: `${process.env.NEXTAUTH_URL}/dashboard`,
+        redirect: `${process.env.NEXTAUTH_URL}${redirectPath}`,
       };
     }
 

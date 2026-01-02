@@ -1,3 +1,4 @@
+// lib/auth.ts
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
@@ -47,6 +48,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               passwordHash: true,
               avatar: true,
               emailVerified: true,
+              role: true,
             },
           });
 
@@ -84,6 +86,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             email: user.email,
             name: user.name,
             image: user.avatar,
+            role: user.role,
           };
         } catch (error) {
           if (error instanceof z.ZodError) {
@@ -115,6 +118,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id || "";
         token.email = user.email || "";
+        token.role = user.role || "USER";
       }
       return token;
     },
@@ -125,8 +129,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           ...session.user,
           id: token.id as string,
           email: token.email as string,
+          role: token.role as string,
         };
-      } else {
       }
       return session;
     },
@@ -136,20 +140,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return url;
     },
   },
-
-  // events: {
-  //   async signIn({ user, isNewUser }) {},
-  //   async signOut(message) {
-  //     if ("token" in message && message.token) {
-  //     } else {
-  //     }
-  //   },
-  //   async session(message) {
-  //     if ("token" in message && message.token) {
-  //     } else {
-  //     }
-  //   },
-  // },
 
   trustHost: true,
 });

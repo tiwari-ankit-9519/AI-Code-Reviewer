@@ -16,7 +16,7 @@ export default function AdminNav() {
     { href: "/dashboard/admin/jobs", label: "Cron Jobs", icon: "⚙️" },
     { href: "/dashboard/admin/analytics", label: "Cron Analytics", icon: "📈" },
     {
-      href: "/dashboard/admin/subscriptions",
+      href: "/dashboard/admin/subscription",
       label: "Subscriptions",
       icon: "💳",
     },

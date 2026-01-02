@@ -1,9 +1,11 @@
+// middleware.ts
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 export default auth((req) => {
   const path = req.nextUrl.pathname;
   const isLoggedIn = !!req.auth;
+  const userRole = req.auth?.user?.role;
 
   const isAuthPage =
     path.startsWith("/login") ||
@@ -16,6 +18,12 @@ export default auth((req) => {
     path.startsWith("/api/profile") ||
     path.startsWith("/api/submissions");
 
+  const isAdminRoute = path.startsWith("/dashboard/admin");
+
+  if (isAdminRoute && userRole !== "ADMIN") {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
+  }
+
   if (isProtected && !isLoggedIn) {
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", path);
@@ -23,7 +31,9 @@ export default auth((req) => {
   }
 
   if (isAuthPage && isLoggedIn) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    const redirectUrl =
+      userRole === "ADMIN" ? "/dashboard/admin" : "/dashboard";
+    return NextResponse.redirect(new URL(redirectUrl, req.url));
   }
 
   return NextResponse.next();
