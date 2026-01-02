@@ -26,7 +26,7 @@ export async function calculateMRR(): Promise<number> {
   return totalMRR / 100;
 }
 
-export function calculateARR(mrr: number): number {
+function calculateARR(mrr: number): number {
   return mrr * 12;
 }
 
