@@ -1,11 +1,20 @@
-// FILE PATH: components/admin/ManualTriggerPanel.tsx
-// This component shows the 6 MANUAL TRIGGER BUTTONS
-// Used by: app/dashboard/admin/jobs/page.tsx (shown at bottom of main page)
-
 "use client";
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Clock,
+  Mail,
+  RotateCcw,
+  CreditCard,
+  BarChart3,
+  Send,
+  Loader2,
+  AlertTriangle,
+} from "lucide-react";
 import {
   triggerExpireTrials,
   triggerTrialReminders,
@@ -25,9 +34,9 @@ interface TriggerButton {
   id: string;
   label: string;
   description: string;
-  icon: string;
+  icon: React.ComponentType<{ className?: string }>;
   action: () => Promise<CronActionResult>;
-  variant: "danger" | "warning" | "success" | "info";
+  variant: "destructive" | "outline" | "default" | "secondary";
 }
 
 export default function ManualTriggerPanel() {
@@ -39,8 +48,20 @@ export default function ManualTriggerPanel() {
       const result = await button.action();
 
       if (result.success) {
+        // Format result for display
+        const resultData = Object.entries(result)
+          .filter(([key]) => key !== "success")
+          .map(([key, value]) => {
+            const formattedKey = key
+              .replace(/([A-Z])/g, " $1")
+              .replace(/^./, (str) => str.toUpperCase())
+              .trim();
+            return `${formattedKey}: ${value}`;
+          })
+          .join("\n");
+
         toast.success(`${button.label} completed!`, {
-          description: JSON.stringify(result, null, 2),
+          description: resultData || "Operation completed successfully",
         });
       } else {
         toast.error(`${button.label} failed`, {
@@ -63,120 +84,122 @@ export default function ManualTriggerPanel() {
       id: "expire-trials",
       label: "Expire Trials",
       description: "Downgrade expired trial users to Starter",
-      icon: "⏰",
+      icon: Clock,
       action: triggerExpireTrials,
-      variant: "danger",
+      variant: "destructive",
     },
     {
       id: "trial-reminders",
       label: "Send Trial Reminders",
       description: "Email users with trials ending in 24h",
-      icon: "📧",
+      icon: Mail,
       action: triggerTrialReminders,
-      variant: "warning",
+      variant: "outline",
     },
     {
       id: "reset-submissions",
       label: "Reset Submissions",
       description: "Reset all users' monthly submission counts",
-      icon: "🔄",
+      icon: RotateCcw,
       action: triggerResetSubmissions,
-      variant: "info",
+      variant: "secondary",
     },
     {
       id: "sync-stripe",
       label: "Sync Stripe",
       description: "Sync subscription status with Stripe",
-      icon: "💳",
+      icon: CreditCard,
       action: triggerSyncStripe,
-      variant: "info",
+      variant: "secondary",
     },
     {
       id: "generate-snapshot",
       label: "Generate Snapshot",
       description: "Create analytics snapshot for last month",
-      icon: "📊",
+      icon: BarChart3,
       action: triggerGenerateSnapshot,
-      variant: "success",
+      variant: "default",
     },
     {
       id: "email-report",
       label: "Email Report",
       description: "Generate and email monthly report",
-      icon: "📨",
+      icon: Send,
       action: triggerEmailAdminReport,
-      variant: "success",
+      variant: "default",
     },
   ];
 
-  const getVariantStyles = (variant: string) => {
-    switch (variant) {
-      case "danger":
-        return "bg-red-500/20 border-red-500 hover:bg-red-500/30 text-red-400";
-      case "warning":
-        return "bg-yellow-500/20 border-yellow-500 hover:bg-yellow-500/30 text-yellow-400";
-      case "success":
-        return "bg-green-500/20 border-green-500 hover:bg-green-500/30 text-green-400";
-      case "info":
-        return "bg-blue-500/20 border-blue-500 hover:bg-blue-500/30 text-blue-400";
-      default:
-        return "bg-gray-500/20 border-gray-500 hover:bg-gray-500/30 text-gray-400";
-    }
-  };
-
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm border-2 border-yellow-500/30 rounded-xl p-6">
-      <div className="mb-6">
-        <h2 className="text-3xl font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-400 to-orange-500 mb-2">
-          🎮 MANUAL TRIGGERS
-        </h2>
-        <p className="text-gray-400 text-sm">
+    <Card className="border-primary/50">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-2xl">
+          <BarChart3 className="h-6 w-6" />
+          Manual Triggers
+        </CardTitle>
+        <p className="text-sm text-muted-foreground">
           Manually execute cron jobs for testing or emergency situations
         </p>
-      </div>
+      </CardHeader>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {buttons.map((button) => (
-          <button
-            key={button.id}
-            onClick={() => handleTrigger(button)}
-            disabled={loading !== null}
-            className={`
-              relative overflow-hidden
-              border-2 rounded-xl p-6
-              transition-all duration-200
-              disabled:opacity-50 disabled:cursor-not-allowed
-              ${getVariantStyles(button.variant)}
-              ${loading === button.id ? "animate-pulse" : ""}
-            `}
-          >
-            <div className="text-center">
-              <div className="text-4xl mb-3">{button.icon}</div>
-              <h3 className="font-black text-lg mb-2">{button.label}</h3>
-              <p className="text-xs opacity-80 mb-4">{button.description}</p>
-              <div className="text-sm font-mono font-bold">
-                {loading === button.id ? "RUNNING..." : "TRIGGER"}
-              </div>
-            </div>
+      <CardContent className="space-y-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {buttons.map((button) => {
+            const Icon = button.icon;
+            const isLoading = loading === button.id;
+            const isDisabled = loading !== null;
 
-            {loading === button.id && (
-              <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent animate-shimmer" />
-            )}
-          </button>
-        ))}
-      </div>
+            return (
+              <Card
+                key={button.id}
+                className={`${
+                  isLoading ? "border-primary" : ""
+                } transition-colors`}
+              >
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <div className="p-3 rounded-full bg-primary/10">
+                      <Icon className="h-8 w-8 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg mb-1">
+                        {button.label}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        {button.description}
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => handleTrigger(button)}
+                      disabled={isDisabled}
+                      variant={button.variant}
+                      className="w-full"
+                    >
+                      {isLoading && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      {isLoading ? "Running..." : "Trigger"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
 
-      <div className="mt-6 bg-gray-900/50 border border-gray-700 rounded-lg p-4">
-        <h4 className="text-sm font-bold text-yellow-400 mb-2">
-          ⚠️ Important Notes
-        </h4>
-        <ul className="text-xs text-gray-400 space-y-1">
-          <li>• All manual triggers are logged to the database</li>
-          <li>• Triggering will execute the job immediately</li>
-          <li>• Check the job status cards above for results</li>
-          <li>• Avoid triggering multiple jobs simultaneously</li>
-        </ul>
-      </div>
-    </div>
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Important Notes</AlertTitle>
+          <AlertDescription>
+            <ul className="text-sm space-y-1 mt-2">
+              <li>• All manual triggers are logged to the database</li>
+              <li>• Triggering will execute the job immediately</li>
+              <li>• Check the job status cards above for results</li>
+              <li>• Avoid triggering multiple jobs simultaneously</li>
+            </ul>
+          </AlertDescription>
+        </Alert>
+      </CardContent>
+    </Card>
   );
 }

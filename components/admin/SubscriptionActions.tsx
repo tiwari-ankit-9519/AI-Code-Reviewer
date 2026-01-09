@@ -6,6 +6,17 @@ import {
   resetSubmissionCountAdmin,
 } from "@/lib/actions/admin-subscriptions";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { RotateCcw, XCircle, Loader2, AlertTriangle } from "lucide-react";
 
 interface User {
   id: string;
@@ -16,7 +27,7 @@ interface User {
 
 export default function SubscriptionActions({ user }: { user: User }) {
   const [loading, setLoading] = useState(false);
-  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const handleResetCount = async () => {
     setLoading(true);
@@ -42,7 +53,7 @@ export default function SubscriptionActions({ user }: { user: User }) {
           ? "Subscription cancelled immediately"
           : "Subscription will cancel at period end"
       );
-      setShowCancelModal(false);
+      setOpen(false);
       window.location.reload();
     } catch (error) {
       toast.error(
@@ -54,62 +65,88 @@ export default function SubscriptionActions({ user }: { user: User }) {
   };
 
   return (
-    <>
-      <div className="flex gap-2 justify-end">
-        <button
-          onClick={handleResetCount}
-          disabled={loading}
-          className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm font-bold transition-all disabled:opacity-50"
-        >
-          Reset Count
-        </button>
-
-        {user.subscriptionStatus === "ACTIVE" && user.stripeCustomerId && (
-          <button
-            onClick={() => setShowCancelModal(true)}
-            disabled={loading}
-            className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white rounded text-sm font-bold transition-all disabled:opacity-50"
-          >
-            Cancel
-          </button>
+    <div className="flex gap-2 justify-end">
+      <Button
+        onClick={handleResetCount}
+        disabled={loading}
+        variant="outline"
+        size="sm"
+        className="gap-2"
+      >
+        {loading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <RotateCcw className="h-4 w-4" />
         )}
-      </div>
+        Reset Count
+      </Button>
 
-      {showCancelModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 border-2 border-red-500/50 rounded-xl p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-black text-white mb-4">
-              Cancel Subscription
-            </h3>
-            <p className="text-gray-400 mb-6">
-              Cancel subscription for {user.email}?
-            </p>
-            <div className="space-y-3">
-              <button
+      {user.subscriptionStatus === "ACTIVE" && user.stripeCustomerId && (
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button
+              disabled={loading}
+              variant="destructive"
+              size="sm"
+              className="gap-2"
+            >
+              <XCircle className="h-4 w-4" />
+              Cancel
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+                Cancel Subscription
+              </DialogTitle>
+              <DialogDescription>
+                Cancel subscription for{" "}
+                <span className="font-semibold">{user.email}</span>?
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="py-4">
+              <div className="rounded-lg border bg-muted/50 p-4">
+                <p className="text-sm text-muted-foreground">
+                  Choose when to cancel the subscription. Canceling at period
+                  end allows the user to keep access until their billing cycle
+                  completes.
+                </p>
+              </div>
+            </div>
+
+            <DialogFooter className="flex flex-col gap-2 sm:flex-col">
+              <Button
                 onClick={() => handleCancel(false)}
                 disabled={loading}
-                className="w-full px-4 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold transition-all disabled:opacity-50"
+                variant="outline"
+                className="w-full gap-2"
               >
+                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                 Cancel at Period End
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => handleCancel(true)}
                 disabled={loading}
-                className="w-full px-4 py-3 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold transition-all disabled:opacity-50"
+                variant="destructive"
+                className="w-full gap-2"
               >
+                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                 Cancel Immediately
-              </button>
-              <button
-                onClick={() => setShowCancelModal(false)}
+              </Button>
+              <Button
+                onClick={() => setOpen(false)}
                 disabled={loading}
-                className="w-full px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-bold transition-all disabled:opacity-50"
+                variant="ghost"
+                className="w-full"
               >
                 Nevermind
-              </button>
-            </div>
-          </div>
-        </div>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
-    </>
+    </div>
   );
 }

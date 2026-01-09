@@ -9,6 +9,36 @@ import {
 import { cancelSubscriptionAdmin } from "@/lib/actions/admin-subscriptions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  RotateCcw,
+  Settings,
+  Clock,
+  XCircle,
+  Loader2,
+  Award,
+  Zap,
+  Crown,
+  AlertTriangle,
+} from "lucide-react";
 
 interface User {
   id: string;
@@ -21,30 +51,30 @@ interface User {
 
 export default function UserDetailActions({ user }: { user: User }) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
+  const [showResetDialog, setShowResetDialog] = useState(false);
   const [showTierModal, setShowTierModal] = useState(false);
   const [showTrialModal, setShowTrialModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
 
   const handleResetCount = async () => {
-    if (!confirm("Reset submission count for this user?")) return;
-
-    setLoading(true);
+    setLoadingAction("reset");
     try {
       await resetSubmissionCountAdmin(user.id);
       toast.success("Submission count reset successfully");
+      setShowResetDialog(false);
       router.refresh();
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to reset count"
       );
     } finally {
-      setLoading(false);
+      setLoadingAction(null);
     }
   };
 
   const handleChangeTier = async (newTier: string) => {
-    setLoading(true);
+    setLoadingAction(newTier);
     try {
       await changeTierAdmin(
         user.id,
@@ -59,12 +89,12 @@ export default function UserDetailActions({ user }: { user: User }) {
         error instanceof Error ? error.message : "Failed to change tier"
       );
     } finally {
-      setLoading(false);
+      setLoadingAction(null);
     }
   };
 
   const handleExtendTrial = async (days: number) => {
-    setLoading(true);
+    setLoadingAction(`extend-${days}`);
     try {
       await extendTrialAdmin(user.id, days);
       toast.success(`Trial extended by ${days} days`);
@@ -75,12 +105,12 @@ export default function UserDetailActions({ user }: { user: User }) {
         error instanceof Error ? error.message : "Failed to extend trial"
       );
     } finally {
-      setLoading(false);
+      setLoadingAction(null);
     }
   };
 
   const handleCancel = async (immediate: boolean) => {
-    setLoading(true);
+    setLoadingAction(immediate ? "cancel-immediate" : "cancel-period");
     try {
       await cancelSubscriptionAdmin(user.id, immediate);
       toast.success(
@@ -95,172 +125,284 @@ export default function UserDetailActions({ user }: { user: User }) {
         error instanceof Error ? error.message : "Failed to cancel subscription"
       );
     } finally {
-      setLoading(false);
+      setLoadingAction(null);
     }
   };
+
+  const isLoading = loadingAction !== null;
 
   return (
     <>
       <div className="space-y-3">
-        <button
-          onClick={handleResetCount}
-          disabled={loading}
-          className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold transition-all disabled:opacity-50"
+        <Button
+          onClick={() => setShowResetDialog(true)}
+          disabled={isLoading}
+          variant="outline"
+          className="w-full gap-2"
         >
-          🔄 Reset Submission Count
-        </button>
+          <RotateCcw className="h-4 w-4" />
+          Reset Submission Count
+        </Button>
 
-        <button
+        <Button
           onClick={() => setShowTierModal(true)}
-          disabled={loading}
-          className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold transition-all disabled:opacity-50"
+          disabled={isLoading}
+          variant="outline"
+          className="w-full gap-2"
         >
-          🎯 Change Tier
-        </button>
+          <Settings className="h-4 w-4" />
+          Change Tier
+        </Button>
 
         {user.subscriptionStatus === "TRIALING" && (
-          <button
+          <Button
             onClick={() => setShowTrialModal(true)}
-            disabled={loading}
-            className="w-full px-4 py-3 bg-yellow-600 hover:bg-yellow-500 text-white rounded-lg font-bold transition-all disabled:opacity-50"
+            disabled={isLoading}
+            variant="outline"
+            className="w-full gap-2"
           >
-            ⏰ Extend Trial
-          </button>
+            <Clock className="h-4 w-4" />
+            Extend Trial
+          </Button>
         )}
 
         {user.subscriptionStatus === "ACTIVE" && user.stripeCustomerId && (
-          <button
+          <Button
             onClick={() => setShowCancelModal(true)}
-            disabled={loading}
-            className="w-full px-4 py-3 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold transition-all disabled:opacity-50"
+            disabled={isLoading}
+            variant="destructive"
+            className="w-full gap-2"
           >
-            ❌ Cancel Subscription
-          </button>
+            <XCircle className="h-4 w-4" />
+            Cancel Subscription
+          </Button>
         )}
       </div>
 
-      {showTierModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 border-2 border-purple-500/50 rounded-xl p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-black text-white mb-4">Change Tier</h3>
-            <p className="text-gray-400 mb-2">Change tier for {user.email}</p>
-            <p className="text-sm text-gray-500 mb-6">
-              Current: {user.subscriptionTier}
-            </p>
-            <div className="space-y-3">
+      {/* Reset Count Confirmation */}
+      <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset Submission Count?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will reset the submission count to 0 for{" "}
+              <span className="font-semibold">{user.email}</span>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetCount} disabled={isLoading}>
+              {loadingAction === "reset" && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Reset Count
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Change Tier Dialog */}
+      <Dialog open={showTierModal} onOpenChange={setShowTierModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Change Tier
+            </DialogTitle>
+            <DialogDescription>
+              Change tier for{" "}
+              <span className="font-semibold">{user.email}</span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <div className="rounded-lg border bg-muted/50 p-3 mb-4">
+              <p className="text-sm text-muted-foreground">
+                Current Tier:{" "}
+                <span className="font-semibold">{user.subscriptionTier}</span>
+              </p>
+            </div>
+
+            <div className="space-y-2">
               {user.subscriptionTier !== "STARTER" && (
-                <button
+                <Button
                   onClick={() => handleChangeTier("STARTER")}
-                  disabled={loading}
-                  className="w-full px-4 py-3 bg-gray-600 hover:bg-gray-500 text-white rounded-lg font-bold transition-all disabled:opacity-50"
+                  disabled={isLoading}
+                  variant="outline"
+                  className="w-full gap-2"
                 >
+                  {loadingAction === "STARTER" && (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  )}
+                  <Award className="h-4 w-4" />
                   Downgrade to STARTER
-                </button>
+                </Button>
               )}
               {user.subscriptionTier !== "HERO" && (
-                <button
+                <Button
                   onClick={() => handleChangeTier("HERO")}
-                  disabled={loading}
-                  className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold transition-all disabled:opacity-50"
+                  disabled={isLoading}
+                  variant="outline"
+                  className="w-full gap-2"
                 >
+                  {loadingAction === "HERO" && (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  )}
+                  <Zap className="h-4 w-4" />
                   Change to HERO
-                </button>
+                </Button>
               )}
               {user.subscriptionTier !== "LEGEND" && (
-                <button
+                <Button
                   onClick={() => handleChangeTier("LEGEND")}
-                  disabled={loading}
-                  className="w-full px-4 py-3 bg-yellow-600 hover:bg-yellow-500 text-white rounded-lg font-bold transition-all disabled:opacity-50"
+                  disabled={isLoading}
+                  variant="outline"
+                  className="w-full gap-2"
                 >
+                  {loadingAction === "LEGEND" && (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  )}
+                  <Crown className="h-4 w-4" />
                   Upgrade to LEGEND
-                </button>
+                </Button>
               )}
-              <button
-                onClick={() => setShowTierModal(false)}
-                disabled={loading}
-                className="w-full px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-bold transition-all disabled:opacity-50"
-              >
-                Cancel
-              </button>
             </div>
           </div>
-        </div>
-      )}
 
-      {showTrialModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 border-2 border-yellow-500/50 rounded-xl p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-black text-white mb-4">Extend Trial</h3>
-            <p className="text-gray-400 mb-6">Extend trial for {user.email}</p>
-            <div className="space-y-3">
-              <button
-                onClick={() => handleExtendTrial(3)}
-                disabled={loading}
-                className="w-full px-4 py-3 bg-yellow-600 hover:bg-yellow-500 text-white rounded-lg font-bold transition-all disabled:opacity-50"
-              >
-                Extend by 3 days
-              </button>
-              <button
-                onClick={() => handleExtendTrial(7)}
-                disabled={loading}
-                className="w-full px-4 py-3 bg-yellow-600 hover:bg-yellow-500 text-white rounded-lg font-bold transition-all disabled:opacity-50"
-              >
-                Extend by 7 days
-              </button>
-              <button
-                onClick={() => handleExtendTrial(14)}
-                disabled={loading}
-                className="w-full px-4 py-3 bg-yellow-600 hover:bg-yellow-500 text-white rounded-lg font-bold transition-all disabled:opacity-50"
-              >
-                Extend by 14 days
-              </button>
-              <button
-                onClick={() => setShowTrialModal(false)}
-                disabled={loading}
-                className="w-full px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-bold transition-all disabled:opacity-50"
-              >
-                Cancel
-              </button>
-            </div>
+          <DialogFooter>
+            <Button
+              onClick={() => setShowTierModal(false)}
+              disabled={isLoading}
+              variant="ghost"
+            >
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Extend Trial Dialog */}
+      <Dialog open={showTrialModal} onOpenChange={setShowTrialModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Extend Trial
+            </DialogTitle>
+            <DialogDescription>
+              Extend trial for{" "}
+              <span className="font-semibold">{user.email}</span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4 space-y-2">
+            <Button
+              onClick={() => handleExtendTrial(3)}
+              disabled={isLoading}
+              variant="outline"
+              className="w-full gap-2"
+            >
+              {loadingAction === "extend-3" && (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              )}
+              Extend by 3 days
+            </Button>
+            <Button
+              onClick={() => handleExtendTrial(7)}
+              disabled={isLoading}
+              variant="outline"
+              className="w-full gap-2"
+            >
+              {loadingAction === "extend-7" && (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              )}
+              Extend by 7 days
+            </Button>
+            <Button
+              onClick={() => handleExtendTrial(14)}
+              disabled={isLoading}
+              variant="outline"
+              className="w-full gap-2"
+            >
+              {loadingAction === "extend-14" && (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              )}
+              Extend by 14 days
+            </Button>
           </div>
-        </div>
-      )}
 
-      {showCancelModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 border-2 border-red-500/50 rounded-xl p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-black text-white mb-4">
+          <DialogFooter>
+            <Button
+              onClick={() => setShowTrialModal(false)}
+              disabled={isLoading}
+              variant="ghost"
+            >
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Subscription Dialog */}
+      <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
               Cancel Subscription
-            </h3>
-            <p className="text-gray-400 mb-6">
-              Cancel subscription for {user.email}?
-            </p>
-            <div className="space-y-3">
-              <button
+            </DialogTitle>
+            <DialogDescription>
+              Cancel subscription for{" "}
+              <span className="font-semibold">{user.email}</span>?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <div className="rounded-lg border bg-muted/50 p-4 mb-4">
+              <p className="text-sm text-muted-foreground">
+                Choose when to cancel the subscription. Canceling at period end
+                allows the user to keep access until their billing cycle
+                completes.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Button
                 onClick={() => handleCancel(false)}
-                disabled={loading}
-                className="w-full px-4 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold transition-all disabled:opacity-50"
+                disabled={isLoading}
+                variant="outline"
+                className="w-full gap-2"
               >
+                {loadingAction === "cancel-period" && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
                 Cancel at Period End
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => handleCancel(true)}
-                disabled={loading}
-                className="w-full px-4 py-3 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold transition-all disabled:opacity-50"
+                disabled={isLoading}
+                variant="destructive"
+                className="w-full gap-2"
               >
+                {loadingAction === "cancel-immediate" && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
                 Cancel Immediately
-              </button>
-              <button
-                onClick={() => setShowCancelModal(false)}
-                disabled={loading}
-                className="w-full px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-bold transition-all disabled:opacity-50"
-              >
-                Nevermind
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
-      )}
+
+          <DialogFooter>
+            <Button
+              onClick={() => setShowCancelModal(false)}
+              disabled={isLoading}
+              variant="ghost"
+            >
+              Nevermind
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

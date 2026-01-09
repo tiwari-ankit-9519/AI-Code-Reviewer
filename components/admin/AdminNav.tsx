@@ -2,52 +2,78 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import {
+  LayoutDashboard,
+  TrendingUp,
+  Clock,
+  BarChart3,
+  CreditCard,
+  Users,
+  Rocket,
+} from "lucide-react";
 
 export default function AdminNav() {
   const pathname = usePathname();
 
   const links = [
-    { href: "/dashboard/admin", label: "Dashboard", icon: "📊" },
+    {
+      href: "/dashboard/admin",
+      label: "Dashboard",
+      icon: LayoutDashboard,
+    },
     {
       href: "/dashboard/admin/subscription-analytics",
       label: "Revenue Analytics",
-      icon: "💰",
+      icon: TrendingUp,
     },
-    { href: "/dashboard/admin/jobs", label: "Cron Jobs", icon: "⚙️" },
-    { href: "/dashboard/admin/analytics", label: "Cron Analytics", icon: "📈" },
+    {
+      href: "/dashboard/admin/jobs",
+      label: "Cron Jobs",
+      icon: Clock,
+    },
+    {
+      href: "/dashboard/admin/analytics",
+      label: "Cron Analytics",
+      icon: BarChart3,
+    },
     {
       href: "/dashboard/admin/subscription",
       label: "Subscriptions",
-      icon: "💳",
+      icon: CreditCard,
     },
-    { href: "/dashboard/admin/users", label: "Users", icon: "👥" },
-    { href: "/dashboard/admin/leads", label: "Leads", icon: "🚀" },
+    {
+      href: "/dashboard/admin/users",
+      label: "Users",
+      icon: Users,
+    },
+    {
+      href: "/dashboard/admin/leads",
+      label: "Leads",
+      icon: Rocket,
+    },
   ];
 
   return (
-    <nav className="bg-gray-800/50 backdrop-blur-sm border-2 border-purple-500/30 rounded-xl p-4 mb-8">
-      <div className="flex gap-4 flex-wrap">
+    <Card className="mb-6 p-2">
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide">
         {links.map((link) => {
+          const Icon = link.icon;
           const isActive = pathname === link.href;
           return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`
-                px-6 py-3 rounded-xl font-bold transition-all
-                ${
-                  isActive
-                    ? "bg-purple-600 text-white"
-                    : "bg-gray-700/50 text-gray-400 hover:bg-gray-700 hover:text-white"
-                }
-              `}
-            >
-              <span className="mr-2">{link.icon}</span>
-              {link.label}
+            <Link key={link.href} href={link.href}>
+              <Button
+                variant={isActive ? "default" : "ghost"}
+                className="flex items-center gap-2 whitespace-nowrap"
+              >
+                <Icon className="h-4 w-4" />
+                <span className="hidden sm:inline">{link.label}</span>
+              </Button>
             </Link>
           );
         })}
       </div>
-    </nav>
+    </Card>
   );
 }

@@ -1,9 +1,11 @@
-// FILE PATH: app/dashboard/admin/subscriptions/page.tsx
-
 import { prisma } from "@/lib/prisma";
 import { Prisma, SubscriptionTier, SubscriptionStatus } from "@prisma/client";
 import SubscriptionFilters from "@/components/admin/SubscriptionFilters";
 import SubscriptionTable from "@/components/admin/SubscriptionTable";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { CreditCard, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface SearchParams {
   page?: string;
@@ -72,58 +74,67 @@ export default async function AdminSubscriptions({
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
+  const buildPageUrl = (pageNum: number) => {
+    const queryParams = new URLSearchParams();
+    queryParams.set("page", pageNum.toString());
+    if (params.tier) queryParams.set("tier", params.tier);
+    if (params.status) queryParams.set("status", params.status);
+    if (params.search) queryParams.set("search", params.search);
+    return `/dashboard/admin/subscriptions?${queryParams.toString()}`;
+  };
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div>
-        <h1 className="text-4xl font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-400 to-orange-500 mb-2">
-          SUBSCRIPTION MANAGEMENT
+        <h1 className="text-4xl font-bold tracking-tight mb-2 flex items-center gap-2">
+          <CreditCard className="h-8 w-8" />
+          Subscription Management
         </h1>
-        <p className="text-gray-400">
+        <p className="text-muted-foreground">
           Manage all user subscriptions and billing
         </p>
       </div>
 
+      {/* Filters */}
       <SubscriptionFilters
         currentTier={params.tier}
         currentStatus={params.status}
         currentSearch={params.search}
       />
 
-      <div className="bg-gray-800/50 backdrop-blur-sm border-2 border-purple-500/30 rounded-xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-sm text-gray-400">
-            Showing {users.length} of {totalCount} subscriptions
+      {/* Table Card */}
+      <Card>
+        <CardContent className="p-6">
+          {/* Pagination Header */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-sm text-muted-foreground">
+              Showing {users.length} of {totalCount} subscriptions
+            </div>
+            <div className="flex gap-2">
+              {page > 1 && (
+                <Link href={buildPageUrl(page - 1)}>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                </Link>
+              )}
+              {page < totalPages && (
+                <Link href={buildPageUrl(page + 1)}>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              )}
+            </div>
           </div>
-          <div className="flex gap-2">
-            {page > 1 && (
-              <a
-                href={`/dashboard/admin/subscriptions?page=${page - 1}${
-                  params.tier ? `&tier=${params.tier}` : ""
-                }${params.status ? `&status=${params.status}` : ""}${
-                  params.search ? `&search=${params.search}` : ""
-                }`}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-white font-bold transition-all"
-              >
-                Previous
-              </a>
-            )}
-            {page < totalPages && (
-              <a
-                href={`/dashboard/admin/subscriptions?page=${page + 1}${
-                  params.tier ? `&tier=${params.tier}` : ""
-                }${params.status ? `&status=${params.status}` : ""}${
-                  params.search ? `&search=${params.search}` : ""
-                }`}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-white font-bold transition-all"
-              >
-                Next
-              </a>
-            )}
-          </div>
-        </div>
 
-        <SubscriptionTable users={users} />
-      </div>
+          {/* Table */}
+          <SubscriptionTable users={users} />
+        </CardContent>
+      </Card>
     </div>
   );
 }

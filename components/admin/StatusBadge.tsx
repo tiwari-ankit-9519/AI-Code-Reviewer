@@ -1,16 +1,49 @@
+import { Badge } from "@/components/ui/badge";
+import {
+  CheckCircle,
+  Clock,
+  XCircle,
+  AlertTriangle,
+  Circle,
+} from "lucide-react";
+
 export default function StatusBadge({ status }: { status: string }) {
-  const getStatusStyles = () => {
+  const getStatusConfig = () => {
     switch (status) {
       case "ACTIVE":
-        return "bg-green-500/20 text-green-400 border-green-500/30";
+        return {
+          variant: "default" as const,
+          icon: CheckCircle,
+          className:
+            "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/50",
+        };
       case "TRIALING":
-        return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+        return {
+          variant: "secondary" as const,
+          icon: Clock,
+          className:
+            "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/50",
+        };
       case "CANCELLED":
-        return "bg-red-500/20 text-red-400 border-red-500/30";
+        return {
+          variant: "destructive" as const,
+          icon: XCircle,
+          className:
+            "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/50",
+        };
       case "PAST_DUE":
-        return "bg-orange-500/20 text-orange-400 border-orange-500/30";
+        return {
+          variant: "outline" as const,
+          icon: AlertTriangle,
+          className:
+            "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/50",
+        };
       default:
-        return "bg-gray-500/20 text-gray-400 border-gray-500/30";
+        return {
+          variant: "outline" as const,
+          icon: Circle,
+          className: "bg-muted text-muted-foreground",
+        };
     }
   };
 
@@ -18,11 +51,13 @@ export default function StatusBadge({ status }: { status: string }) {
     return status.replace("_", " ");
   };
 
+  const config = getStatusConfig();
+  const Icon = config.icon;
+
   return (
-    <span
-      className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${getStatusStyles()}`}
-    >
+    <Badge variant={config.variant} className={`gap-1 ${config.className}`}>
+      <Icon className="h-3 w-3" />
       {formatStatus(status)}
-    </span>
+    </Badge>
   );
 }

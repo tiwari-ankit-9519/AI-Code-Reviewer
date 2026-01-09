@@ -2,6 +2,18 @@ import { prisma } from "@/lib/prisma";
 import { getCronJobStats } from "@/lib/actions/admin-cron";
 import CronMetricsChart from "@/components/admin/CronMetricsChart";
 import CronHealthIndicator from "@/components/admin/CronHealthIndicator";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { BarChart3, AlertTriangle, Activity, Zap } from "lucide-react";
 
 export default async function CronAnalyticsPage() {
   const [dailyStats, monthlyStats] = await Promise.all([
@@ -26,45 +38,62 @@ export default async function CronAnalyticsPage() {
   const manualTriggers = allLogs.filter((log) =>
     log.jobName.startsWith("manual-")
   );
-
   const failedJobs = allLogs.filter((log) => log.status === "FAILED");
 
+  const getStatusVariant = (
+    status: string
+  ): "default" | "secondary" | "destructive" => {
+    switch (status) {
+      case "SUCCESS":
+        return "default";
+      case "PARTIAL":
+        return "secondary";
+      case "FAILED":
+        return "destructive";
+      default:
+        return "secondary";
+    }
+  };
+
   return (
-    <>
-      <div className="mb-8">
-        <h1 className="text-4xl font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-400 to-orange-500 mb-2">
-          📊 CRON ANALYTICS
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-4xl font-bold tracking-tight mb-2 flex items-center gap-2">
+          <BarChart3 className="h-8 w-8" />
+          Cron Analytics
         </h1>
-        <p className="text-gray-400">
+        <p className="text-muted-foreground">
           Performance metrics and health monitoring
         </p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6 mb-8">
-        <CronHealthIndicator
-          title="Daily Tasks Health"
-          stats={dailyStats}
-          color="blue"
-        />
+      {/* Health Indicators */}
+      <div className="grid md:grid-cols-3 gap-6">
+        <CronHealthIndicator title="Daily Tasks Health" stats={dailyStats} />
         <CronHealthIndicator
           title="Monthly Tasks Health"
           stats={monthlyStats}
-          color="purple"
         />
-        <div className="bg-gray-800/50 backdrop-blur-sm border-2 border-yellow-500/30 rounded-xl p-6">
-          <div className="text-gray-400 text-sm mb-2">
-            Manual Triggers (30d)
-          </div>
-          <div className="text-4xl font-black text-yellow-400 mb-2">
-            {manualTriggers.length}
-          </div>
-          <div className="text-xs text-gray-500">
-            Last 30 days manual executions
-          </div>
-        </div>
+
+        <Card className="border-yellow-500/50">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <Zap className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+              <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                Manual Triggers (30d)
+              </p>
+            </div>
+            <p className="text-4xl font-bold mb-2">{manualTriggers.length}</p>
+            <p className="text-xs text-muted-foreground">
+              Last 30 days manual executions
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6 mb-8">
+      {/* Metrics Charts */}
+      <div className="grid md:grid-cols-2 gap-6">
         <CronMetricsChart
           title="Daily Tasks - Last 30 Days"
           logs={allLogs.filter((log) => log.jobName === "daily-tasks")}
@@ -75,97 +104,86 @@ export default async function CronAnalyticsPage() {
         />
       </div>
 
+      {/* Failed Jobs Alert */}
       {failedJobs.length > 0 && (
-        <div className="bg-red-500/10 border-2 border-red-500/30 rounded-xl p-6 mb-8">
-          <h2 className="text-2xl font-black text-red-400 mb-4">
-            ⚠️ FAILED JOBS ({failedJobs.length})
-          </h2>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
-            {failedJobs.map((log) => (
-              <div
-                key={log.id}
-                className="bg-gray-900/50 border border-red-500/30 rounded-lg p-4"
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-white font-bold">{log.jobName}</span>
-                  <span className="text-sm text-gray-400">
-                    {new Date(log.executedAt).toLocaleString()}
-                  </span>
-                </div>
-                {log.error && (
-                  <p className="text-sm text-red-400 font-mono">{log.error}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Failed Jobs ({failedJobs.length})</AlertTitle>
+          <AlertDescription>
+            <div className="space-y-2 max-h-64 overflow-y-auto mt-4">
+              {failedJobs.map((log) => (
+                <Card key={log.id} className="bg-destructive/5">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-semibold font-mono text-sm">
+                        {log.jobName}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(log.executedAt).toLocaleString("en-IN", {
+                          dateStyle: "short",
+                          timeStyle: "short",
+                        })}
+                      </span>
+                    </div>
+                    {log.error && (
+                      <p className="text-sm font-mono text-destructive">
+                        {log.error}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </AlertDescription>
+        </Alert>
       )}
 
-      <div className="bg-gray-800/50 backdrop-blur-sm border-2 border-purple-500/30 rounded-xl p-6">
-        <h2 className="text-2xl font-black text-white mb-4">
-          📋 Recent Activity (Last 100)
-        </h2>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-700">
-                <th className="text-left text-gray-400 text-sm py-3 px-4">
-                  Job Name
-                </th>
-                <th className="text-left text-gray-400 text-sm py-3 px-4">
-                  Status
-                </th>
-                <th className="text-left text-gray-400 text-sm py-3 px-4">
-                  Duration
-                </th>
-                <th className="text-left text-gray-400 text-sm py-3 px-4">
-                  Executed At
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {allLogs.slice(0, 20).map((log) => (
-                <tr
-                  key={log.id}
-                  className="border-b border-gray-800 hover:bg-gray-700/30"
-                >
-                  <td className="py-3 px-4">
-                    <span className="text-white font-mono text-sm">
+      {/* Recent Activity Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Recent Activity (Last 100)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Job Name</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Duration</TableHead>
+                  <TableHead>Executed At</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {allLogs.slice(0, 20).map((log) => (
+                  <TableRow key={log.id}>
+                    <TableCell className="font-mono text-sm">
                       {log.jobName}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span
-                      className={`px-2 py-1 rounded text-xs font-bold ${
-                        log.status === "SUCCESS"
-                          ? "bg-green-500/20 text-green-400"
-                          : log.status === "PARTIAL"
-                          ? "bg-yellow-500/20 text-yellow-400"
-                          : "bg-red-500/20 text-red-400"
-                      }`}
-                    >
-                      {log.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="text-gray-400 font-mono text-sm">
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusVariant(log.status)}>
+                        {log.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-mono text-sm text-muted-foreground">
                       {log.duration}ms
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="text-gray-400 text-sm">
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
                       {new Date(log.executedAt).toLocaleString("en-IN", {
                         dateStyle: "short",
                         timeStyle: "short",
                       })}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

@@ -53,15 +53,21 @@ model EnterpriseLead {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  name          String
-  passwordHash  String
-  avatar        String?
-  emailVerified DateTime?
-  role          UserRole  @default(USER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                String    @id @default(uuid())
+  email             String    @unique
+  name              String
+  passwordHash      String
+  avatar            String?
+  emailVerified     DateTime?
+  role              UserRole  @default(USER)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  passwordChangedAt DateTime?
+
+  emailNotifications Boolean @default(true)
+  marketingEmails    Boolean @default(false)
+  submissionUpdates  Boolean @default(true)
+  securityAlerts     Boolean @default(true)
 
   subscriptionTier        SubscriptionTier   @default(STARTER)
   subscriptionStatus      SubscriptionStatus @default(ACTIVE)

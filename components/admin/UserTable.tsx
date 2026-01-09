@@ -1,7 +1,18 @@
+// components/admin/UserTable.tsx
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card } from "@/components/ui/card";
 import TierBadge from "@/components/admin/TierBadge";
 import StatusBadge from "@/components/admin/StatusBadge";
 import UserActions from "@/components/admin/UserActions";
 import { formatDistanceToNow } from "date-fns";
+import { Users } from "lucide-react";
 
 interface User {
   id: string;
@@ -20,99 +31,99 @@ interface User {
 export default function UserTable({ users }: { users: User[] }) {
   if (users.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-500">
-        No users found matching your filters
-      </div>
+      <Card className="p-12">
+        <div className="flex flex-col items-center justify-center text-center">
+          <Users className="h-12 w-12 text-muted-foreground mb-3" />
+          <p className="text-muted-foreground">
+            No users found matching your filters
+          </p>
+        </div>
+      </Card>
     );
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
-        <thead className="bg-gray-900/50 border-b-2 border-purple-500/30">
-          <tr>
-            <th className="px-6 py-4 text-left text-gray-400 text-sm font-bold">
-              User
-            </th>
-            <th className="px-6 py-4 text-left text-gray-400 text-sm font-bold">
-              Tier
-            </th>
-            <th className="px-6 py-4 text-left text-gray-400 text-sm font-bold">
-              Status
-            </th>
-            <th className="px-6 py-4 text-left text-gray-400 text-sm font-bold">
-              Trial Info
-            </th>
-            <th className="px-6 py-4 text-left text-gray-400 text-sm font-bold">
-              Usage
-            </th>
-            <th className="px-6 py-4 text-left text-gray-400 text-sm font-bold">
-              Joined
-            </th>
-            <th className="px-6 py-4 text-right text-gray-400 text-sm font-bold">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr
-              key={user.id}
-              className="border-b border-purple-500/10 hover:bg-purple-500/5 transition-all"
-            >
-              <td className="px-6 py-4">
-                <div>
-                  <p className="font-bold text-white">{user.name}</p>
-                  <p className="text-sm text-gray-400">{user.email}</p>
-                </div>
-              </td>
-              <td className="px-6 py-4">
-                <TierBadge tier={user.subscriptionTier} />
-              </td>
-              <td className="px-6 py-4">
-                <StatusBadge status={user.subscriptionStatus} />
-              </td>
-              <td className="px-6 py-4">
-                {user.subscriptionStatus === "TRIALING" && user.trialEndsAt ? (
+    <Card>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>User</TableHead>
+              <TableHead>Tier</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Trial Info</TableHead>
+              <TableHead>Usage</TableHead>
+              <TableHead>Joined</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {users.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell>
                   <div>
-                    <p className="text-sm text-yellow-400 font-bold">
-                      Ends{" "}
-                      {formatDistanceToNow(new Date(user.trialEndsAt), {
-                        addSuffix: true,
-                      })}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(user.trialEndsAt).toLocaleDateString("en-IN", {
-                        dateStyle: "medium",
-                      })}
+                    <p className="font-medium">{user.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {user.email}
                     </p>
                   </div>
-                ) : user.isTrialUsed ? (
-                  <span className="text-sm text-gray-500">Trial used</span>
-                ) : (
-                  <span className="text-sm text-gray-500">No trial</span>
-                )}
-              </td>
-              <td className="px-6 py-4">
-                <span className="text-white font-mono">
-                  {user.monthlySubmissionCount}
-                </span>
-                <span className="text-gray-500 text-sm ml-1">
-                  /{user.subscriptionTier === "STARTER" ? "5" : "∞"}
-                </span>
-              </td>
-              <td className="px-6 py-4 text-gray-400 text-sm">
-                {formatDistanceToNow(new Date(user.createdAt), {
-                  addSuffix: true,
-                })}
-              </td>
-              <td className="px-6 py-4">
-                <UserActions user={user} />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+                </TableCell>
+                <TableCell>
+                  <TierBadge tier={user.subscriptionTier} />
+                </TableCell>
+                <TableCell>
+                  <StatusBadge status={user.subscriptionStatus} />
+                </TableCell>
+                <TableCell>
+                  {user.subscriptionStatus === "TRIALING" &&
+                  user.trialEndsAt ? (
+                    <div>
+                      <p className="text-sm font-semibold text-yellow-600 dark:text-yellow-400">
+                        Ends{" "}
+                        {formatDistanceToNow(new Date(user.trialEndsAt), {
+                          addSuffix: true,
+                        })}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(user.trialEndsAt).toLocaleDateString(
+                          "en-IN",
+                          {
+                            dateStyle: "medium",
+                          }
+                        )}
+                      </p>
+                    </div>
+                  ) : user.isTrialUsed ? (
+                    <span className="text-sm text-muted-foreground">
+                      Trial used
+                    </span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">
+                      No trial
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <span className="font-mono">
+                    {user.monthlySubmissionCount}
+                  </span>
+                  <span className="text-muted-foreground text-sm ml-1">
+                    /{user.subscriptionTier === "STARTER" ? "5" : "∞"}
+                  </span>
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {formatDistanceToNow(new Date(user.createdAt), {
+                    addSuffix: true,
+                  })}
+                </TableCell>
+                <TableCell className="text-right">
+                  <UserActions user={user} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </Card>
   );
 }

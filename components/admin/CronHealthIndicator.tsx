@@ -1,101 +1,196 @@
 "use client";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  CheckCircle,
+  AlertCircle,
+  AlertTriangle,
+  XCircle,
+  Clock,
+  Activity,
+} from "lucide-react";
+
 interface CronStats {
   totalRuns: number;
   successfulRuns: number;
   failedRuns: number;
   successRate: number;
   avgDuration: number;
+  lastResult?: Record<string, unknown>;
 }
 
 interface CronHealthIndicatorProps {
   title: string;
   stats: CronStats;
-  color: "blue" | "purple" | "green" | "red";
 }
 
 export default function CronHealthIndicator({
   title,
   stats,
-  color,
 }: CronHealthIndicatorProps) {
   const getHealthStatus = (successRate: number) => {
-    if (successRate >= 95) return { label: "EXCELLENT", icon: "🟢" };
-    if (successRate >= 85) return { label: "GOOD", icon: "🟡" };
-    if (successRate >= 70) return { label: "WARNING", icon: "🟠" };
-    return { label: "CRITICAL", icon: "🔴" };
-  };
-
-  const getColorClasses = () => {
-    switch (color) {
-      case "blue":
-        return "border-blue-500/30 from-blue-500/10 to-blue-600/10";
-      case "purple":
-        return "border-purple-500/30 from-purple-500/10 to-purple-600/10";
-      case "green":
-        return "border-green-500/30 from-green-500/10 to-green-600/10";
-      case "red":
-        return "border-red-500/30 from-red-500/10 to-red-600/10";
-    }
+    if (successRate >= 95)
+      return {
+        label: "Excellent",
+        variant: "default" as const,
+        icon: CheckCircle,
+        color: "text-green-600 dark:text-green-400",
+      };
+    if (successRate >= 85)
+      return {
+        label: "Good",
+        variant: "secondary" as const,
+        icon: AlertCircle,
+        color: "text-yellow-600 dark:text-yellow-400",
+      };
+    if (successRate >= 70)
+      return {
+        label: "Warning",
+        variant: "outline" as const,
+        icon: AlertTriangle,
+        color: "text-orange-600 dark:text-orange-400",
+      };
+    return {
+      label: "Critical",
+      variant: "destructive" as const,
+      icon: XCircle,
+      color: "text-red-600 dark:text-red-400",
+    };
   };
 
   const health = getHealthStatus(stats.successRate);
+  const HealthIcon = health.icon;
+
+  const getProgressColor = (rate: number) => {
+    if (rate >= 95) return "bg-green-500";
+    if (rate >= 85) return "bg-yellow-500";
+    if (rate >= 70) return "bg-orange-500";
+    return "bg-red-500";
+  };
+
+  const formatLastResult = (result: Record<string, unknown>) => {
+    if (!result) return null;
+
+    const entries = Object.entries(result).filter(
+      ([key]) => key !== "success" && key !== "message"
+    );
+
+    if (entries.length === 0) return null;
+
+    return (
+      <div className="space-y-2">
+        <p className="text-xs font-semibold text-muted-foreground mb-2">
+          Last Result:
+        </p>
+        {entries.map(([key, value]) => {
+          const formattedKey = key
+            .replace(/([A-Z])/g, " $1")
+            .replace(/^./, (str) => str.toUpperCase())
+            .trim();
+
+          let displayValue: string;
+          if (Array.isArray(value)) {
+            displayValue = value.length === 0 ? "None" : value.join(", ");
+          } else if (typeof value === "object" && value !== null) {
+            displayValue = JSON.stringify(value);
+          } else {
+            displayValue = String(value);
+          }
+
+          return (
+            <div
+              key={key}
+              className="flex items-center justify-between text-sm py-1 px-2 rounded-md bg-muted/50"
+            >
+              <span className="text-muted-foreground">{formattedKey}:</span>
+              <span className="font-mono font-semibold">
+                {displayValue === "0" || displayValue === "None" ? (
+                  <span className="text-muted-foreground">{displayValue}</span>
+                ) : (
+                  <span className="text-primary">{displayValue}</span>
+                )}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
-    <div
-      className={`bg-linear-to-br ${getColorClasses()} backdrop-blur-sm border-2 rounded-xl p-6`}
-    >
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-white font-bold text-lg">{title}</h3>
-        <span className="text-2xl">{health.icon}</span>
-      </div>
-
-      <div className="space-y-3">
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base font-semibold">{title}</CardTitle>
+          <Badge variant={health.variant} className="gap-1">
+            <HealthIcon className="h-3 w-3" />
+            {health.label}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Success Rate */}
         <div>
-          <div className="text-gray-400 text-xs mb-1">Health Status</div>
-          <div className="text-white font-black text-xl">{health.label}</div>
-        </div>
-
-        <div>
-          <div className="text-gray-400 text-xs mb-1">Success Rate</div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-white font-black text-2xl">
-              {stats.successRate.toFixed(1)}%
+          <div className="flex items-baseline justify-between mb-2">
+            <span className="text-sm font-medium text-muted-foreground">
+              Success Rate
             </span>
-            <span className="text-gray-500 text-sm">
-              ({stats.successfulRuns}/{stats.totalRuns})
-            </span>
+            <div className="flex items-baseline gap-2">
+              <span className={`text-2xl font-bold ${health.color}`}>
+                {stats.successRate.toFixed(1)}%
+              </span>
+              <span className="text-xs text-muted-foreground">
+                ({stats.successfulRuns}/{stats.totalRuns})
+              </span>
+            </div>
+          </div>
+          <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+            <div
+              className={`h-full transition-all ${getProgressColor(
+                stats.successRate
+              )}`}
+              style={{ width: `${stats.successRate}%` }}
+            />
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <div className="text-gray-400 text-xs mb-1">Avg Duration</div>
-            <div className="text-white font-bold">{stats.avgDuration}ms</div>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1 rounded-lg border bg-card p-3">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              Avg Duration
+            </div>
+            <div className="text-lg font-bold">{stats.avgDuration}ms</div>
           </div>
-          <div>
-            <div className="text-gray-400 text-xs mb-1">Failed</div>
-            <div className="text-red-400 font-bold">{stats.failedRuns}</div>
+          <div className="space-y-1 rounded-lg border bg-card p-3">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <XCircle className="h-3 w-3" />
+              Failed
+            </div>
+            <div className="text-lg font-bold text-destructive">
+              {stats.failedRuns}
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="mt-4 pt-4 border-t border-gray-700">
-        <div className="w-full bg-gray-700 rounded-full h-2">
-          <div
-            className={`h-2 rounded-full transition-all ${
-              stats.successRate >= 95
-                ? "bg-green-500"
-                : stats.successRate >= 85
-                ? "bg-yellow-500"
-                : stats.successRate >= 70
-                ? "bg-orange-500"
-                : "bg-red-500"
-            }`}
-            style={{ width: `${stats.successRate}%` }}
-          />
+        {/* Total Runs */}
+        <div className="flex items-center justify-between rounded-lg border bg-muted/50 px-3 py-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Activity className="h-4 w-4" />
+            Total Runs
+          </div>
+          <span className="font-semibold">{stats.totalRuns}</span>
         </div>
-      </div>
-    </div>
+
+        {/* Last Result */}
+        {stats.lastResult && (
+          <div className="rounded-lg border bg-muted/30 p-3">
+            {formatLastResult(stats.lastResult)}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

@@ -1,3 +1,4 @@
+// lib/analytics/metrics-calculator.ts
 "use server";
 
 import { prisma } from "@/lib/prisma";
@@ -11,12 +12,14 @@ export async function calculateMRR(): Promise<number> {
       where: {
         subscriptionTier: "HERO",
         subscriptionStatus: "ACTIVE",
+        stripeCustomerId: { not: null },
       },
     }),
     prisma.user.count({
       where: {
         subscriptionTier: "LEGEND",
         subscriptionStatus: "ACTIVE",
+        stripeCustomerId: { not: null },
       },
     }),
   ]);
@@ -37,6 +40,7 @@ export async function calculateARPU(): Promise<number> {
     where: {
       subscriptionTier: { in: ["HERO", "LEGEND"] },
       subscriptionStatus: "ACTIVE",
+      stripeCustomerId: { not: null },
     },
   });
 
@@ -54,6 +58,7 @@ export async function calculateChurnRate(
     where: {
       subscriptionTier: { in: ["HERO", "LEGEND"] },
       subscriptionStatus: "ACTIVE",
+      stripeCustomerId: { not: null },
       createdAt: { lt: periodStart },
     },
   });
@@ -120,6 +125,7 @@ export async function calculateRevenueGrowth(): Promise<number> {
     where: {
       subscriptionTier: "HERO",
       subscriptionStatus: "ACTIVE",
+      stripeCustomerId: { not: null },
       createdAt: { lte: lastMonthEnd },
     },
   });
@@ -128,6 +134,7 @@ export async function calculateRevenueGrowth(): Promise<number> {
     where: {
       subscriptionTier: "LEGEND",
       subscriptionStatus: "ACTIVE",
+      stripeCustomerId: { not: null },
       createdAt: { lte: lastMonthEnd },
     },
   });
@@ -213,12 +220,14 @@ export async function getActiveSubscriptionsByTier() {
       where: {
         subscriptionTier: "HERO",
         subscriptionStatus: "ACTIVE",
+        stripeCustomerId: { not: null },
       },
     }),
     prisma.user.count({
       where: {
         subscriptionTier: "LEGEND",
         subscriptionStatus: "ACTIVE",
+        stripeCustomerId: { not: null },
       },
     }),
   ]);
@@ -253,12 +262,7 @@ export async function getTrialMetrics(month: number, year: number) {
 
   const conversionRate = started > 0 ? (converted / started) * 100 : 0;
 
-  return {
-    started,
-    converted,
-    expired,
-    conversionRate: Math.round(conversionRate * 10) / 10,
-  };
+  return { started, converted, expired, conversionRate };
 }
 
 export async function getSubmissionMetrics(month: number, year: number) {
@@ -269,9 +273,12 @@ export async function getSubmissionMetrics(month: number, year: number) {
     where: {
       createdAt: { gte: periodStart, lte: periodEnd },
     },
-    include: {
+    select: {
+      userId: true,
       user: {
-        select: { subscriptionTier: true },
+        select: {
+          subscriptionTier: true,
+        },
       },
     },
   });
@@ -295,6 +302,6 @@ export async function getSubmissionMetrics(month: number, year: number) {
   return {
     total: submissions.length,
     byTier,
-    avgPerUser: Math.round(avgPerUser * 10) / 10,
+    avgPerUser,
   };
 }

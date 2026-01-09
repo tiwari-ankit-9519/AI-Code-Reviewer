@@ -4,6 +4,16 @@ import { useState } from "react";
 import { updateLeadStatus } from "@/lib/actions/admin-leads";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Loader2, Save } from "lucide-react";
 
 interface Lead {
   id: string;
@@ -38,31 +48,40 @@ export default function UpdateLeadForm({ lead }: { lead: Lead }) {
 
   return (
     <div className="grid md:grid-cols-2 gap-6">
-      <div>
-        <label className="block text-sm font-black text-gray-300 mb-2">
-          Lead Status
-        </label>
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="w-full px-4 py-3 bg-gray-900 border-2 border-purple-500/30 rounded-xl text-white focus:border-purple-500 outline-none"
-        >
-          <option value="NEW">New</option>
-          <option value="CONTACTED">Contacted</option>
-          <option value="QUALIFIED">Qualified</option>
-          <option value="CONVERTED">Converted</option>
-          <option value="LOST">Lost</option>
-        </select>
+      <div className="space-y-2">
+        <Label htmlFor="lead-status">Lead Status</Label>
+        <Select value={status} onValueChange={setStatus}>
+          <SelectTrigger id="lead-status">
+            <SelectValue placeholder="Select status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="NEW">New</SelectItem>
+            <SelectItem value="CONTACTED">Contacted</SelectItem>
+            <SelectItem value="QUALIFIED">Qualified</SelectItem>
+            <SelectItem value="CONVERTED">Converted</SelectItem>
+            <SelectItem value="LOST">Lost</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex items-end">
-        <button
+        <Button
           onClick={handleUpdateStatus}
           disabled={loading || status === lead.status}
-          className="w-full px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold transition-all disabled:opacity-50"
+          className="w-full gap-2"
         >
-          {loading ? "Updating..." : "Update Status"}
-        </button>
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Updating...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" />
+              Update Status
+            </>
+          )}
+        </Button>
       </div>
     </div>
   );

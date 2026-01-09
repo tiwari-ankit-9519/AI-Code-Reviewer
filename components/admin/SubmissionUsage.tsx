@@ -1,3 +1,8 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { FileText, TrendingUp, Zap, Crown, Award } from "lucide-react";
+
 interface SubmissionMetrics {
   total: number;
   byTier: {
@@ -14,109 +19,157 @@ interface SubmissionUsageProps {
 
 export default function SubmissionUsage({ metrics }: SubmissionUsageProps) {
   const getPercentage = (value: number) => {
-    return metrics.total > 0 ? ((value / metrics.total) * 100).toFixed(1) : 0;
+    return metrics.total > 0 ? (value / metrics.total) * 100 : 0;
   };
 
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm border-2 border-purple-500/30 rounded-xl p-6">
-      <h2 className="text-2xl font-black text-white mb-6">Submission Usage</h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <div className="mb-4">
-            <div className="text-gray-400 text-sm mb-2">
-              Total Submissions This Month
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FileText className="h-5 w-5" />
+          Submission Usage
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left Column - Total & Breakdown */}
+          <div className="space-y-6">
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">
+                Total Submissions This Month
+              </p>
+              <p className="text-5xl font-bold tracking-tight">
+                {metrics.total.toLocaleString()}
+              </p>
             </div>
-            <div className="text-5xl font-black text-white">
-              {metrics.total.toLocaleString()}
+
+            <div className="space-y-4">
+              {/* Starter Tier */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <Award className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Starter Tier</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {metrics.byTier.starter} (
+                    {getPercentage(metrics.byTier.starter).toFixed(1)}%)
+                  </span>
+                </div>
+                <Progress
+                  value={getPercentage(metrics.byTier.starter)}
+                  className="h-2"
+                />
+              </div>
+
+              {/* Hero Tier */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium text-primary">
+                      Hero Tier
+                    </span>
+                  </div>
+                  <span className="text-sm font-semibold text-primary">
+                    {metrics.byTier.hero} (
+                    {getPercentage(metrics.byTier.hero).toFixed(1)}%)
+                  </span>
+                </div>
+                <Progress
+                  value={getPercentage(metrics.byTier.hero)}
+                  className="h-2 [&>div]:bg-primary"
+                />
+              </div>
+
+              {/* Legend Tier */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <Crown className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                    <span className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                      Legend Tier
+                    </span>
+                  </div>
+                  <span className="text-sm font-semibold text-yellow-600 dark:text-yellow-400">
+                    {metrics.byTier.legend} (
+                    {getPercentage(metrics.byTier.legend).toFixed(1)}%)
+                  </span>
+                </div>
+                <Progress
+                  value={getPercentage(metrics.byTier.legend)}
+                  className="h-2 [&>div]:bg-yellow-500"
+                />
+              </div>
             </div>
           </div>
 
-          <div className="space-y-3 mt-6">
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-gray-400">Starter Tier</span>
-                <span className="text-sm font-bold text-gray-400">
-                  {metrics.byTier.starter} (
-                  {getPercentage(metrics.byTier.starter)}%)
-                </span>
+          {/* Right Column - Average Stats */}
+          <Card className="bg-muted/50">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold">
+                  Average Submissions per User
+                </h3>
               </div>
-              <div className="w-full bg-gray-700 rounded-full h-2">
-                <div
-                  className="bg-gray-400 h-2 rounded-full transition-all"
-                  style={{ width: `${getPercentage(metrics.byTier.starter)}%` }}
-                />
-              </div>
-            </div>
 
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-purple-400">Hero Tier</span>
-                <span className="text-sm font-bold text-purple-400">
-                  {metrics.byTier.hero} ({getPercentage(metrics.byTier.hero)}%)
-                </span>
+              <div className="mb-6">
+                <p className="text-6xl font-bold text-primary mb-2">
+                  {metrics.avgPerUser.toFixed(1)}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  submissions per user this month
+                </p>
               </div>
-              <div className="w-full bg-gray-700 rounded-full h-2">
-                <div
-                  className="bg-purple-500 h-2 rounded-full transition-all"
-                  style={{ width: `${getPercentage(metrics.byTier.hero)}%` }}
-                />
-              </div>
-            </div>
 
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-yellow-400">Legend Tier</span>
-                <span className="text-sm font-bold text-yellow-400">
-                  {metrics.byTier.legend} (
-                  {getPercentage(metrics.byTier.legend)}%)
-                </span>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <Award className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
+                      Starter (Limit: 5)
+                    </span>
+                  </div>
+                  <Badge
+                    variant={metrics.byTier.starter > 0 ? "default" : "outline"}
+                  >
+                    {metrics.byTier.starter > 0 ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary" />
+                    <span className="text-sm text-primary">
+                      Hero (Unlimited)
+                    </span>
+                  </div>
+                  <Badge
+                    variant={metrics.byTier.hero > 0 ? "default" : "outline"}
+                  >
+                    {metrics.byTier.hero > 0 ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <Crown className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                    <span className="text-sm text-yellow-600 dark:text-yellow-400">
+                      Legend (Unlimited)
+                    </span>
+                  </div>
+                  <Badge
+                    variant={metrics.byTier.legend > 0 ? "default" : "outline"}
+                  >
+                    {metrics.byTier.legend > 0 ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
               </div>
-              <div className="w-full bg-gray-700 rounded-full h-2">
-                <div
-                  className="bg-yellow-500 h-2 rounded-full transition-all"
-                  style={{ width: `${getPercentage(metrics.byTier.legend)}%` }}
-                />
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
-
-        <div className="bg-gray-900/50 rounded-lg p-6 border border-purple-500/30">
-          <h3 className="text-lg font-black text-white mb-4">
-            Average Submissions per User
-          </h3>
-          <div className="text-6xl font-black text-purple-400 mb-4">
-            {metrics.avgPerUser.toFixed(1)}
-          </div>
-          <p className="text-sm text-gray-400 mb-6">
-            submissions per user this month
-          </p>
-
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-400">Starter (Limit: 5)</span>
-              <span className="text-sm font-bold text-gray-300">
-                {metrics.byTier.starter > 0 ? "Active" : "Inactive"}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-purple-400">Hero (Unlimited)</span>
-              <span className="text-sm font-bold text-purple-300">
-                {metrics.byTier.hero > 0 ? "Active" : "Inactive"}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-yellow-400">
-                Legend (Unlimited)
-              </span>
-              <span className="text-sm font-bold text-yellow-300">
-                {metrics.byTier.legend > 0 ? "Active" : "Inactive"}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -1,247 +1,755 @@
+// app/dashboard/settings/settings-client.tsx
 "use client";
 
 import { useState } from "react";
-import { SettingsForm } from "@/components/settings-form";
-import { PasswordForm } from "@/components/password-form";
-import { DeleteAccountButton } from "@/components/delete-account-button";
-import { SubscriptionTabClient } from "@/components/subscription-tab";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import {
+  User,
+  Mail,
+  Calendar,
+  FileCode,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+  Save,
+  Trash2,
+  CreditCard,
+  Shield,
+  Bell,
+  Key,
+} from "lucide-react";
+import {
+  updateProfile,
+  changePassword,
+  updateNotificationSettings,
+  deleteAccount,
+} from "@/lib/actions/user-settings";
 
-interface UserProfile {
-  id: string;
-  name: string | null;
-  email: string;
-  avatar: string | null;
-  createdAt: Date;
-  emailVerified: Date | null;
-  _count: {
-    submissions: number;
+interface SettingsClientProps {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatar: string | null;
+    createdAt: Date;
+    emailVerified: Date | null;
+    passwordChangedAt: Date | null;
+    _count: {
+      submissions: number;
+    };
   };
 }
 
-export function SettingsClient({ user }: { user: UserProfile }) {
-  const [activeTab, setActiveTab] = useState<
-    "profile" | "security" | "subscription" | "danger"
-  >("profile");
+export function SettingsClient({ user }: SettingsClientProps) {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [showNotificationDialog, setShowNotificationDialog] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name: user.name,
+    email: user.email,
+  });
+
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  const [notificationSettings, setNotificationSettings] = useState({
+    emailNotifications: true,
+    marketingEmails: false,
+    submissionUpdates: true,
+    securityAlerts: true,
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const result = await updateProfile(formData);
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to update profile");
+      }
+
+      toast.success("Profile updated successfully!");
+      router.refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update profile"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("Passwords don't match");
+      return;
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+
+    setIsChangingPassword(true);
+
+    try {
+      const result = await changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to change password");
+      }
+
+      toast.success("Password changed successfully!");
+      setShowPasswordDialog(false);
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      router.refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to change password"
+      );
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleNotificationSave = async () => {
+    setIsSavingNotifications(true);
+
+    try {
+      const result = await updateNotificationSettings(notificationSettings);
+
+      if (!result.success) {
+        throw new Error(
+          result.error || "Failed to update notification settings"
+        );
+      }
+
+      toast.success("Notification settings updated!");
+      setShowNotificationDialog(false);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update notification settings"
+      );
+    } finally {
+      setIsSavingNotifications(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+
+    try {
+      const result = await deleteAccount();
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to delete account");
+      }
+
+      toast.success("Account deleted successfully");
+      router.push("/");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete account"
+      );
+      setIsDeleting(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handlePasswordInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = e.target;
+    setPasswordData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const getPasswordChangeText = () => {
+    if (!user.passwordChangedAt) {
+      return "Never changed";
+    }
+    return `Last changed ${formatDistanceToNow(
+      new Date(user.passwordChangedAt),
+      { addSuffix: true }
+    )}`;
+  };
 
   return (
-    <div className="space-y-8">
+    <div className="container max-w-4xl mx-auto py-8 space-y-6">
+      {/* Header */}
       <div>
-        <h1
-          className="text-4xl md:text-5xl font-black text-white font-mono uppercase"
-          style={{ textShadow: "0 0 20px rgba(255,255,255,0.3)" }}
-        >
-          ⚙️ Settings
+        <h1 className="text-4xl font-bold tracking-tight mb-2 flex items-center gap-2">
+          <User className="h-8 w-8" />
+          Account Settings
         </h1>
-        <p className="text-gray-400 mt-2 font-mono text-lg">
-          Configure your warrior profile and preferences
+        <p className="text-muted-foreground">
+          Manage your account settings and preferences
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-1">
-          <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 p-4 shadow-xl sticky top-24">
-            <nav className="space-y-2">
-              <button
-                onClick={() => setActiveTab("profile")}
-                className={`w-full text-left px-4 py-3 rounded-lg font-bold font-mono text-sm transition-all ${
-                  activeTab === "profile"
-                    ? "bg-purple-500/20 text-purple-300 border-2 border-purple-400/50"
-                    : "hover:bg-purple-500/20 text-gray-400 hover:text-purple-300"
-                }`}
-              >
-                ⚔️ Profile
-              </button>
-              <button
-                onClick={() => setActiveTab("security")}
-                className={`w-full text-left px-4 py-3 rounded-lg font-bold font-mono text-sm transition-all ${
-                  activeTab === "security"
-                    ? "bg-purple-500/20 text-purple-300 border-2 border-purple-400/50"
-                    : "hover:bg-purple-500/20 text-gray-400 hover:text-purple-300"
-                }`}
-              >
-                🔒 Security
-              </button>
-              <button
-                onClick={() => setActiveTab("subscription")}
-                className={`w-full text-left px-4 py-3 rounded-lg font-bold font-mono text-sm transition-all ${
-                  activeTab === "subscription"
-                    ? "bg-purple-500/20 text-purple-300 border-2 border-purple-400/50"
-                    : "hover:bg-purple-500/20 text-gray-400 hover:text-purple-300"
-                }`}
-              >
-                💳 Subscription
-              </button>
-              <button
-                onClick={() => setActiveTab("danger")}
-                className={`w-full text-left px-4 py-3 rounded-lg font-bold font-mono text-sm transition-all ${
-                  activeTab === "danger"
-                    ? "bg-purple-500/20 text-purple-300 border-2 border-purple-400/50"
-                    : "hover:bg-purple-500/20 text-gray-400 hover:text-purple-300"
-                }`}
-              >
-                ⚠️ Danger Zone
-              </button>
-            </nav>
+      {/* Profile Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile Information</CardTitle>
+          <CardDescription>
+            Update your personal information and profile picture
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Avatar Section */}
+          <div className="flex items-center gap-4">
+            <Avatar className="h-20 w-20 border-2">
+              {user.avatar ? (
+                <AvatarImage src={user.avatar} alt={user.name} />
+              ) : (
+                <AvatarFallback className="text-xl font-bold">
+                  {getInitials(user.name)}
+                </AvatarFallback>
+              )}
+            </Avatar>
+            <div>
+              <h3 className="font-semibold text-lg">{user.name}</h3>
+              <p className="text-sm text-muted-foreground">{user.email}</p>
+            </div>
           </div>
-        </div>
 
-        <div className="lg:col-span-3 space-y-6">
-          {activeTab === "profile" && (
-            <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-blue-500/50 shadow-2xl overflow-hidden">
-              <div className="px-6 py-5 border-b-4 border-blue-500/30 bg-linear-to-r from-blue-900/20 to-cyan-900/20">
-                <h2 className="text-2xl font-black text-white font-mono uppercase flex items-center gap-2">
-                  <span>⚔️</span>
-                  Profile Information
-                </h2>
-                <p className="text-sm text-gray-400 mt-1 font-mono">
-                  Update your warrior details
-                </p>
-              </div>
-              <div className="p-6">
-                <SettingsForm user={user} />
-              </div>
+          <Separator />
+
+          {/* Edit Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="Your name"
+                required
+              />
             </div>
-          )}
 
-          {activeTab === "security" && (
-            <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 shadow-2xl overflow-hidden">
-              <div className="px-6 py-5 border-b-4 border-purple-500/30 bg-linear-to-r from-purple-900/20 to-pink-900/20">
-                <h2 className="text-2xl font-black text-white font-mono uppercase flex items-center gap-2">
-                  <span>🔒</span>
-                  Change Password
-                </h2>
-                <p className="text-sm text-gray-400 mt-1 font-mono">
-                  Strengthen your account defenses
-                </p>
-              </div>
-              <div className="p-6">
-                <PasswordForm />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="your@email.com"
+                required
+              />
             </div>
-          )}
 
-          {activeTab === "subscription" && (
-            <SubscriptionTabClient userId={user.id} />
-          )}
+            <Button type="submit" disabled={isLoading} className="gap-2">
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
-          {activeTab === "danger" && (
-            <div className="bg-linear-to-br from-red-900/30 to-red-950/30 rounded-2xl border-4 border-red-500 shadow-2xl overflow-hidden">
-              <div className="px-6 py-5 border-b-4 border-red-500/50 bg-linear-to-r from-red-900/40 to-orange-900/40">
-                <h2 className="text-2xl font-black text-red-400 font-mono uppercase flex items-center gap-2">
-                  <span>⚠️</span>
-                  Danger Zone
-                </h2>
-                <p className="text-sm text-gray-400 mt-1 font-mono">
-                  Permanently delete your warrior account
-                </p>
+      {/* Account Stats */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Account Statistics</CardTitle>
+          <CardDescription>Overview of your account activity</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-start gap-3 p-4 rounded-lg border bg-card">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Calendar className="h-5 w-5 text-primary" />
               </div>
-              <div className="p-6">
-                <div className="bg-red-500/10 border-2 border-red-400/50 rounded-xl p-4 mb-4">
-                  <div className="flex items-start gap-3">
-                    <svg
-                      className="w-6 h-6 text-red-400 shrink-0 mt-0.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                      />
-                    </svg>
-                    <div>
-                      <h4 className="text-sm font-black text-red-300 mb-1 font-mono">
-                        This action cannot be undone!
-                      </h4>
-                      <p className="text-xs text-red-400 font-mono">
-                        All your quests, achievements, and data will be
-                        permanently lost.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <DeleteAccountButton />
-              </div>
-            </div>
-          )}
-
-          {/* <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 p-6 shadow-xl">
-            <h3 className="text-lg font-black text-white mb-4 font-mono uppercase">
-              📊 Account Stats
-            </h3>
-            <div className="space-y-4">
-              <div className="bg-cyan-500/10 border-2 border-cyan-400/50 rounded-lg p-3">
-                <p className="text-xs text-cyan-300 mb-1 font-mono uppercase font-bold">
-                  Member Since
-                </p>
-                <p className="text-sm font-black text-white font-mono">
+              <div>
+                <p className="text-sm text-muted-foreground">Member Since</p>
+                <p className="font-semibold">
                   {new Date(user.createdAt).toLocaleDateString("en-US", {
                     month: "long",
-                    day: "numeric",
                     year: "numeric",
                   })}
                 </p>
               </div>
-              <div className="bg-pink-500/10 border-2 border-pink-400/50 rounded-lg p-3">
-                <p className="text-xs text-pink-300 mb-1 font-mono uppercase font-bold">
-                  Total Quests
-                </p>
-                <p className="text-sm font-black text-white font-mono">
-                  {user._count.submissions}
-                </p>
+            </div>
+
+            <div className="flex items-start gap-3 p-4 rounded-lg border bg-card">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <FileCode className="h-5 w-5 text-primary" />
               </div>
-              <div className="bg-green-500/10 border-2 border-green-400/50 rounded-lg p-3">
-                <p className="text-xs text-green-300 mb-1 font-mono uppercase font-bold">
-                  Email Status
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Total Submissions
                 </p>
-                <div className="flex items-center gap-2">
-                  {user.emailVerified ? (
-                    <>
-                      <svg
-                        className="w-5 h-5 text-green-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      <span className="text-sm font-black text-green-400 font-mono">
-                        ✓ Verified
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <svg
-                        className="w-5 h-5 text-yellow-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                        />
-                      </svg>
-                      <span className="text-sm font-black text-yellow-400 font-mono">
-                        ! Not Verified
-                      </span>
-                    </>
-                  )}
-                </div>
+                <p className="font-semibold">{user._count.submissions}</p>
               </div>
             </div>
-          </div> */}
-        </div>
-      </div>
+
+            <div className="flex items-start gap-3 p-4 rounded-lg border bg-card">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Mail className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Email Status</p>
+                <p className="font-semibold">
+                  {user.emailVerified ? "Verified" : "Not Verified"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Email Verification Alert */}
+      {!user.emailVerified && (
+        <Alert className="border-yellow-500/50 bg-yellow-500/10">
+          <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+          <AlertDescription className="text-yellow-600 dark:text-yellow-400">
+            Your email address is not verified. Please check your inbox for a
+            verification link.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {user.emailVerified && (
+        <Alert className="border-green-500/50 bg-green-500/10">
+          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <AlertDescription className="text-green-600 dark:text-green-400">
+            Your email address has been verified successfully.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Security Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Security
+          </CardTitle>
+          <CardDescription>
+            Manage your account security settings
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between p-4 rounded-lg border">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Key className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium">Password</p>
+                <p className="text-sm text-muted-foreground">
+                  {getPasswordChangeText()}
+                </p>
+              </div>
+            </div>
+            <Dialog
+              open={showPasswordDialog}
+              onOpenChange={setShowPasswordDialog}
+            >
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  Change Password
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Change Password</DialogTitle>
+                  <DialogDescription>
+                    Enter your current password and choose a new one.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handlePasswordChange}>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="currentPassword">Current Password</Label>
+                      <Input
+                        id="currentPassword"
+                        name="currentPassword"
+                        type="password"
+                        value={passwordData.currentPassword}
+                        onChange={handlePasswordInputChange}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="newPassword">New Password</Label>
+                      <Input
+                        id="newPassword"
+                        name="newPassword"
+                        type="password"
+                        value={passwordData.newPassword}
+                        onChange={handlePasswordInputChange}
+                        required
+                        minLength={8}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword">
+                        Confirm New Password
+                      </Label>
+                      <Input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type="password"
+                        value={passwordData.confirmPassword}
+                        onChange={handlePasswordInputChange}
+                        required
+                        minLength={8}
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowPasswordDialog(false)}
+                      disabled={isChangingPassword}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={isChangingPassword}>
+                      {isChangingPassword ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Changing...
+                        </>
+                      ) : (
+                        "Change Password"
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="flex items-center justify-between p-4 rounded-lg border">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Shield className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium">Two-Factor Authentication</p>
+                <p className="text-sm text-muted-foreground">
+                  Add an extra layer of security
+                </p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm" disabled>
+              Coming Soon
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Subscription Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5" />
+            Subscription & Billing
+          </CardTitle>
+          <CardDescription>
+            Manage your subscription and payment methods
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Current Plan</p>
+              <p className="text-sm text-muted-foreground">
+                View and manage your subscription
+              </p>
+            </div>
+            <Link href="/dashboard/subscription">
+              <Button variant="outline" size="sm">
+                Manage Subscription
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Notifications Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Notifications
+          </CardTitle>
+          <CardDescription>
+            Configure how you receive notifications
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Dialog
+            open={showNotificationDialog}
+            onOpenChange={setShowNotificationDialog}
+          >
+            <DialogTrigger asChild>
+              <div className="flex items-center justify-between p-4 rounded-lg border cursor-pointer hover:bg-muted/50">
+                <div>
+                  <p className="font-medium">Notification Preferences</p>
+                  <p className="text-sm text-muted-foreground">
+                    Manage email and app notifications
+                  </p>
+                </div>
+                <Button variant="outline" size="sm">
+                  Configure
+                </Button>
+              </div>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Notification Settings</DialogTitle>
+                <DialogDescription>
+                  Choose what notifications you want to receive
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Email Notifications</p>
+                    <p className="text-sm text-muted-foreground">
+                      Receive updates about your submissions
+                    </p>
+                  </div>
+                  <Switch
+                    checked={notificationSettings.emailNotifications}
+                    onCheckedChange={(checked) =>
+                      setNotificationSettings((prev) => ({
+                        ...prev,
+                        emailNotifications: checked,
+                      }))
+                    }
+                  />
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Submission Updates</p>
+                    <p className="text-sm text-muted-foreground">
+                      Get notified when your code review is complete
+                    </p>
+                  </div>
+                  <Switch
+                    checked={notificationSettings.submissionUpdates}
+                    onCheckedChange={(checked) =>
+                      setNotificationSettings((prev) => ({
+                        ...prev,
+                        submissionUpdates: checked,
+                      }))
+                    }
+                  />
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Security Alerts</p>
+                    <p className="text-sm text-muted-foreground">
+                      Important security updates about your account
+                    </p>
+                  </div>
+                  <Switch
+                    checked={notificationSettings.securityAlerts}
+                    onCheckedChange={(checked) =>
+                      setNotificationSettings((prev) => ({
+                        ...prev,
+                        securityAlerts: checked,
+                      }))
+                    }
+                  />
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Marketing Emails</p>
+                    <p className="text-sm text-muted-foreground">
+                      Receive news and product updates
+                    </p>
+                  </div>
+                  <Switch
+                    checked={notificationSettings.marketingEmails}
+                    onCheckedChange={(checked) =>
+                      setNotificationSettings((prev) => ({
+                        ...prev,
+                        marketingEmails: checked,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowNotificationDialog(false)}
+                  disabled={isSavingNotifications}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleNotificationSave}
+                  disabled={isSavingNotifications}
+                >
+                  {isSavingNotifications ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </CardContent>
+      </Card>
+
+      {/* Danger Zone */}
+      <Card className="border-destructive">
+        <CardHeader>
+          <CardTitle className="text-destructive">Danger Zone</CardTitle>
+          <CardDescription>
+            Irreversible actions for your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between p-4 rounded-lg border border-destructive/50 bg-destructive/5">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-destructive/10">
+                <Trash2 className="h-5 w-5 text-destructive" />
+              </div>
+              <div>
+                <p className="font-medium">Delete Account</p>
+                <p className="text-sm text-muted-foreground">
+                  Permanently delete your account and all data
+                </p>
+              </div>
+            </div>
+            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+              <DialogTrigger asChild>
+                <Button variant="destructive" size="sm">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Account
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Are you absolutely sure?</DialogTitle>
+                  <DialogDescription>
+                    This action cannot be undone. This will permanently delete
+                    your account and remove all your data from our servers.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDeleteDialog(false)}
+                    disabled={isDeleting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteAccount}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Account
+                      </>
+                    )}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

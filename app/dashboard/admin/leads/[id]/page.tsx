@@ -2,10 +2,23 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import LeadStatusBadge from "@/components/admin/LeadStatusBadge";
 import UpdateLeadForm from "@/components/admin/UpdateLeadForm";
 import NotesSection from "@/components/admin/NotesSection";
 import ConvertToLegendButton from "@/components/admin/ConvertToLegendButton";
+import {
+  ArrowLeft,
+  Mail,
+  Building2,
+  Users,
+  FileText,
+  MessageSquare,
+  Settings,
+  StickyNote,
+} from "lucide-react";
 
 export default async function LeadDetailPage({
   params,
@@ -24,18 +37,17 @@ export default async function LeadDetailPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <Link
-            href="/dashboard/admin/leads"
-            className="text-purple-400 hover:text-purple-300 mb-2 inline-block"
-          >
-            ← Back to Leads
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <Link href="/dashboard/admin/leads">
+            <Button variant="ghost" className="gap-2 -ml-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Leads
+            </Button>
           </Link>
-          <h1 className="text-4xl font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-400 to-orange-500">
-            {lead.name}
-          </h1>
-          <p className="text-gray-400 mt-1">
+          <h1 className="text-4xl font-bold tracking-tight">{lead.name}</h1>
+          <p className="text-muted-foreground">
             Submitted{" "}
             {formatDistanceToNow(new Date(lead.createdAt), { addSuffix: true })}
           </p>
@@ -45,78 +57,140 @@ export default async function LeadDetailPage({
         )}
       </div>
 
+      {/* Contact & Use Case Grid */}
       <div className="grid md:grid-cols-2 gap-6">
-        <div className="bg-gray-800/50 backdrop-blur-sm border-2 border-purple-500/30 rounded-xl p-6">
-          <h3 className="text-xl font-black text-white mb-4">
-            Contact Information
-          </h3>
-          <dl className="space-y-3">
-            <div>
-              <dt className="text-gray-400 text-sm mb-1">Email</dt>
-              <dd className="text-white font-bold">
-                <a
-                  href={`mailto:${lead.email}`}
-                  className="text-purple-400 hover:text-purple-300"
-                >
-                  {lead.email}
-                </a>
-              </dd>
-            </div>
-            <div>
-              <dt className="text-gray-400 text-sm mb-1">Company</dt>
-              <dd className="text-white">{lead.company || "—"}</dd>
-            </div>
-            <div>
-              <dt className="text-gray-400 text-sm mb-1">Team Size</dt>
-              <dd className="text-white">{lead.teamSize || "—"}</dd>
-            </div>
-            <div>
-              <dt className="text-gray-400 text-sm mb-1">Status</dt>
-              <dd>
-                <LeadStatusBadge status={lead.status} />
-              </dd>
-            </div>
-            {lead.convertedAt && (
+        {/* Contact Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Contact Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="space-y-4">
               <div>
-                <dt className="text-gray-400 text-sm mb-1">Converted At</dt>
-                <dd className="text-green-400 font-bold">
-                  {new Date(lead.convertedAt).toLocaleDateString("en-IN", {
-                    dateStyle: "long",
-                  })}
+                <dt className="text-sm font-medium text-muted-foreground mb-1">
+                  Email
+                </dt>
+                <dd>
+                  <a
+                    href={`mailto:${lead.email}`}
+                    className="text-primary hover:underline font-medium"
+                  >
+                    {lead.email}
+                  </a>
                 </dd>
               </div>
-            )}
-          </dl>
-        </div>
 
-        <div className="bg-gray-800/50 backdrop-blur-sm border-2 border-purple-500/30 rounded-xl p-6">
-          <h3 className="text-xl font-black text-white mb-4">Use Case</h3>
-          <p className="text-gray-300 whitespace-pre-wrap mb-6">
-            {lead.useCase}
-          </p>
+              <Separator />
 
-          {lead.message && (
-            <>
-              <h3 className="text-xl font-black text-white mb-4">
-                Additional Message
-              </h3>
-              <p className="text-gray-300 whitespace-pre-wrap">
-                {lead.message}
+              <div>
+                <dt className="text-sm font-medium text-muted-foreground mb-1 flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Company
+                </dt>
+                <dd className="font-medium">{lead.company || "—"}</dd>
+              </div>
+
+              <Separator />
+
+              <div>
+                <dt className="text-sm font-medium text-muted-foreground mb-1 flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Team Size
+                </dt>
+                <dd className="font-medium">{lead.teamSize || "—"}</dd>
+              </div>
+
+              <Separator />
+
+              <div>
+                <dt className="text-sm font-medium text-muted-foreground mb-1">
+                  Status
+                </dt>
+                <dd>
+                  <LeadStatusBadge status={lead.status} />
+                </dd>
+              </div>
+
+              {lead.convertedAt && (
+                <>
+                  <Separator />
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground mb-1">
+                      Converted At
+                    </dt>
+                    <dd className="font-semibold text-green-600 dark:text-green-400">
+                      {new Date(lead.convertedAt).toLocaleDateString("en-IN", {
+                        dateStyle: "long",
+                      })}
+                    </dd>
+                  </div>
+                </>
+              )}
+            </dl>
+          </CardContent>
+        </Card>
+
+        {/* Use Case & Message */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Use Case
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div>
+              <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                {lead.useCase}
               </p>
-            </>
-          )}
-        </div>
+            </div>
+
+            {lead.message && (
+              <>
+                <Separator />
+                <div>
+                  <h4 className="font-semibold mb-2 flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    Additional Message
+                  </h4>
+                  <p className="text-sm whitespace-pre-wrap leading-relaxed text-muted-foreground">
+                    {lead.message}
+                  </p>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="bg-gray-800/50 backdrop-blur-sm border-2 border-purple-500/30 rounded-xl p-6">
-        <h3 className="text-xl font-black text-white mb-4">Admin Actions</h3>
-        <UpdateLeadForm lead={lead} />
-      </div>
+      {/* Admin Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Admin Actions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <UpdateLeadForm lead={lead} />
+        </CardContent>
+      </Card>
 
-      <div className="bg-gray-800/50 backdrop-blur-sm border-2 border-purple-500/30 rounded-xl p-6">
-        <h3 className="text-xl font-black text-white mb-4">Internal Notes</h3>
-        <NotesSection leadId={lead.id} notes={lead.notes} />
-      </div>
+      {/* Internal Notes */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <StickyNote className="h-5 w-5" />
+            Internal Notes
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <NotesSection leadId={lead.id} notes={lead.notes} />
+        </CardContent>
+      </Card>
     </div>
   );
 }

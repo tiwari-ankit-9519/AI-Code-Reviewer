@@ -1,26 +1,60 @@
+import { Badge } from "@/components/ui/badge";
+import { Circle, Phone, Star, CheckCircle, XCircle } from "lucide-react";
+
 export default function LeadStatusBadge({ status }: { status: string }) {
-  const getStatusStyles = () => {
+  const getStatusConfig = () => {
     switch (status) {
       case "NEW":
-        return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+        return {
+          variant: "secondary" as const,
+          icon: Circle,
+          className:
+            "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/50",
+        };
       case "CONTACTED":
-        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+        return {
+          variant: "outline" as const,
+          icon: Phone,
+          className:
+            "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/50",
+        };
       case "QUALIFIED":
-        return "bg-purple-500/20 text-purple-400 border-purple-500/30";
+        return {
+          variant: "outline" as const,
+          icon: Star,
+          className:
+            "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/50",
+        };
       case "CONVERTED":
-        return "bg-green-500/20 text-green-400 border-green-500/30";
+        return {
+          variant: "default" as const,
+          icon: CheckCircle,
+          className:
+            "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/50",
+        };
       case "LOST":
-        return "bg-red-500/20 text-red-400 border-red-500/30";
+        return {
+          variant: "destructive" as const,
+          icon: XCircle,
+          className:
+            "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/50",
+        };
       default:
-        return "bg-gray-500/20 text-gray-400 border-gray-500/30";
+        return {
+          variant: "outline" as const,
+          icon: Circle,
+          className: "bg-muted text-muted-foreground",
+        };
     }
   };
 
+  const config = getStatusConfig();
+  const Icon = config.icon;
+
   return (
-    <span
-      className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${getStatusStyles()}`}
-    >
+    <Badge variant={config.variant} className={`gap-1 ${config.className}`}>
+      <Icon className="h-3 w-3" />
       {status}
-    </span>
+    </Badge>
   );
 }

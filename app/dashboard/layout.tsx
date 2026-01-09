@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import DashboardNav from "@/components/dashboard-nav";
 import { TrialBanner } from "@/components/trial-banner";
 import { checkTrialStatus } from "@/lib/subscription/subscription-utils";
+import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({
   children,
@@ -12,7 +13,7 @@ export default async function DashboardLayout({
   const session = await auth();
 
   if (!session?.user?.id) {
-    return null;
+    redirect("/");
   }
 
   const user = await prisma.user.findUnique({
@@ -29,36 +30,26 @@ export default async function DashboardLayout({
   });
 
   if (!user) {
-    return null;
+    redirect("/");
   }
 
   const trialStatus = await checkTrialStatus(session.user.id);
 
   return (
-    <div className="min-h-screen bg-[#0a0e27] relative">
+    <div className="min-h-screen bg-background">
       <DashboardNav user={user} />
 
-      {trialStatus.isInTrial && <TrialBanner trialStatus={trialStatus} />}
+      {trialStatus.isInTrial && (
+        <div className="sticky top-16 z-40 animate-in slide-in-from-top duration-300">
+          <TrialBanner trialStatus={trialStatus} />
+        </div>
+      )}
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
-        {children}
+      <main className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="animate-in fade-in slide-in-from-bottom duration-500">
+          {children}
+        </div>
       </main>
-
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-20 left-10 w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
-        <div
-          className="absolute top-40 right-20 w-2 h-2 bg-pink-400 rounded-full animate-pulse"
-          style={{ animationDelay: "0.5s" }}
-        ></div>
-        <div
-          className="absolute bottom-40 left-1/4 w-2 h-2 bg-yellow-400 rounded-full animate-pulse"
-          style={{ animationDelay: "1s" }}
-        ></div>
-        <div
-          className="absolute top-60 right-1/3 w-2 h-2 bg-green-400 rounded-full animate-pulse"
-          style={{ animationDelay: "1.5s" }}
-        ></div>
-      </div>
     </div>
   );
 }

@@ -4,8 +4,38 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { UsageProgress } from "@/components/subscription/usage-progress";
 import { submitCode } from "@/lib/actions/submissions";
+import {
+  ArrowLeft,
+  FileCode,
+  Send,
+  AlertCircle,
+  Zap,
+  CheckCircle,
+  Loader2,
+} from "lucide-react";
 
 export default function NewSubmissionPage() {
   const router = useRouter();
@@ -39,9 +69,7 @@ export default function NewSubmissionPage() {
   }, []);
 
   const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -61,14 +89,14 @@ export default function NewSubmissionPage() {
         fileName: formData.fileName || `untitled.${formData.language}`,
       });
 
-      toast.success("Quest submitted successfully!", {
-        description: "Your code is being reviewed by the AI warriors",
+      toast.success("Code submitted successfully!", {
+        description: "Your code is being reviewed by AI",
       });
 
       router.push(`/dashboard/submissions/${result.id}`);
     } catch (error: unknown) {
       const errorMessage =
-        error instanceof Error ? error.message : "Failed to submit quest";
+        error instanceof Error ? error.message : "Failed to submit code";
       const errorName = error instanceof Error ? error.name : "";
 
       if (
@@ -96,194 +124,219 @@ export default function NewSubmissionPage() {
     : "";
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-900 via-purple-900 to-gray-900 p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center text-purple-400 hover:text-purple-300 transition-colors font-mono text-sm mb-4"
-          >
-            <span className="mr-2">←</span> BACK TO DASHBOARD
-          </Link>
-          <h1 className="text-4xl font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-400 via-pink-500 to-purple-500 uppercase font-mono mb-2">
-            ⚔️ NEW QUEST
-          </h1>
-          <p className="text-gray-400 font-mono">
-            Submit your code for AI-powered review and level up your skills
-          </p>
-        </div>
-
-        {usageData?.tier === "STARTER" && usageData.remaining > 0 && (
-          <div className="bg-blue-500/20 border-2 border-blue-400 rounded-xl p-4 mb-6">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="font-black text-blue-300 mb-2 font-mono uppercase text-sm">
-                  {usageData.remaining} / {usageData.limit} quests remaining
-                </p>
-                <UsageProgress
-                  current={usageData.used}
-                  limit={usageData.limit}
-                  tier="STARTER"
-                />
-              </div>
-              {usageData.percentage >= 80 && (
-                <Link href="/pricing">
-                  <button className="bg-yellow-400 text-gray-900 px-4 py-2 rounded-lg font-black hover:bg-yellow-300 transition-all ml-4">
-                    UPGRADE
-                  </button>
-                </Link>
-              )}
-            </div>
-          </div>
-        )}
-
-        {usageData?.remaining === 0 ? (
-          <div className="bg-red-500/20 border-4 border-red-400 rounded-2xl p-8 text-center shadow-2xl shadow-red-500/20">
-            <h2 className="text-3xl font-black text-red-400 mb-4 uppercase font-mono">
-              ⚠️ QUEST LIMIT REACHED
-            </h2>
-            <p className="text-gray-300 mb-6 text-lg">
-              You&apos;ve used all 5 quests this month. Upgrade to Hero for
-              unlimited submissions!
-            </p>
-            <Link href="/pricing">
-              <button className="bg-yellow-400 text-gray-900 px-8 py-4 rounded-xl font-black hover:bg-yellow-300 transition-all shadow-lg hover:shadow-yellow-400/50 uppercase">
-                UPGRADE TO HERO - ₹2999/MONTH
-              </button>
-            </Link>
-            <p className="text-gray-500 text-sm mt-4 font-mono">
-              Or wait until {nextResetDate} for your free quests to reset
-            </p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label
-                htmlFor="fileName"
-                className="block text-sm font-black text-purple-400 mb-2 uppercase font-mono"
-              >
-                FILE NAME *
-              </label>
-              <input
-                type="text"
-                id="fileName"
-                name="fileName"
-                required
-                value={formData.fileName}
-                onChange={handleInputChange}
-                placeholder="e.g., MyComponent.jsx or script.py"
-                className="w-full px-4 py-3 bg-gray-900/50 border-2 border-purple-500/30 rounded-xl text-white placeholder-gray-500 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all font-mono"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="language"
-                className="block text-sm font-black text-purple-400 mb-2 uppercase font-mono"
-              >
-                PROGRAMMING LANGUAGE *
-              </label>
-              <select
-                id="language"
-                name="language"
-                required
-                value={formData.language}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-gray-900/50 border-2 border-purple-500/30 rounded-xl text-white focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all font-mono cursor-pointer"
-              >
-                <option value="javascript">JavaScript</option>
-                <option value="typescript">TypeScript</option>
-                <option value="python">Python</option>
-                <option value="java">Java</option>
-                <option value="cpp">C++</option>
-                <option value="csharp">C#</option>
-                <option value="go">Go</option>
-                <option value="rust">Rust</option>
-                <option value="php">PHP</option>
-                <option value="ruby">Ruby</option>
-                <option value="swift">Swift</option>
-                <option value="kotlin">Kotlin</option>
-              </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="code"
-                className="block text-sm font-black text-purple-400 mb-2 uppercase font-mono"
-              >
-                CODE *
-              </label>
-              <textarea
-                id="code"
-                name="code"
-                required
-                value={formData.code}
-                onChange={handleInputChange}
-                rows={15}
-                placeholder="Paste your code here..."
-                className="w-full px-4 py-3 bg-gray-900/50 border-2 border-purple-500/30 rounded-xl text-white placeholder-gray-500 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all font-mono text-sm resize-none"
-              />
-            </div>
-
-            <div className="flex gap-4 pt-4">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex-1 bg-linear-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-xl font-black hover:from-purple-500 hover:to-pink-500 transition-all shadow-lg hover:shadow-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed uppercase font-mono"
-              >
-                {isSubmitting ? "⚔️ SUBMITTING..." : "⚔️ SUBMIT QUEST"}
-              </button>
-              <Link
-                href="/dashboard"
-                className="px-8 py-4 bg-gray-700 text-white rounded-xl font-black hover:bg-gray-600 transition-all text-center uppercase font-mono"
-              >
-                CANCEL
-              </Link>
-            </div>
-          </form>
-        )}
+    <div className="container max-w-4xl mx-auto py-8 space-y-6">
+      {/* Header */}
+      <div>
+        <Link href="/dashboard">
+          <Button variant="ghost" className="gap-2 -ml-2 mb-4">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
+        </Link>
+        <h1 className="text-4xl font-bold tracking-tight mb-2 flex items-center gap-2">
+          <FileCode className="h-8 w-8" />
+          New Submission
+        </h1>
+        <p className="text-muted-foreground">
+          Submit your code for AI-powered review and analysis
+        </p>
       </div>
 
-      {showUpgradeModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-linear-to-br from-gray-900 to-purple-900 border-4 border-yellow-400 rounded-2xl p-8 max-w-md w-full shadow-2xl shadow-yellow-400/20">
-            <h2 className="text-3xl font-black text-yellow-400 mb-4 uppercase font-mono">
-              🎮 UPGRADE TO HERO
-            </h2>
-            <p className="text-gray-300 mb-6 text-lg">
+      {/* Usage Warning for Starter Tier */}
+      {usageData?.tier === "STARTER" && usageData.remaining > 0 && (
+        <Alert className="border-blue-500/50 bg-blue-500/10">
+          <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <AlertTitle className="text-blue-600 dark:text-blue-400">
+            {usageData.remaining} / {usageData.limit} submissions remaining
+          </AlertTitle>
+          <AlertDescription>
+            <div className="mt-2 mb-3">
+              <UsageProgress
+                current={usageData.used}
+                limit={usageData.limit}
+                tier="STARTER"
+              />
+            </div>
+            {usageData.percentage >= 80 && (
+              <Link href="/pricing">
+                <Button size="sm" className="mt-2">
+                  Upgrade to Hero
+                </Button>
+              </Link>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Limit Reached */}
+      {usageData?.remaining === 0 ? (
+        <Card className="border-destructive">
+          <CardContent className="p-8 text-center space-y-4">
+            <div className="flex justify-center">
+              <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">
+                <AlertCircle className="h-8 w-8 text-destructive" />
+              </div>
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold mb-2">
+                Submission Limit Reached
+              </h2>
+              <p className="text-muted-foreground">
+                You&apos;ve used all 5 submissions this month. Upgrade to Hero
+                for unlimited submissions!
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Link href="/pricing">
+                <Button size="lg" className="w-full sm:w-auto">
+                  Upgrade to Hero - ₹2999/month
+                </Button>
+              </Link>
+              <p className="text-sm text-muted-foreground">
+                Or wait until {nextResetDate} for your submissions to reset
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        /* Submission Form */
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Code Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* File Name */}
+              <div className="space-y-2">
+                <Label htmlFor="fileName">File Name *</Label>
+                <Input
+                  id="fileName"
+                  name="fileName"
+                  required
+                  value={formData.fileName}
+                  onChange={handleInputChange}
+                  placeholder="e.g., MyComponent.jsx or script.py"
+                  className="font-mono"
+                />
+              </div>
+
+              {/* Language */}
+              <div className="space-y-2">
+                <Label htmlFor="language">Programming Language *</Label>
+                <Select
+                  value={formData.language}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, language: value }))
+                  }
+                >
+                  <SelectTrigger id="language" className="font-mono">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="javascript">JavaScript</SelectItem>
+                    <SelectItem value="typescript">TypeScript</SelectItem>
+                    <SelectItem value="python">Python</SelectItem>
+                    <SelectItem value="java">Java</SelectItem>
+                    <SelectItem value="cpp">C++</SelectItem>
+                    <SelectItem value="csharp">C#</SelectItem>
+                    <SelectItem value="go">Go</SelectItem>
+                    <SelectItem value="rust">Rust</SelectItem>
+                    <SelectItem value="php">PHP</SelectItem>
+                    <SelectItem value="ruby">Ruby</SelectItem>
+                    <SelectItem value="swift">Swift</SelectItem>
+                    <SelectItem value="kotlin">Kotlin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Code */}
+              <div className="space-y-2">
+                <Label htmlFor="code">Code *</Label>
+                <Textarea
+                  id="code"
+                  name="code"
+                  required
+                  value={formData.code}
+                  onChange={handleInputChange}
+                  rows={15}
+                  placeholder="Paste your code here..."
+                  className="font-mono text-sm resize-none"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Actions */}
+          <div className="flex gap-4">
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 gap-2"
+              size="lg"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4" />
+                  Submit Code
+                </>
+              )}
+            </Button>
+            <Link href="/dashboard">
+              <Button variant="outline" size="lg">
+                Cancel
+              </Button>
+            </Link>
+          </div>
+        </form>
+      )}
+
+      {/* Upgrade Modal */}
+      <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              Upgrade to Hero
+            </DialogTitle>
+            <DialogDescription>
               You&apos;ve reached your monthly limit of 5 submissions. Upgrade
               to Hero tier for unlimited code reviews!
-            </p>
-            <div className="space-y-3 mb-6">
-              <div className="flex items-center text-green-400">
-                <span className="mr-2">✓</span>
-                <span className="font-mono">Unlimited submissions</span>
-              </div>
-              <div className="flex items-center text-green-400">
-                <span className="mr-2">✓</span>
-                <span className="font-mono">Priority AI reviews</span>
-              </div>
-              <div className="flex items-center text-green-400">
-                <span className="mr-2">✓</span>
-                <span className="font-mono">Advanced analytics</span>
-              </div>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-4">
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <span>Unlimited submissions</span>
             </div>
-            <div className="flex gap-3">
-              <Link href="/pricing" className="flex-1">
-                <button className="w-full bg-yellow-400 text-gray-900 px-6 py-3 rounded-xl font-black hover:bg-yellow-300 transition-all uppercase">
-                  UPGRADE NOW
-                </button>
-              </Link>
-              <button
-                onClick={() => setShowUpgradeModal(false)}
-                className="px-6 py-3 bg-gray-700 text-white rounded-xl font-black hover:bg-gray-600 transition-all uppercase"
-              >
-                CLOSE
-              </button>
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <span>Priority AI reviews</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <span>Advanced analytics</span>
             </div>
           </div>
-        </div>
-      )}
+
+          <DialogFooter className="flex gap-2 sm:gap-2">
+            <Link href="/pricing" className="flex-1">
+              <Button className="w-full">Upgrade Now</Button>
+            </Link>
+            <Button
+              variant="outline"
+              onClick={() => setShowUpgradeModal(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

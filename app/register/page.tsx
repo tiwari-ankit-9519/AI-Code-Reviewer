@@ -1,8 +1,30 @@
+// app/register/page.tsx
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  ArrowLeft,
+  UserPlus,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
+  Code2,
+  Users,
+  TrendingUp,
+  Award,
+  Mail,
+  Lock,
+  User,
+  Sparkles,
+  Info,
+} from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -30,6 +52,11 @@ export default function RegisterPage() {
     setPasswordStrength(calculateStrength(pwd));
   }
 
+  function getStrengthText(strength: number): string {
+    const texts = ["Very Weak", "Weak", "Fair", "Strong", "Very Strong"];
+    return texts[strength] || "Very Weak";
+  }
+
   function getStrengthColor(strength: number): string {
     const colors = [
       "bg-red-500",
@@ -39,11 +66,6 @@ export default function RegisterPage() {
       "bg-green-500",
     ];
     return colors[strength] || "bg-gray-300";
-  }
-
-  function getStrengthText(strength: number): string {
-    const texts = ["Very Weak", "Weak", "Fair", "Strong", "Very Strong"];
-    return texts[strength] || "Very Weak";
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -86,283 +108,279 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-[#0a0e27]">
-      <div className="hidden lg:flex bg-linear-to-br from-[#0a0e27] via-[#1a1f3a] to-[#0a0e27] items-center justify-center p-12 relative overflow-hidden border-r-4 border-purple-500/30">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(147,51,234,0.2),transparent_50%)]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(236,72,153,0.15),transparent_50%)]"></div>
+    <div className="min-h-screen grid lg:grid-cols-2">
+      {/* Left Side - Registration Form */}
+      <div className="flex items-center justify-center p-8 bg-background relative overflow-hidden">
+        {/* Animated background gradient */}
+        <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-primary/5 animate-pulse" />
 
-        <div className="absolute top-20 left-10 w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
-        <div
-          className="absolute top-40 right-20 w-2 h-2 bg-pink-400 rounded-full animate-pulse"
-          style={{ animationDelay: "0.5s" }}
-        ></div>
-        <div
-          className="absolute bottom-40 left-1/4 w-2 h-2 bg-yellow-400 rounded-full animate-pulse"
-          style={{ animationDelay: "1s" }}
-        ></div>
-        <div
-          className="absolute top-60 right-1/3 w-2 h-2 bg-green-400 rounded-full animate-pulse"
-          style={{ animationDelay: "1.5s" }}
-        ></div>
-
-        <div className="relative z-10 max-w-md text-center">
-          <div className="inline-flex items-center justify-center w-24 h-24 bg-linear-to-br from-yellow-400 to-orange-500 rounded-2xl mb-8 shadow-2xl shadow-yellow-500/50 border-4 border-yellow-600">
-            <svg
-              className="w-12 h-12 text-gray-900"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+        <div className="w-full max-w-md space-y-6 relative z-10">
+          {/* Back to Home Link with hover effect */}
+          <Link href="/">
+            <Button
+              variant="ghost"
+              className="gap-2 -ml-2 group hover:gap-3 transition-all duration-300 mb-10"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-              />
-            </svg>
+              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+              Back to Home
+            </Button>
+          </Link>
+
+          {/* Animated Header */}
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold tracking-tight flex items-center gap-3 group">
+              <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors duration-300 group-hover:rotate-6 transform">
+                <UserPlus className="h-8 w-8 text-primary" />
+              </div>
+              <span className="bg-linear-to-r from-foreground to-foreground/70 bg-clip-text">
+                Create Account
+              </span>
+            </h1>
+            <p className="text-muted-foreground animate-fade-in">
+              Start your journey with AI-powered code reviews
+            </p>
           </div>
-          <h1
-            className="text-5xl font-black text-white mb-6 font-mono uppercase"
-            style={{ textShadow: "0 0 20px rgba(255,255,255,0.3)" }}
-          >
-            Begin Your Quest
-          </h1>
-          <p className="text-gray-300 text-lg leading-relaxed font-mono">
-            Join 10,000+ developers using AI to level up their code. Get instant
-            feedback and legendary insights.
+
+          {/* Animated Alert Messages */}
+          {info && !error && (
+            <Alert className="border-green-500/50 bg-green-500/10 animate-in slide-in-from-top duration-300">
+              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400 animate-bounce" />
+              <AlertDescription className="text-green-600 dark:text-green-400">
+                {info}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {error && (
+            <Alert
+              variant="destructive"
+              className="animate-in shake duration-300"
+            >
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Registration Form */}
+          <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 border-2 hover:border-primary/20">
+            <CardContent className="pt-6">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Name Field */}
+                <div className="space-y-2 group">
+                  <Label
+                    htmlFor="name"
+                    className="flex items-center gap-2 group-focus-within:text-primary transition-colors"
+                  >
+                    <User className="h-4 w-4" />
+                    Full Name
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      id="name"
+                      name="name"
+                      required
+                      disabled={loading}
+                      placeholder="Enter your name"
+                      autoComplete="name"
+                      className="pl-10 transition-all duration-300 focus:scale-[1.02] hover:border-primary/50"
+                    />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  </div>
+                </div>
+
+                {/* Email Field */}
+                <div className="space-y-2 group">
+                  <Label
+                    htmlFor="email"
+                    className="flex items-center gap-2 group-focus-within:text-primary transition-colors"
+                  >
+                    <Mail className="h-4 w-4" />
+                    Email Address
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      type="email"
+                      id="email"
+                      name="email"
+                      required
+                      disabled={loading}
+                      placeholder="you@example.com"
+                      autoComplete="email"
+                      className="pl-10 transition-all duration-300 focus:scale-[1.02] hover:border-primary/50"
+                    />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  </div>
+                </div>
+
+                {/* Password Field */}
+                <div className="space-y-2 group">
+                  <Label
+                    htmlFor="password"
+                    className="flex items-center gap-2 group-focus-within:text-primary transition-colors"
+                  >
+                    <Lock className="h-4 w-4" />
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      type="password"
+                      id="password"
+                      name="password"
+                      required
+                      disabled={loading}
+                      minLength={12}
+                      value={password}
+                      onChange={handlePasswordChange}
+                      placeholder="Create a strong password"
+                      autoComplete="new-password"
+                      className="pl-10 transition-all duration-300 focus:scale-[1.02] hover:border-primary/50"
+                    />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  </div>
+
+                  {/* Password Strength Indicator */}
+                  {password && (
+                    <div className="space-y-2 animate-in slide-in-from-top duration-300">
+                      <div className="flex gap-1">
+                        {[0, 1, 2, 3, 4].map((level) => (
+                          <div
+                            key={level}
+                            className={`h-2 flex-1 rounded-full transition-all duration-300 ${
+                              level <= passwordStrength
+                                ? getStrengthColor(passwordStrength)
+                                : "bg-muted"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground flex items-center gap-2">
+                        <Sparkles className="h-3 w-3" />
+                        Strength:{" "}
+                        <span className="font-semibold text-foreground">
+                          {getStrengthText(passwordStrength)}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+
+                  <p className="text-xs text-muted-foreground">
+                    Min 12 characters • Uppercase • Lowercase • Number • Special
+                    character
+                  </p>
+                </div>
+
+                {/* Submit Button */}
+                <Button
+                  type="submit"
+                  disabled={loading || passwordStrength < 2}
+                  className="w-full gap-2 group hover:gap-3 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+                  size="lg"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Creating account...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                      Create Account
+                    </>
+                  )}
+                </Button>
+
+                {/* Info Alert */}
+                <Alert className="border-blue-500/50 bg-blue-500/10">
+                  <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <AlertDescription className="text-blue-600 dark:text-blue-400 text-xs">
+                    You&apos;ll receive a verification email. Verify your
+                    address before your first login.
+                  </AlertDescription>
+                </Alert>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Sign In Link */}
+          <p className="text-center text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link
+              href="/login"
+              className={`text-primary font-semibold hover:underline hover:translate-x-1 inline-block transition-all duration-200 ${
+                loading ? "pointer-events-none opacity-50" : ""
+              }`}
+            >
+              Sign in →
+            </Link>
           </p>
-          <div className="mt-12 grid grid-cols-3 gap-6 text-center">
-            <div className="bg-linear-to-br from-cyan-500/20 to-blue-500/20 p-4 rounded-xl border-2 border-cyan-400/50">
-              <div
-                className="text-4xl font-black text-cyan-300 mb-1 font-mono"
-                style={{ textShadow: "0 0 10px rgba(34,211,238,0.5)" }}
-              >
-                10k+
-              </div>
-              <div className="text-xs text-gray-300 font-mono uppercase">
-                Players
-              </div>
-            </div>
-            <div className="bg-linear-to-br from-pink-500/20 to-red-500/20 p-4 rounded-xl border-2 border-pink-400/50">
-              <div
-                className="text-4xl font-black text-pink-300 mb-1 font-mono"
-                style={{ textShadow: "0 0 10px rgba(236,72,153,0.5)" }}
-              >
-                50k+
-              </div>
-              <div className="text-xs text-gray-300 font-mono uppercase">
-                Quests
-              </div>
-            </div>
-            <div className="bg-linear-to-br from-green-500/20 to-emerald-500/20 p-4 rounded-xl border-2 border-green-400/50">
-              <div
-                className="text-4xl font-black text-green-300 mb-1 font-mono"
-                style={{ textShadow: "0 0 10px rgba(34,197,94,0.5)" }}
-              >
-                99%
-              </div>
-              <div className="text-xs text-gray-300 font-mono uppercase">
-                Success
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-center p-8 bg-[#0a0e27]">
-        <div className="w-full max-w-md">
-          <div className="mb-8">
-            <Link
-              href="/"
-              className="inline-flex items-center text-sm text-gray-400 hover:text-yellow-400 mb-8 font-mono transition-colors"
-            >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                />
-              </svg>
-              Back to Home
-            </Link>
-            <h2
-              className="text-4xl font-black text-white mt-4 font-mono uppercase"
-              style={{ textShadow: "0 0 20px rgba(255,255,255,0.2)" }}
-            >
-              Create Account
+      {/* Right Side - Hero Section */}
+      <div className="hidden lg:flex items-center justify-center bg-linear-to-br from-primary/10 via-primary/5 to-background p-12 relative overflow-hidden border-l">
+        {/* Animated background patterns */}
+        <div className="absolute inset-0 bg-grid-white/5 bg-size[40px_40px] animate-pulse" />
+        <div className="absolute inset-0 bg-linear-to-t from-background via-transparent to-transparent" />
+
+        {/* Floating particles effect */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-primary/20 rounded-full animate-ping" />
+          <div className="absolute top-3/4 right-1/4 w-3 h-3 bg-primary/20 rounded-full animate-ping animation-delay-1000" />
+          <div className="absolute top-1/2 right-1/3 w-2 h-2 bg-primary/20 rounded-full animate-ping animation-delay-2000" />
+        </div>
+
+        <div className="relative z-10 max-w-md space-y-8 animate-in slide-in-from-right duration-700">
+          {/* Logo with animation */}
+          <div className="flex items-center gap-3 group cursor-pointer">
+            <div className="p-3 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-all duration-300 group-hover:rotate-12 transform shadow-lg">
+              <Code2 className="h-10 w-10 text-primary group-hover:scale-110 transition-transform" />
+            </div>
+            <h2 className="text-3xl font-bold bg-linear-to-r from-foreground to-foreground/70 bg-clip-text">
+              Code Review AI
             </h2>
-            <p className="text-gray-400 mt-2 font-mono">
-              Start your free journey today
-            </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {info && !error && (
-              <div className="bg-green-500/20 border-2 border-green-400 text-green-300 px-4 py-3 rounded-xl text-sm font-mono shadow-lg shadow-green-500/20">
-                ✓ {info}
-              </div>
-            )}
-            {error && (
-              <div className="bg-red-500/20 border-2 border-red-400 text-red-300 px-4 py-3 rounded-xl text-sm font-mono shadow-lg shadow-red-500/20">
-                ✗ {error}
-              </div>
-            )}
+          {/* Main heading with gradient */}
+          <h3 className="text-5xl font-bold tracking-tight bg-linear-to-br from-foreground via-foreground to-foreground/70 bg-clip-text leading-tight">
+            Begin Your Journey
+          </h3>
 
-            <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-black text-gray-300 mb-2 font-mono uppercase"
-              >
-                Player Name
-              </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                required
-                autoComplete="name"
-                className="w-full px-4 py-3 bg-[#1a1f3a] border-2 border-purple-500/30 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition text-white font-mono placeholder-gray-500"
-                placeholder="Enter your name"
-              />
-            </div>
+          {/* Description with icon */}
+          <p className="text-lg text-muted-foreground leading-relaxed flex items-start gap-3 group">
+            <Sparkles className="h-6 w-6 text-primary mt-1 group-hover:rotate-12 transition-transform shrink-0" />
+            <span>
+              Join thousands of developers using AI to improve their code
+              quality. Get instant feedback and ship with confidence.
+            </span>
+          </p>
 
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-black text-gray-300 mb-2 font-mono uppercase"
-              >
-                Email Address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                autoComplete="email"
-                className="w-full px-4 py-3 bg-[#1a1f3a] border-2 border-purple-500/30 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition text-white font-mono placeholder-gray-500"
-                placeholder="you@example.com"
-              />
-            </div>
+          {/* Animated stats cards */}
+          <div className="grid grid-cols-3 gap-4 pt-4">
+            <Card className="bg-card/50 backdrop-blur border-2 hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:shadow-lg group cursor-pointer">
+              <CardContent className="p-4 text-center">
+                <Users className="h-6 w-6 mb-2 text-primary mx-auto group-hover:rotate-180 transition-transform duration-500" />
+                <div className="text-2xl font-bold mb-1">10K+</div>
+                <p className="text-xs text-muted-foreground">Developers</p>
+              </CardContent>
+            </Card>
 
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-black text-gray-300 mb-2 font-mono uppercase"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                minLength={12}
-                value={password}
-                onChange={handlePasswordChange}
-                autoComplete="new-password"
-                className="w-full px-4 py-3 bg-[#1a1f3a] border-2 border-purple-500/30 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition text-white font-mono placeholder-gray-500"
-                placeholder="Create a strong password"
-              />
-              {password && (
-                <div className="mt-3 space-y-2">
-                  <div className="flex gap-1">
-                    {[0, 1, 2, 3, 4].map((level) => (
-                      <div
-                        key={level}
-                        className={`h-2 flex-1 rounded-full transition-all ${
-                          level <= passwordStrength
-                            ? getStrengthColor(passwordStrength)
-                            : "bg-gray-700"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <p className="text-xs text-gray-400 font-mono">
-                    Power Level:{" "}
-                    <span className="font-black text-white">
-                      {getStrengthText(passwordStrength)}
-                    </span>
-                  </p>
-                </div>
-              )}
-              <p className="mt-2 text-xs text-gray-500 font-mono">
-                Min 12 characters • Uppercase • Lowercase • Number • Special
-                char
-              </p>
-            </div>
+            <Card className="bg-card/50 backdrop-blur border-2 hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:shadow-lg group cursor-pointer animation-delay-100">
+              <CardContent className="p-4 text-center">
+                <TrendingUp className="h-6 w-6 mb-2 text-primary mx-auto group-hover:rotate-180 transition-transform duration-500" />
+                <div className="text-2xl font-bold mb-1">50K+</div>
+                <p className="text-xs text-muted-foreground">Reviews</p>
+              </CardContent>
+            </Card>
 
-            <button
-              type="submit"
-              disabled={loading || passwordStrength < 2}
-              className="w-full bg-linear-to-r from-yellow-400 to-orange-500 text-gray-900 py-4 px-4 rounded-xl font-black hover:from-yellow-300 hover:to-orange-400 focus:outline-none focus:ring-4 focus:ring-yellow-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-2xl shadow-yellow-500/50 hover:shadow-yellow-500/70 hover:-translate-y-1 font-mono uppercase text-lg border-4 border-yellow-600"
-            >
-              {loading ? (
-                <span className="flex items-center justify-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-3 h-6 w-6 text-gray-900"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Spawning...
-                </span>
-              ) : (
-                "Start Adventure"
-              )}
-            </button>
-
-            <div className="bg-blue-500/20 border-2 border-blue-400 rounded-xl p-4">
-              <div className="flex items-start gap-3">
-                <svg
-                  className="w-6 h-6 text-blue-400 mt-0.5 shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <p className="text-xs text-blue-300 font-mono">
-                  You&apos;ll receive a verification email. Verify your address
-                  before your first login to unlock full powers.
-                </p>
-              </div>
-            </div>
-
-            <p className="text-sm text-center text-gray-400 font-mono">
-              Already registered?{" "}
-              <Link
-                href="/login"
-                className="text-yellow-400 hover:text-yellow-300 font-black transition-colors"
-              >
-                Sign In →
-              </Link>
-            </p>
-          </form>
+            <Card className="bg-card/50 backdrop-blur border-2 hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:shadow-lg group cursor-pointer animation-delay-200">
+              <CardContent className="p-4 text-center">
+                <Award className="h-6 w-6 mb-2 text-primary mx-auto group-hover:rotate-180 transition-transform duration-500" />
+                <div className="text-2xl font-bold mb-1">99%</div>
+                <p className="text-xs text-muted-foreground">Success</p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

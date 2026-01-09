@@ -10,6 +10,7 @@ import RevenueChart from "@/components/admin/RevenueChart";
 import TierDistributionChart from "@/components/admin/TierDistributionChart";
 import TrialPerformance from "@/components/admin/TrialPerformance";
 import SubmissionUsage from "@/components/admin/SubmissionUsage";
+import { BarChart3 } from "lucide-react";
 
 async function getRevenueHistory() {
   const snapshots = await prisma.tierUsageAnalytics.findMany({
@@ -45,23 +46,31 @@ export default async function SubscriptionAnalyticsPage() {
   ]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Header */}
       <div>
-        <h1 className="text-4xl font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-400 to-orange-500 mb-2">
-          📊 SUBSCRIPTION ANALYTICS
+        <h1 className="text-4xl font-bold tracking-tight mb-2 flex items-center gap-2">
+          <BarChart3 className="h-8 w-8" />
+          Subscription Analytics
         </h1>
-        <p className="text-gray-400">Revenue metrics and business insights</p>
+        <p className="text-muted-foreground">
+          Revenue metrics and business insights
+        </p>
       </div>
 
+      {/* Metrics Cards */}
       <MetricsCards metrics={metrics} />
 
+      {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RevenueChart data={revenueHistory} />
         <TierDistributionChart distribution={tierDistribution} />
       </div>
 
+      {/* Trial Performance */}
       <TrialPerformance metrics={trialMetrics} />
 
+      {/* Submission Usage */}
       <SubmissionUsage metrics={submissionMetrics} />
     </div>
   );

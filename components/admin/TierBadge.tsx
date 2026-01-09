@@ -1,22 +1,46 @@
+import { Badge } from "@/components/ui/badge";
+import { Award, Zap, Crown } from "lucide-react";
+
 export default function TierBadge({ tier }: { tier: string }) {
-  const getTierStyles = () => {
+  const getTierConfig = () => {
     switch (tier) {
       case "STARTER":
-        return "bg-gray-500/20 text-gray-400 border-gray-500/30";
+        return {
+          variant: "outline" as const,
+          icon: Award,
+          className:
+            "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/50",
+        };
       case "HERO":
-        return "bg-purple-500/20 text-purple-400 border-purple-500/30";
+        return {
+          variant: "default" as const,
+          icon: Zap,
+          className:
+            "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/50",
+        };
       case "LEGEND":
-        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+        return {
+          variant: "secondary" as const,
+          icon: Crown,
+          className:
+            "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/50",
+        };
       default:
-        return "bg-gray-500/20 text-gray-400 border-gray-500/30";
+        return {
+          variant: "outline" as const,
+          icon: Award,
+          className: "bg-muted text-muted-foreground",
+        };
     }
   };
 
+  const config = getTierConfig();
+  const Icon = config.icon;
+
   return (
-    <span
-      className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${getTierStyles()}`}
-    >
+    <Badge variant={config.variant} className={`gap-1 ${config.className}`}>
+      <Icon className="h-3 w-3" />
       {tier}
-    </span>
+    </Badge>
   );
 }

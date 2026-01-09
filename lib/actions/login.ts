@@ -66,8 +66,8 @@ export async function loginAction(
 
       return {
         success: true,
-        message: "Login successful",
-        redirect: `${process.env.NEXTAUTH_URL}${redirectPath}`,
+        message: "Login successful! Redirecting...",
+        redirect: redirectPath,
       };
     }
 

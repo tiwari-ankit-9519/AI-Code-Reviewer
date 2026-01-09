@@ -1,9 +1,14 @@
+// components/admin/NotesSection.tsx
 "use client";
 
 import { useState } from "react";
 import { updateLeadNotes } from "@/lib/actions/admin-leads";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { Plus, Edit, Save, X, Loader2 } from "lucide-react";
 
 interface NotesSectionProps {
   leadId: string;
@@ -20,7 +25,7 @@ export default function NotesSection({ leadId, notes }: NotesSectionProps) {
     setLoading(true);
     try {
       await updateLeadNotes(leadId, noteText);
-      toast.success("Notes saved");
+      toast.success("Notes saved successfully");
       setEditing(false);
       router.refresh();
     } catch (error) {
@@ -39,55 +44,69 @@ export default function NotesSection({ leadId, notes }: NotesSectionProps) {
 
   if (!editing && !notes) {
     return (
-      <button
+      <Button
         onClick={() => setEditing(true)}
-        className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-bold transition-all"
+        variant="outline"
+        className="gap-2"
       >
-        + Add Notes
-      </button>
+        <Plus className="h-4 w-4" />
+        Add Notes
+      </Button>
     );
   }
 
   if (!editing) {
     return (
-      <div>
-        <div className="bg-gray-900/50 rounded-xl p-4 mb-4 border border-gray-700">
-          <p className="text-gray-300 whitespace-pre-wrap">{notes}</p>
-        </div>
-        <button
+      <div className="space-y-4">
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm whitespace-pre-wrap">{notes}</p>
+          </CardContent>
+        </Card>
+        <Button
           onClick={() => setEditing(true)}
-          className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold transition-all"
+          variant="outline"
+          className="gap-2"
         >
+          <Edit className="h-4 w-4" />
           Edit Notes
-        </button>
+        </Button>
       </div>
     );
   }
 
   return (
-    <div>
-      <textarea
+    <div className="space-y-4">
+      <Textarea
         value={noteText}
         onChange={(e) => setNoteText(e.target.value)}
         rows={6}
-        className="w-full px-4 py-3 bg-gray-900 border-2 border-purple-500/30 rounded-xl text-white focus:border-purple-500 outline-none resize-none mb-4"
         placeholder="Add internal notes about this lead..."
+        className="resize-none"
       />
       <div className="flex gap-3">
-        <button
-          onClick={handleSave}
-          disabled={loading}
-          className="px-6 py-3 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold transition-all disabled:opacity-50"
-        >
-          {loading ? "Saving..." : "Save Notes"}
-        </button>
-        <button
+        <Button onClick={handleSave} disabled={loading} className="gap-2">
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" />
+              Save Notes
+            </>
+          )}
+        </Button>
+        <Button
           onClick={handleCancel}
           disabled={loading}
-          className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-bold transition-all disabled:opacity-50"
+          variant="outline"
+          className="gap-2"
         >
+          <X className="h-4 w-4" />
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   );

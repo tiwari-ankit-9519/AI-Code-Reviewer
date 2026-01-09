@@ -24,8 +24,8 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-900 via-purple-900 to-gray-900">
-      <div className="max-w-7xl mx-auto p-8">
+    <div className="min-h-screen bg-background">
+      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <AdminNav />
         {children}
       </div>

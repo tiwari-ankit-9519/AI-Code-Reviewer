@@ -9,6 +9,14 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { TrendingUp } from "lucide-react";
 
 interface RevenueData {
   periodStart: Date;
@@ -31,48 +39,73 @@ export default function RevenueChart({ data }: RevenueChartProps) {
   }));
 
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm border-2 border-purple-500/30 rounded-xl p-6">
-      <h2 className="text-2xl font-black text-white mb-4">Revenue Trend</h2>
-      <div className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis
-              dataKey="month"
-              stroke="#9ca3af"
-              style={{ fontSize: "12px" }}
-            />
-            <YAxis
-              stroke="#9ca3af"
-              style={{ fontSize: "12px" }}
-              tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#1f2937",
-                border: "1px solid #374151",
-                borderRadius: "8px",
-              }}
-              labelStyle={{ color: "#fff" }}
-              formatter={(value: number | undefined) => {
-                const amount = value || 0;
-                return [`₹${amount.toLocaleString("en-IN")}`, "MRR"];
-              }}
-            />
-            <Line
-              type="monotone"
-              dataKey="mrr"
-              stroke="#a855f7"
-              strokeWidth={3}
-              dot={{ fill: "#a855f7", r: 4 }}
-              activeDot={{ r: 6 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-      <div className="mt-4 text-sm text-gray-400">
-        Last 12 months revenue performance
-      </div>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <TrendingUp className="h-5 w-5" />
+          Revenue Trend
+        </CardTitle>
+        <CardDescription>Last 12 months revenue performance</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                className="stroke-muted"
+                opacity={0.3}
+              />
+              <XAxis
+                dataKey="month"
+                className="text-xs"
+                tick={{ fill: "hsl(var(--muted-foreground))" }}
+                tickLine={{ stroke: "hsl(var(--muted-foreground))" }}
+              />
+              <YAxis
+                className="text-xs"
+                tick={{ fill: "hsl(var(--muted-foreground))" }}
+                tickLine={{ stroke: "hsl(var(--muted-foreground))" }}
+                tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "hsl(var(--popover))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "var(--radius)",
+                  color: "hsl(var(--popover-foreground))",
+                }}
+                labelStyle={{
+                  color: "hsl(var(--popover-foreground))",
+                  fontWeight: 600,
+                  marginBottom: "4px",
+                }}
+                formatter={(value: number | string | undefined) => {
+                  const amount = typeof value === "number" ? value : 0;
+                  return [`₹${amount.toLocaleString("en-IN")}`, "MRR"];
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="mrr"
+                stroke="hsl(var(--primary))"
+                strokeWidth={3}
+                dot={{
+                  fill: "hsl(var(--primary))",
+                  r: 4,
+                  strokeWidth: 2,
+                  stroke: "hsl(var(--background))",
+                }}
+                activeDot={{
+                  r: 6,
+                  strokeWidth: 2,
+                  stroke: "hsl(var(--background))",
+                }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
