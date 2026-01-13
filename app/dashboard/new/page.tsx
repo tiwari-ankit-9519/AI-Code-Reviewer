@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -26,7 +25,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { UsageProgress } from "@/components/subscription/usage-progress";
-import { submitCode } from "@/lib/actions/submissions";
+import SubmissionEligibilityWrapper from "@/components/submissions/submission-eligibility-wrapper";
+import { createSubmission } from "@/lib/actions/submissions";
 import {
   ArrowLeft,
   FileCode,
@@ -83,16 +83,20 @@ export default function NewSubmissionPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await submitCode({
-        code: formData.code,
-        language: formData.language,
-        fileName: formData.fileName || `untitled.${formData.language}`,
-      });
+      // Create FormData object for the server action
+      const formDataObj = new FormData();
+      formDataObj.append("code", formData.code);
+      formDataObj.append("language", formData.language);
+      formDataObj.append(
+        "fileName",
+        formData.fileName || `untitled.${formData.language}`
+      );
+
+      const result = await createSubmission(formDataObj);
 
       toast.success("Code submitted successfully!", {
         description: "Your code is being reviewed by AI",
       });
-
       router.push(`/dashboard/submissions/${result.id}`);
     } catch (error: unknown) {
       const errorMessage =
@@ -100,6 +104,14 @@ export default function NewSubmissionPage() {
       const errorName = error instanceof Error ? error.name : "";
 
       if (
+        errorName === "CoolingPeriodError" ||
+        errorMessage.includes("cooling period") ||
+        errorMessage.includes("wait")
+      ) {
+        toast.error("Cooling Period Active", {
+          description: errorMessage,
+        });
+      } else if (
         errorName === "SubmissionLimitError" ||
         errorMessage.includes("limit")
       ) {
@@ -142,158 +154,158 @@ export default function NewSubmissionPage() {
         </p>
       </div>
 
-      {/* Usage Warning for Starter Tier */}
-      {usageData?.tier === "STARTER" && usageData.remaining > 0 && (
-        <Alert className="border-blue-500/50 bg-blue-500/10">
-          <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-          <AlertTitle className="text-blue-600 dark:text-blue-400">
-            {usageData.remaining} / {usageData.limit} submissions remaining
-          </AlertTitle>
-          <AlertDescription>
-            <div className="mt-2 mb-3">
-              <UsageProgress
-                current={usageData.used}
-                limit={usageData.limit}
-                tier="STARTER"
-              />
-            </div>
-            {usageData.percentage >= 80 && (
-              <Link href="/pricing">
-                <Button size="sm" className="mt-2">
-                  Upgrade to Hero
-                </Button>
-              </Link>
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Limit Reached */}
-      {usageData?.remaining === 0 ? (
-        <Card className="border-destructive">
-          <CardContent className="p-8 text-center space-y-4">
-            <div className="flex justify-center">
-              <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">
-                <AlertCircle className="h-8 w-8 text-destructive" />
-              </div>
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold mb-2">
-                Submission Limit Reached
-              </h2>
-              <p className="text-muted-foreground">
-                You&apos;ve used all 5 submissions this month. Upgrade to Hero
-                for unlimited submissions!
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Link href="/pricing">
-                <Button size="lg" className="w-full sm:w-auto">
-                  Upgrade to Hero - ₹2999/month
-                </Button>
-              </Link>
-              <p className="text-sm text-muted-foreground">
-                Or wait until {nextResetDate} for your submissions to reset
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        /* Submission Form */
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Code Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* File Name */}
-              <div className="space-y-2">
-                <Label htmlFor="fileName">File Name *</Label>
-                <Input
-                  id="fileName"
-                  name="fileName"
-                  required
-                  value={formData.fileName}
-                  onChange={handleInputChange}
-                  placeholder="e.g., MyComponent.jsx or script.py"
-                  className="font-mono"
+      {/* Wrap everything in SubmissionEligibilityWrapper */}
+      <SubmissionEligibilityWrapper>
+        {/* Usage Warning for Starter Tier */}
+        {usageData?.tier === "STARTER" && usageData.remaining > 0 && (
+          <Alert className="border-blue-500/50 bg-blue-500/10">
+            <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <AlertTitle className="text-blue-600 dark:text-blue-400">
+              {usageData.remaining} / {usageData.limit} submissions remaining
+            </AlertTitle>
+            <AlertDescription>
+              <div className="mt-2 mb-3">
+                <UsageProgress
+                  current={usageData.used}
+                  limit={usageData.limit}
+                  tier="STARTER"
                 />
               </div>
+              {usageData.percentage >= 80 && (
+                <Link href="/pricing">
+                  <Button size="sm" className="mt-2">
+                    Upgrade to Hero
+                  </Button>
+                </Link>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
 
-              {/* Language */}
-              <div className="space-y-2">
-                <Label htmlFor="language">Programming Language *</Label>
-                <Select
-                  value={formData.language}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, language: value }))
-                  }
-                >
-                  <SelectTrigger id="language" className="font-mono">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="javascript">JavaScript</SelectItem>
-                    <SelectItem value="typescript">TypeScript</SelectItem>
-                    <SelectItem value="python">Python</SelectItem>
-                    <SelectItem value="java">Java</SelectItem>
-                    <SelectItem value="cpp">C++</SelectItem>
-                    <SelectItem value="csharp">C#</SelectItem>
-                    <SelectItem value="go">Go</SelectItem>
-                    <SelectItem value="rust">Rust</SelectItem>
-                    <SelectItem value="php">PHP</SelectItem>
-                    <SelectItem value="ruby">Ruby</SelectItem>
-                    <SelectItem value="swift">Swift</SelectItem>
-                    <SelectItem value="kotlin">Kotlin</SelectItem>
-                  </SelectContent>
-                </Select>
+        {/* Limit Reached */}
+        {usageData?.remaining === 0 ? (
+          <Card className="border-destructive">
+            <CardContent className="p-8 text-center space-y-4">
+              <div className="flex justify-center">
+                <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <AlertCircle className="h-8 w-8 text-destructive" />
+                </div>
               </div>
-
-              {/* Code */}
+              <div>
+                <h2 className="text-2xl font-bold mb-2">
+                  Submission Limit Reached
+                </h2>
+                <p className="text-muted-foreground">
+                  You&apos;ve used all 5 submissions this month. Upgrade to Hero
+                  for unlimited submissions!
+                </p>
+              </div>
               <div className="space-y-2">
-                <Label htmlFor="code">Code *</Label>
-                <Textarea
-                  id="code"
-                  name="code"
-                  required
-                  value={formData.code}
-                  onChange={handleInputChange}
-                  rows={15}
-                  placeholder="Paste your code here..."
-                  className="font-mono text-sm resize-none"
-                />
+                <Link href="/pricing">
+                  <Button size="lg" className="w-full sm:w-auto">
+                    Upgrade to Hero - ₹2999/month
+                  </Button>
+                </Link>
+                <p className="text-sm text-muted-foreground">
+                  Or wait until {nextResetDate} for your submissions to reset
+                </p>
               </div>
             </CardContent>
           </Card>
-
-          {/* Actions */}
-          <div className="flex gap-4">
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 gap-2"
-              size="lg"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Submitting...
-                </>
-              ) : (
-                <>
-                  <Send className="h-4 w-4" />
-                  Submit Code
-                </>
-              )}
-            </Button>
-            <Link href="/dashboard">
-              <Button variant="outline" size="lg">
-                Cancel
+        ) : (
+          /* Submission Form */
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Code Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* File Name */}
+                <div className="space-y-2">
+                  <Label htmlFor="fileName">File Name *</Label>
+                  <Input
+                    id="fileName"
+                    name="fileName"
+                    required
+                    value={formData.fileName}
+                    onChange={handleInputChange}
+                    placeholder="e.g., MyComponent.jsx or script.py"
+                    className="font-mono"
+                  />
+                </div>
+                {/* Language */}
+                <div className="space-y-2">
+                  <Label htmlFor="language">Programming Language *</Label>
+                  <Select
+                    value={formData.language}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({ ...prev, language: value }))
+                    }
+                  >
+                    <SelectTrigger id="language" className="font-mono">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="javascript">JavaScript</SelectItem>
+                      <SelectItem value="typescript">TypeScript</SelectItem>
+                      <SelectItem value="python">Python</SelectItem>
+                      <SelectItem value="java">Java</SelectItem>
+                      <SelectItem value="cpp">C++</SelectItem>
+                      <SelectItem value="csharp">C#</SelectItem>
+                      <SelectItem value="go">Go</SelectItem>
+                      <SelectItem value="rust">Rust</SelectItem>
+                      <SelectItem value="php">PHP</SelectItem>
+                      <SelectItem value="ruby">Ruby</SelectItem>
+                      <SelectItem value="swift">Swift</SelectItem>
+                      <SelectItem value="kotlin">Kotlin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* Code */}
+                <div className="space-y-2">
+                  <Label htmlFor="code">Code *</Label>
+                  <Textarea
+                    id="code"
+                    name="code"
+                    required
+                    value={formData.code}
+                    onChange={handleInputChange}
+                    rows={15}
+                    placeholder="Paste your code here..."
+                    className="font-mono text-sm resize-none"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+            {/* Actions */}
+            <div className="flex gap-4">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 gap-2"
+                size="lg"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    Submit Code
+                  </>
+                )}
               </Button>
-            </Link>
-          </div>
-        </form>
-      )}
+              <Link href="/dashboard">
+                <Button variant="outline" size="lg">
+                  Cancel
+                </Button>
+              </Link>
+            </div>
+          </form>
+        )}
+      </SubmissionEligibilityWrapper>
 
       {/* Upgrade Modal */}
       <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
@@ -308,7 +320,6 @@ export default function NewSubmissionPage() {
               to Hero tier for unlimited code reviews!
             </DialogDescription>
           </DialogHeader>
-
           <div className="space-y-3 py-4">
             <div className="flex items-center gap-2 text-sm">
               <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
@@ -323,7 +334,6 @@ export default function NewSubmissionPage() {
               <span>Advanced analytics</span>
             </div>
           </div>
-
           <DialogFooter className="flex gap-2 sm:gap-2">
             <Link href="/pricing" className="flex-1">
               <Button className="w-full">Upgrade Now</Button>

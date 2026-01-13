@@ -6,6 +6,10 @@ import {
   extendTrialAdmin,
   resetSubmissionCountAdmin,
 } from "@/lib/actions/admin-users";
+import {
+  resetUserSessionCount,
+  resetUserCompletely,
+} from "@/lib/actions/admin-users";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +20,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   RotateCcw,
   Settings,
@@ -34,23 +46,105 @@ interface User {
   trialEndsAt: Date | null;
 }
 
+type ResetType = "monthly" | "session" | "complete" | null;
+
 export default function UserActions({ user }: { user: User }) {
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [showTierModal, setShowTierModal] = useState(false);
   const [showTrialModal, setShowTrialModal] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetType, setResetType] = useState<ResetType>(null);
 
-  const handleResetCount = async () => {
-    setLoadingAction("reset");
+  const handleResetMonthly = async () => {
+    setLoadingAction("reset-monthly");
     try {
       await resetSubmissionCountAdmin(user.id);
-      toast.success("Submission count reset successfully");
+      toast.success("Monthly submission count reset successfully");
+      setShowResetConfirm(false);
+      setResetType(null);
       window.location.reload();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to reset count"
+        error instanceof Error ? error.message : "Failed to reset monthly count"
       );
     } finally {
       setLoadingAction(null);
+    }
+  };
+
+  const handleResetSession = async () => {
+    setLoadingAction("reset-session");
+    try {
+      await resetUserSessionCount(user.id);
+      toast.success("Session count reset successfully");
+      setShowResetConfirm(false);
+      setResetType(null);
+      window.location.reload();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to reset session"
+      );
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const handleCompleteReset = async () => {
+    setLoadingAction("reset-complete");
+    try {
+      await resetUserCompletely(user.id);
+      toast.success("Complete reset successful");
+      setShowResetConfirm(false);
+      setResetType(null);
+      window.location.reload();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to complete reset"
+      );
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const handleResetClick = (type: ResetType) => {
+    setResetType(type);
+    setShowResetConfirm(true);
+  };
+
+  const executeReset = () => {
+    switch (resetType) {
+      case "monthly":
+        return handleResetMonthly();
+      case "session":
+        return handleResetSession();
+      case "complete":
+        return handleCompleteReset();
+    }
+  };
+
+  const getResetDescription = () => {
+    switch (resetType) {
+      case "monthly":
+        return "This will reset the monthly submission count to 0. The user will be able to submit up to their tier limit again.";
+      case "session":
+        return "This will reset the current session review count to 0. The user can continue their session without hitting the cooling period.";
+      case "complete":
+        return "This will reset ALL counts (monthly + session), clear any cooling periods, and end all active sessions. This is a full reset.";
+      default:
+        return "";
+    }
+  };
+
+  const getResetTitle = () => {
+    switch (resetType) {
+      case "monthly":
+        return "Reset Monthly Count?";
+      case "session":
+        return "Reset Session Count?";
+      case "complete":
+        return "Complete Reset?";
+      default:
+        return "Reset User?";
     }
   };
 
@@ -87,24 +181,53 @@ export default function UserActions({ user }: { user: User }) {
   };
 
   const isLoading = loadingAction !== null;
+  const showSessionReset =
+    user.subscriptionTier === "HERO" || user.subscriptionTier === "LEGEND";
 
   return (
     <>
       <div className="flex gap-2 justify-end">
-        <Button
-          onClick={handleResetCount}
-          disabled={isLoading}
-          variant="outline"
-          size="sm"
-          className="gap-1"
-        >
-          {loadingAction === "reset" ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
-          ) : (
-            <RotateCcw className="h-3 w-3" />
-          )}
-          Reset
-        </Button>
+        {/* Reset Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              disabled={isLoading}
+              variant="outline"
+              size="sm"
+              className="gap-1"
+            >
+              {loadingAction?.startsWith("reset") ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <RotateCcw className="h-3 w-3" />
+              )}
+              Reset
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Reset Options</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem onClick={() => handleResetClick("monthly")}>
+              Reset Monthly Count
+            </DropdownMenuItem>
+
+            {showSessionReset && (
+              <DropdownMenuItem onClick={() => handleResetClick("session")}>
+                Reset Session Count
+              </DropdownMenuItem>
+            )}
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem
+              onClick={() => handleResetClick("complete")}
+              className="text-destructive focus:text-destructive"
+            >
+              Complete Reset (All)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <Button
           onClick={() => setShowTierModal(true)}
@@ -131,6 +254,50 @@ export default function UserActions({ user }: { user: User }) {
         )}
       </div>
 
+      {/* Reset Confirmation Dialog */}
+      <Dialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{getResetTitle()}</DialogTitle>
+            <DialogDescription>
+              <span className="font-semibold">{user.email}</span>
+              <br />
+              <br />
+              {getResetDescription()}
+              <br />
+              <br />
+              This action will be logged in the subscription history.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setShowResetConfirm(false);
+                setResetType(null);
+              }}
+              disabled={isLoading}
+              variant="ghost"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={executeReset}
+              disabled={isLoading}
+              variant={resetType === "complete" ? "destructive" : "default"}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Resetting...
+                </>
+              ) : (
+                "Confirm Reset"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Change Tier Dialog */}
       <Dialog open={showTierModal} onOpenChange={setShowTierModal}>
         <DialogContent className="sm:max-w-[425px]">
@@ -144,7 +311,6 @@ export default function UserActions({ user }: { user: User }) {
               <span className="font-semibold">{user.email}</span>
             </DialogDescription>
           </DialogHeader>
-
           <div className="py-4">
             <div className="rounded-lg border bg-muted/50 p-3 mb-4">
               <p className="text-sm text-muted-foreground">
@@ -152,7 +318,6 @@ export default function UserActions({ user }: { user: User }) {
                 <span className="font-semibold">{user.subscriptionTier}</span>
               </p>
             </div>
-
             <div className="space-y-2">
               {user.subscriptionTier !== "STARTER" && (
                 <Button
@@ -198,7 +363,6 @@ export default function UserActions({ user }: { user: User }) {
               )}
             </div>
           </div>
-
           <DialogFooter>
             <Button
               onClick={() => setShowTierModal(false)}
@@ -224,7 +388,6 @@ export default function UserActions({ user }: { user: User }) {
               <span className="font-semibold">{user.email}</span>
             </DialogDescription>
           </DialogHeader>
-
           <div className="py-4 space-y-2">
             <Button
               onClick={() => handleExtendTrial(3)}
@@ -260,7 +423,6 @@ export default function UserActions({ user }: { user: User }) {
               Extend by 14 days
             </Button>
           </div>
-
           <DialogFooter>
             <Button
               onClick={() => setShowTrialModal(false)}

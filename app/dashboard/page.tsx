@@ -1,10 +1,13 @@
-// app/dashboard/page.tsx
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import TrialBanner from "@/components/trial-banner";
+import CoolingPeriodBanner from "@/components/cooling-period-banner";
+import SessionProgress from "@/components/session-progress";
 import {
   Users,
   TrendingUp,
@@ -17,12 +20,16 @@ import {
   Zap,
   ArrowUpRight,
 } from "lucide-react";
+import {
+  checkCoolingPeriodStatus,
+  getActiveSession,
+} from "@/lib/services/review-session-service";
 
 export default async function DashboardPage() {
   const session = await auth();
 
   if (!session?.user?.id) {
-    return null;
+    redirect("/login");
   }
 
   const user = await prisma.user.findUnique({
@@ -38,7 +45,7 @@ export default async function DashboardPage() {
   });
 
   if (!user) {
-    return null;
+    redirect("/login");
   }
 
   const submissions = await prisma.codeSubmission.findMany({
@@ -74,7 +81,11 @@ export default async function DashboardPage() {
   const avgScore = Math.round(avgScoreResult._avg?.overallScore ?? 0);
 
   const isStarter = user.subscriptionTier === "STARTER";
+  const isHero = user.subscriptionTier === "HERO";
   const isAtLimit = isStarter && user.monthlySubmissionCount >= 5;
+
+  const coolingStatus = await checkCoolingPeriodStatus(user.id);
+  const activeSession = isHero ? await getActiveSession(user.id) : null;
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-emerald-600 dark:text-emerald-400";
@@ -92,7 +103,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom duration-700">
-      {/* Header */}
       <div className="space-y-2">
         <h1 className="text-4xl font-bold tracking-tight flex items-center gap-2">
           <Sparkles className="h-8 w-8 text-primary animate-pulse" />
@@ -103,9 +113,27 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      {/* Stats Grid */}
+      {user.subscriptionStatus === "TRIALING" && (
+        <TrialBanner userId={user.id} />
+      )}
+
+      {coolingStatus.isInCoolingPeriod && (
+        <CoolingPeriodBanner
+          endsAt={coolingStatus.endsAt!}
+          hoursRemaining={coolingStatus.hoursRemaining}
+          tier={user.subscriptionTier}
+        />
+      )}
+
+      {isHero && activeSession && !coolingStatus.isInCoolingPeriod && (
+        <SessionProgress
+          currentCount={activeSession.reviewsInSession}
+          maxCount={activeSession.maxReviewsPerSession}
+          tier={user.subscriptionTier}
+        />
+      )}
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* Total Reviews Card */}
         <Card className="border-2 hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:shadow-lg group">
           <CardContent className="p-6">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -125,7 +153,6 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Average Score Card */}
         <Card className="border-2 hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:shadow-lg group">
           <CardContent className="p-6">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -149,7 +176,6 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Subscription Card */}
         <Card className="border-2 hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:shadow-lg group">
           <CardContent className="p-6">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -167,7 +193,6 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Quick Action Card */}
         <Card className="border-2 hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:shadow-lg group bg-linear-to-br from-primary/5 to-transparent">
           <CardContent className="p-6">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -175,9 +200,23 @@ export default async function DashboardPage() {
                 Quick Action
               </h3>
             </div>
-            <Link href={isAtLimit ? "/pricing" : "/dashboard/submissions/new"}>
-              <Button className="w-full mt-2 group/btn" size="lg">
-                {isAtLimit ? "Upgrade Plan" : "New Review"}
+            <Link
+              href={
+                isAtLimit || coolingStatus.isInCoolingPeriod
+                  ? "/pricing"
+                  : "/dashboard/submissions/new"
+              }
+            >
+              <Button
+                className="w-full mt-2 group/btn"
+                size="lg"
+                disabled={coolingStatus.isInCoolingPeriod && !isAtLimit}
+              >
+                {coolingStatus.isInCoolingPeriod
+                  ? "Cooling Period"
+                  : isAtLimit
+                  ? "Upgrade Plan"
+                  : "New Review"}
                 <ArrowUpRight className="h-4 w-4 ml-2 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
               </Button>
             </Link>
@@ -185,8 +224,7 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {/* Limit Reached Alert */}
-      {isAtLimit && (
+      {isAtLimit && !coolingStatus.isInCoolingPeriod && (
         <Card className="border-2 border-destructive bg-destructive/5 animate-in slide-in-from-top duration-500">
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
@@ -214,9 +252,7 @@ export default async function DashboardPage() {
         </Card>
       )}
 
-      {/* Main Content Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-        {/* Recent Reviews */}
         <Card className="col-span-4 border-2 hover:border-primary/30 transition-all duration-300">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -313,7 +349,6 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Getting Started */}
         <Card className="col-span-3 border-2 hover:border-primary/30 transition-all duration-300 bg-linear-to-br from-primary/5 to-transparent">
           <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">
@@ -337,7 +372,6 @@ export default async function DashboardPage() {
                   </p>
                 </div>
               </div>
-
               <div className="flex gap-4 group">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-lg group-hover:scale-110 transition-transform">
                   2
@@ -352,7 +386,6 @@ export default async function DashboardPage() {
                   </p>
                 </div>
               </div>
-
               <div className="flex gap-4 group">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-lg group-hover:scale-110 transition-transform">
                   3

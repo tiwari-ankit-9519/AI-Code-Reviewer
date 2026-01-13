@@ -1,4 +1,3 @@
-// components/admin/UserTable.tsx
 import {
   Table,
   TableBody,

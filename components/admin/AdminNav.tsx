@@ -1,5 +1,5 @@
+// components/admin/AdminNav.tsx
 "use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,13 @@ import {
   CreditCard,
   Users,
   Rocket,
+  Settings,
+  Activity,
+  Shield,
+  Timer,
 } from "lucide-react";
-
 export default function AdminNav() {
   const pathname = usePathname();
-
   const links = [
     {
       href: "/dashboard/admin",
@@ -49,12 +51,31 @@ export default function AdminNav() {
       icon: Users,
     },
     {
+      href: "/dashboard/admin/users/session-analytics",
+      label: "Session Analytics",
+      icon: Activity,
+    },
+    {
+      href: "/dashboard/admin/users/cooling-periods",
+      label: "Cooling Periods",
+      icon: Timer,
+    },
+    {
       href: "/dashboard/admin/leads",
       label: "Leads",
       icon: Rocket,
     },
+    {
+      href: "/dashboard/admin/tier-config",
+      label: "Tier Config",
+      icon: Settings,
+    },
+    {
+      href: "/dashboard/admin/system-health",
+      label: "System Health",
+      icon: Shield,
+    },
   ];
-
   return (
     <Card className="mb-6 p-2">
       <div className="flex gap-2 overflow-x-auto scrollbar-hide">

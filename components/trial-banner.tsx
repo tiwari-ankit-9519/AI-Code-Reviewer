@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { checkTrialStatus } from "@/lib/actions/subscription-actions";
 
 interface TrialStatus {
   isInTrial: boolean;
@@ -9,11 +11,21 @@ interface TrialStatus {
 }
 
 interface TrialBannerProps {
-  trialStatus: TrialStatus;
+  userId: string;
 }
 
-export function TrialBanner({ trialStatus }: TrialBannerProps) {
-  if (!trialStatus.isInTrial) {
+export default function TrialBanner({ userId }: TrialBannerProps) {
+  const [trialStatus, setTrialStatus] = useState<TrialStatus | null>(null);
+
+  useEffect(() => {
+    async function fetchTrialStatus() {
+      const status = await checkTrialStatus(userId);
+      setTrialStatus(status);
+    }
+    fetchTrialStatus();
+  }, [userId]);
+
+  if (!trialStatus || !trialStatus.isInTrial) {
     return null;
   }
 
@@ -33,20 +45,9 @@ export function TrialBanner({ trialStatus }: TrialBannerProps) {
     <div
       className={`bg-linear-to-r ${getUrgencyColor(
         trialStatus.daysRemaining
-      )} border-b-4 border-yellow-600 shadow-2xl shadow-yellow-500/50 relative overflow-hidden`}
+      )} border-b-4 border-yellow-600 shadow-2xl shadow-yellow-500/50 relative overflow-hidden rounded-xl`}
     >
-      <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.1)_50%,transparent_75%)] bg-size-[250%_250%] animate-[shimmer_3s_linear_infinite]"></div>
-
-      <style jsx>{`
-        @keyframes shimmer {
-          0% {
-            background-position: 200% 0;
-          }
-          100% {
-            background-position: -200% 0;
-          }
-        }
-      `}</style>
+      <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.1)_50%,transparent_75%)] bg-size-[250%_250%] animate-shimmer"></div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 relative z-10">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">

@@ -80,6 +80,10 @@ model User {
   submissionLimitNotified Boolean            @default(false)
   stripeCustomerId        String?            @unique
 
+  currentSessionId    String?
+  isInCoolingPeriod   Boolean   @default(false)
+  coolingPeriodEndsAt DateTime?
+
   submissions         CodeSubmission[]
   apiKeys             ApiKey[]
   accounts            Account[]
@@ -89,6 +93,8 @@ model User {
   rateLimits          RateLimitBucket[]
   subscriptions       Subscription[]
   subscriptionHistory SubscriptionHistory[]
+  reviewSessions      ReviewSession[]
+  analyticsSnapshots  AnalyticsSnapshot[]
 
   @@index([email])
   @@index([role])
@@ -340,6 +346,7 @@ model AnalyticsSnapshot {
   snapshotDate DateTime @default(now())
 
   userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([snapshotDate])
@@ -450,4 +457,50 @@ model RateLimitBucket {
   @@index([userId])
   @@index([windowEnd])
   @@map("rate_limit_buckets")
+}
+
+model ReviewSession {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tier SubscriptionTier
+
+  reviewsInSession     Int @default(0)
+  maxReviewsPerSession Int
+
+  sessionStartedAt DateTime  @default(now())
+  sessionEndedAt   DateTime?
+
+  coolingPeriodHours  Int
+  coolingPeriodEndsAt DateTime?
+  isInCoolingPeriod   Boolean   @default(false)
+
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isInCoolingPeriod])
+  @@index([coolingPeriodEndsAt])
+  @@map("review_sessions")
+}
+
+model TierLimitConfig {
+  id   String           @id @default(uuid())
+  tier SubscriptionTier @unique
+
+  reviewsPerSession  Int @default(10)
+  coolingPeriodHours Int @default(24)
+
+  monthlyReviewLimit Int?
+
+  isActive     Boolean  @default(true)
+  lastModified DateTime @updatedAt
+  modifiedBy   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("tier_limit_configs")
 }

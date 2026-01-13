@@ -1,16 +1,11 @@
-// lib/actions/admin-users.ts
+// lib/actions/admin-user-management.ts
 "use server";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { SubscriptionTier } from "@prisma/client";
 
-// ============================================
-// SUBMISSION COUNT RESET
-// ============================================
-
-export async function resetSubmissionCountAdmin(userId: string) {
+export async function resetUserSubmissionCount(userId: string) {
   const session = await auth();
 
   if (!session?.user || session.user.role !== "ADMIN") {
@@ -64,10 +59,6 @@ export async function resetSubmissionCountAdmin(userId: string) {
     message: `Monthly submission count reset for ${user.email}`,
   };
 }
-
-// ============================================
-// SESSION COUNT RESET
-// ============================================
 
 export async function resetUserSessionCount(userId: string) {
   const session = await auth();
@@ -143,10 +134,6 @@ export async function resetUserSessionCount(userId: string) {
   };
 }
 
-// ============================================
-// COMPLETE RESET (ALL)
-// ============================================
-
 export async function resetUserCompletely(userId: string) {
   const session = await auth();
 
@@ -216,143 +203,5 @@ export async function resetUserCompletely(userId: string) {
   return {
     success: true,
     message: `Complete reset successful for ${user.email}`,
-  };
-}
-
-// ============================================
-// TIER MANAGEMENT
-// ============================================
-
-export async function changeTierAdmin(
-  userId: string,
-  newTier: string,
-  reason: string
-) {
-  const session = await auth();
-
-  if (!session?.user || session.user.role !== "ADMIN") {
-    throw new Error("Unauthorized: Admin access required");
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      email: true,
-      subscriptionTier: true,
-    },
-  });
-
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  // Validate and convert to SubscriptionTier enum
-  if (!Object.values(SubscriptionTier).includes(newTier as SubscriptionTier)) {
-    throw new Error("Invalid tier");
-  }
-
-  const tier = newTier as SubscriptionTier;
-
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      subscriptionTier: tier,
-    },
-  });
-
-  // Log the tier change
-  await prisma.subscriptionHistory.create({
-    data: {
-      userId,
-      action: "TIER_CHANGED",
-      fromTier: user.subscriptionTier,
-      toTier: tier,
-      reason: reason || "admin_changed",
-      metadata: {
-        changedBy: session.user.id,
-        timestamp: new Date().toISOString(),
-      },
-    },
-  });
-
-  revalidatePath("/dashboard/admin/users");
-  revalidatePath(`/dashboard/admin/users/${userId}`);
-
-  return {
-    success: true,
-    message: `Tier changed to ${newTier}`,
-  };
-}
-
-// ============================================
-// TRIAL EXTENSION
-// ============================================
-
-export async function extendTrialAdmin(userId: string, days: number) {
-  const session = await auth();
-
-  if (!session?.user || session.user.role !== "ADMIN") {
-    throw new Error("Unauthorized: Admin access required");
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      email: true,
-      trialEndsAt: true,
-      subscriptionStatus: true,
-      subscriptionTier: true, // Get tier instead of status
-    },
-  });
-
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  if (user.subscriptionStatus !== "TRIALING") {
-    throw new Error("User is not currently in a trial period");
-  }
-
-  if (!user.trialEndsAt) {
-    throw new Error("User has no trial end date");
-  }
-
-  const currentTrialEnd = new Date(user.trialEndsAt);
-  const newTrialEnd = new Date(
-    currentTrialEnd.getTime() + days * 24 * 60 * 60 * 1000
-  );
-
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      trialEndsAt: newTrialEnd,
-    },
-  });
-
-  // Log the extension
-  await prisma.subscriptionHistory.create({
-    data: {
-      userId,
-      action: "TRIAL_EXTENDED",
-      toTier: user.subscriptionTier, // Use tier, not status
-      reason: "admin_extended",
-      metadata: {
-        extendedBy: session.user.id,
-        daysAdded: days,
-        oldEndDate: currentTrialEnd.toISOString(),
-        newEndDate: newTrialEnd.toISOString(),
-        timestamp: new Date().toISOString(),
-      },
-    },
-  });
-
-  revalidatePath("/dashboard/admin/users");
-  revalidatePath(`/dashboard/admin/users/${userId}`);
-
-  return {
-    success: true,
-    message: `Trial extended by ${days} days`,
   };
 }
