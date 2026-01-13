@@ -1,3 +1,5 @@
+// prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -20,6 +22,12 @@ enum SubscriptionStatus {
   PAST_DUE
 }
 
+enum SupportLevel {
+  COMMUNITY
+  PRIORITY
+  DEDICATED
+}
+
 enum PaymentProvider {
   STRIPE
   PADDLE
@@ -29,6 +37,18 @@ enum PaymentProvider {
 enum UserRole {
   USER
   ADMIN
+}
+
+enum SecurityCheckLevel {
+  BASIC
+  ADVANCED
+  ENTERPRISE
+}
+
+enum PerformanceCheckLevel {
+  BASIC
+  ADVANCED
+  ENTERPRISE
 }
 
 model EnterpriseLead {
@@ -52,17 +72,91 @@ model EnterpriseLead {
   @@map("enterprise_leads")
 }
 
+enum SupportCategory {
+  TECHNICAL
+  BILLING
+  FEATURE_REQUEST
+  BUG_REPORT
+  GENERAL
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_USER
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model SupportTicket {
+  id       String          @id @default(uuid())
+  userId   String
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject  String
+  category SupportCategory
+  priority TicketPriority
+  status   TicketStatus    @default(OPEN)
+
+  assignedTo String?
+  assignedAt DateTime?
+
+  firstResponseAt DateTime?
+  resolvedAt      DateTime?
+  closedAt        DateTime?
+
+  slaResponseTime Int
+  slaViolated     Boolean @default(false)
+
+  messages SupportMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([priority])
+  @@index([assignedTo])
+  @@index([createdAt])
+  @@map("support_tickets")
+}
+
+model SupportMessage {
+  id       String        @id @default(uuid())
+  ticketId String
+  ticket   SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  senderId String
+  isStaff  Boolean @default(false)
+  message  String  @db.Text
+
+  attachments Json @default("[]")
+
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+  @@index([createdAt])
+  @@map("support_messages")
+}
+
 model User {
-  id                String    @id @default(uuid())
-  email             String    @unique
+  id                String          @id @default(uuid())
+  email             String          @unique
   name              String
   passwordHash      String
   avatar            String?
   emailVerified     DateTime?
-  role              UserRole  @default(USER)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  role              UserRole        @default(USER)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
   passwordChangedAt DateTime?
+  supportTickets    SupportTicket[]
 
   emailNotifications Boolean @default(true)
   marketingEmails    Boolean @default(false)
@@ -81,8 +175,14 @@ model User {
   stripeCustomerId        String?            @unique
 
   currentSessionId    String?
-  isInCoolingPeriod   Boolean   @default(false)
+  isInCoolingPeriod   Boolean      @default(false)
   coolingPeriodEndsAt DateTime?
+  maxFileSize         Int          @default(51200)
+  apiAccessEnabled    Boolean      @default(false)
+  supportLevel        SupportLevel @default(COMMUNITY)
+
+  securityCheckLevel    SecurityCheckLevel    @default(BASIC)
+  performanceCheckLevel PerformanceCheckLevel @default(BASIC)
 
   submissions         CodeSubmission[]
   apiKeys             ApiKey[]
@@ -154,6 +254,9 @@ model ApiKey {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  isActive Boolean @default(true)
+
+  @@index([isActive])
   @@index([userId])
   @@index([key])
   @@map("api_keys")
@@ -173,8 +276,10 @@ model CodeSubmission {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  analysis AnalysisResult?
-  issues   Issue[]
+  analysis                 AnalysisResult?
+  issues                   Issue[]
+  securityCheckMetadata    SecurityCheckMetadata?
+  performanceCheckMetadata PerformanceCheckMetadata?
 
   @@index([userId])
   @@index([createdAt])
@@ -182,6 +287,36 @@ model CodeSubmission {
   @@index([language])
   @@index([userId, createdAt])
   @@map("code_submissions")
+}
+
+model SecurityCheckMetadata {
+  id              String             @id @default(uuid())
+  submissionId    String             @unique
+  submission      CodeSubmission     @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  tier            SubscriptionTier
+  securityLevel   SecurityCheckLevel
+  checksPerformed Json               @default("[]")
+  checksSkipped   Json               @default("[]")
+  analysisDepth   String
+  createdAt       DateTime           @default(now())
+
+  @@index([tier])
+  @@map("security_check_metadata")
+}
+
+model PerformanceCheckMetadata {
+  id               String                @id @default(uuid())
+  submissionId     String                @unique
+  submission       CodeSubmission        @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  tier             SubscriptionTier
+  performanceLevel PerformanceCheckLevel
+  checksPerformed  Json                  @default("[]")
+  checksSkipped    Json                  @default("[]")
+  analysisDepth    String
+  createdAt        DateTime              @default(now())
+
+  @@index([tier])
+  @@map("performance_check_metadata")
 }
 
 model AnalysisResult {
@@ -499,8 +634,9 @@ model TierLimitConfig {
   lastModified DateTime @updatedAt
   modifiedBy   String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  maxFileSize Int      @default(51200)
 
   @@map("tier_limit_configs")
 }

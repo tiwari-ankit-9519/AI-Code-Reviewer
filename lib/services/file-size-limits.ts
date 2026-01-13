@@ -1,3 +1,5 @@
+// lib/services/file-size-limits.ts
+
 import { SubscriptionTier } from "@prisma/client";
 
 export const FILE_SIZE_LIMITS = {
@@ -25,18 +27,21 @@ export function validateFileSize(
   const limit = getFileSizeLimit(tier);
 
   if (fileSize > limit) {
+    const upgradeMessage =
+      tier === "STARTER"
+        ? "Upgrade to HERO for 100KB limit."
+        : tier === "HERO"
+        ? "Upgrade to LEGEND for 500KB limit."
+        : "";
+
     return {
       valid: false,
       limit,
       message: `File size ${formatFileSize(
         fileSize
-      )} exceeds your ${tier} tier limit of ${formatFileSize(limit)}. ${
-        tier === "STARTER"
-          ? "Upgrade to HERO for 100KB limit."
-          : tier === "HERO"
-          ? "Upgrade to LEGEND for 500KB limit."
-          : ""
-      }`,
+      )} exceeds your ${tier} tier limit of ${formatFileSize(
+        limit
+      )}. ${upgradeMessage}`,
     };
   }
 
@@ -44,4 +49,25 @@ export function validateFileSize(
     valid: true,
     limit,
   };
+}
+
+export function getFileSizeLimitDisplay(tier: SubscriptionTier): string {
+  const limit = getFileSizeLimit(tier);
+  return formatFileSize(limit);
+}
+
+export function getRemainingSize(
+  currentSize: number,
+  tier: SubscriptionTier
+): number {
+  const limit = getFileSizeLimit(tier);
+  return Math.max(0, limit - currentSize);
+}
+
+export function getFileSizePercentage(
+  currentSize: number,
+  tier: SubscriptionTier
+): number {
+  const limit = getFileSizeLimit(tier);
+  return Math.min(100, (currentSize / limit) * 100);
 }

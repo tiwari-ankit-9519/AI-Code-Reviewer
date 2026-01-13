@@ -1,3 +1,5 @@
+// scripts/update-user-check-levels.ts
+
 import { PrismaClient, SubscriptionTier } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
@@ -15,28 +17,15 @@ const prisma = new PrismaClient({
   adapter,
 });
 
-interface TierConfigData {
-  reviewsPerSession: number;
-  coolingPeriodHours: number;
-  monthlyReviewLimit: number | null;
+interface CheckLevels {
+  security: "BASIC" | "ADVANCED" | "ENTERPRISE";
+  performance: "BASIC" | "ADVANCED" | "ENTERPRISE";
 }
 
-const DEFAULT_TIER_CONFIGS: Record<SubscriptionTier, TierConfigData> = {
-  STARTER: {
-    reviewsPerSession: 5,
-    coolingPeriodHours: 0,
-    monthlyReviewLimit: 5,
-  },
-  HERO: {
-    reviewsPerSession: 20,
-    coolingPeriodHours: 24,
-    monthlyReviewLimit: null,
-  },
-  LEGEND: {
-    reviewsPerSession: 50,
-    coolingPeriodHours: 0,
-    monthlyReviewLimit: null,
-  },
+const TIER_CHECK_LEVELS: Record<SubscriptionTier, CheckLevels> = {
+  STARTER: { security: "BASIC", performance: "BASIC" },
+  HERO: { security: "ADVANCED", performance: "ADVANCED" },
+  LEGEND: { security: "ENTERPRISE", performance: "ENTERPRISE" },
 };
 
 async function main() {
@@ -48,47 +37,43 @@ async function main() {
   try {
     await prisma.$connect();
     console.log("✅ Connected to database");
-    console.log("Initializing tier configurations...\n");
+    console.log("Updating user check levels...\n");
 
-    const tiers: SubscriptionTier[] = ["STARTER", "HERO", "LEGEND"];
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        subscriptionTier: true,
+      },
+    });
 
-    for (const tier of tiers) {
-      const configData = DEFAULT_TIER_CONFIGS[tier];
+    console.log(`Found ${users.length} users to update\n`);
 
-      const existing = await prisma.tierLimitConfig.findUnique({
-        where: { tier },
+    let updatedCount = 0;
+
+    for (const user of users) {
+      const levels =
+        TIER_CHECK_LEVELS[user.subscriptionTier] || TIER_CHECK_LEVELS.STARTER;
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          securityCheckLevel: levels.security,
+          performanceCheckLevel: levels.performance,
+        },
       });
 
-      if (existing) {
-        await prisma.tierLimitConfig.update({
-          where: { tier },
-          data: configData,
-        });
-        console.log(`✅ Updated config for ${tier}`);
-        console.log(`   Reviews per session: ${configData.reviewsPerSession}`);
-        console.log(`   Cooling period: ${configData.coolingPeriodHours}h`);
-        console.log(
-          `   Monthly limit: ${configData.monthlyReviewLimit || "∞"}\n`
-        );
-      } else {
-        await prisma.tierLimitConfig.create({
-          data: {
-            tier,
-            ...configData,
-          },
-        });
-        console.log(`✅ Created config for ${tier}`);
-        console.log(`   Reviews per session: ${configData.reviewsPerSession}`);
-        console.log(`   Cooling period: ${configData.coolingPeriodHours}h`);
-        console.log(
-          `   Monthly limit: ${configData.monthlyReviewLimit || "∞"}\n`
-        );
-      }
+      console.log(`✅ Updated ${user.email}`);
+      console.log(`   Tier: ${user.subscriptionTier}`);
+      console.log(`   Security Level: ${levels.security}`);
+      console.log(`   Performance Level: ${levels.performance}\n`);
+
+      updatedCount++;
     }
 
-    console.log("✅ Tier configurations initialized successfully!");
+    console.log(`✅ Successfully updated ${updatedCount} users!`);
   } catch (error) {
-    console.error("❌ Error initializing tier configs:", error);
+    console.error("❌ Error updating user check levels:", error);
     throw error;
   } finally {
     await prisma.$disconnect();

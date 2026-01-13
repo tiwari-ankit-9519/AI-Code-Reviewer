@@ -16,6 +16,7 @@ import {
   Activity,
   Shield,
   Timer,
+  Ticket,
 } from "lucide-react";
 export default function AdminNav() {
   const pathname = usePathname();
@@ -74,6 +75,11 @@ export default function AdminNav() {
       href: "/dashboard/admin/system-health",
       label: "System Health",
       icon: Shield,
+    },
+    {
+      href: "/dashboard/admin/support",
+      label: "Support Tickets",
+      icon: Ticket,
     },
   ];
   return (

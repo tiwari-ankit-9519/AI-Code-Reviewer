@@ -2,7 +2,7 @@
 "use server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { analyzeCode } from "@/lib/ai/code-analyzer";
+import { analyzeCodeWithTier } from "@/lib/ai/code-analyzer";
 import { revalidatePath } from "next/cache";
 import {
   canUserSubmit,
@@ -29,6 +29,7 @@ import {
 } from "@/lib/services/edge-case-handlers";
 import { validateFileSize } from "@/lib/services/file-size-limits";
 import { CoolingPeriodError } from "@/lib/errors/submission-errors";
+import { SubscriptionTier } from "@prisma/client";
 
 export async function createSubmission(formData: FormData) {
   const session = await auth();
@@ -145,7 +146,12 @@ export async function createSubmission(formData: FormData) {
       );
     }
 
-    await runAnalysisAndRevalidate(submission.id, code, language);
+    await runAnalysisAndRevalidate(
+      submission.id,
+      code,
+      language,
+      subscription.subscriptionTier
+    );
 
     return {
       success: true,
@@ -164,7 +170,8 @@ export async function createSubmission(formData: FormData) {
 export async function runAnalysisAndRevalidate(
   submissionId: string,
   code: string,
-  language: string
+  language: string,
+  tier: SubscriptionTier
 ) {
   try {
     await prisma.codeSubmission.update({
@@ -172,7 +179,7 @@ export async function runAnalysisAndRevalidate(
       data: { status: "analyzing" },
     });
 
-    const analysis = await analyzeCode(code, language);
+    const analysis = await analyzeCodeWithTier(code, language, tier);
 
     const issues = [
       ...analysis.securityIssues.map((issue) => {
@@ -223,6 +230,34 @@ export async function runAnalysisAndRevalidate(
           analysisTime: analysis.analysisTime,
           summary: analysis.summary,
           recommendations: JSON.parse(JSON.stringify(analysis.recommendations)),
+        },
+      }),
+      prisma.securityCheckMetadata.create({
+        data: {
+          submissionId,
+          tier: analysis.securityMetadata.tier,
+          securityLevel: analysis.securityMetadata.securityLevel,
+          checksPerformed: JSON.parse(
+            JSON.stringify(analysis.securityMetadata.checksPerformed)
+          ),
+          checksSkipped: JSON.parse(
+            JSON.stringify(analysis.securityMetadata.checksSkipped)
+          ),
+          analysisDepth: analysis.securityMetadata.analysisDepth,
+        },
+      }),
+      prisma.performanceCheckMetadata.create({
+        data: {
+          submissionId,
+          tier: analysis.performanceMetadata.tier,
+          performanceLevel: analysis.performanceMetadata.performanceLevel,
+          checksPerformed: JSON.parse(
+            JSON.stringify(analysis.performanceMetadata.checksPerformed)
+          ),
+          checksSkipped: JSON.parse(
+            JSON.stringify(analysis.performanceMetadata.checksSkipped)
+          ),
+          analysisDepth: analysis.performanceMetadata.analysisDepth,
         },
       }),
       ...(issues.length > 0

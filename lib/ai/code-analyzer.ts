@@ -1,25 +1,19 @@
-import { groq, GROQ_MODELS } from "./groq-client";
+// lib/ai/enhanced-code-analyzer.ts
 
-export interface AnalysisResult {
-  securityScore: number;
-  performanceScore: number;
-  qualityScore: number;
-  complexityScore: number;
-  maintainabilityScore: number;
-  overallScore: number;
-  securityIssues: Issue[];
-  performanceIssues: Issue[];
-  codeSmells: Issue[];
-  bugRisks: Issue[];
-  styleSuggestions: Issue[];
-  summary: string;
-  recommendations: Recommendation[];
-  aiModel: string;
-  aiProvider: string;
-  promptTokens: number;
-  completionTokens: number;
-  analysisTime: number;
-}
+import { groq, GROQ_MODELS } from "./groq-client";
+import { SubscriptionTier } from "@prisma/client";
+import {
+  getSecurityCheckConfig,
+  buildSecurityAnalysisPrompt,
+  filterSecurityIssuesByTier,
+  getSecurityCheckMetadata,
+} from "@/lib/services/security-check-service";
+import {
+  getPerformanceCheckConfig,
+  buildPerformanceAnalysisPrompt,
+  filterPerformanceIssuesByTier,
+  getPerformanceCheckMetadata,
+} from "@/lib/services/performance-check-service";
 
 export interface Issue {
   id: string;
@@ -46,136 +40,293 @@ export interface Recommendation {
   effort: "low" | "medium" | "high";
 }
 
-export async function analyzeCode(
+export interface EnhancedAnalysisResult {
+  securityScore: number;
+  performanceScore: number;
+  qualityScore: number;
+  complexityScore: number;
+  maintainabilityScore: number;
+  overallScore: number;
+  securityIssues: Issue[];
+  performanceIssues: Issue[];
+  codeSmells: Issue[];
+  bugRisks: Issue[];
+  styleSuggestions: Issue[];
+  summary: string;
+  recommendations: Recommendation[];
+  aiModel: string;
+  aiProvider: string;
+  promptTokens: number;
+  completionTokens: number;
+  analysisTime: number;
+  securityMetadata: ReturnType<typeof getSecurityCheckMetadata>;
+  performanceMetadata: ReturnType<typeof getPerformanceCheckMetadata>;
+}
+
+export async function analyzeCodeWithTier(
   code: string,
-  language: string
-): Promise<AnalysisResult> {
+  language: string,
+  tier: SubscriptionTier
+): Promise<EnhancedAnalysisResult> {
   const startTime = Date.now();
 
-  const prompt = `You are an expert code reviewer. Analyze the following ${language} code for security vulnerabilities, performance issues, code quality, complexity, and maintainability.
+  const securityConfig = getSecurityCheckConfig(tier);
+  const performanceConfig = getPerformanceCheckConfig(tier);
+
+  const securityPrompt = buildSecurityAnalysisPrompt(
+    code,
+    language,
+    securityConfig
+  );
+  const performancePrompt = buildPerformanceAnalysisPrompt(
+    code,
+    language,
+    performanceConfig
+  );
+
+  const generalPrompt = `You are an expert code reviewer. Analyze the following ${language} code for code quality, complexity, maintainability, code smells, bug risks, and style issues.
 
 CODE:
 \`\`\`${language}
 ${code}
 \`\`\`
 
-Provide a detailed JSON response with the following structure:
+Provide a detailed JSON response with:
 {
-  "securityScore": number (0-100),
-  "performanceScore": number (0-100),
   "qualityScore": number (0-100),
   "complexityScore": number (0-100),
   "maintainabilityScore": number (0-100),
-  "securityIssues": [
-    {
-      "type": "sql_injection | xss | hardcoded_secret | etc",
-      "severity": "critical | high | medium | low | info",
-      "title": "Brief title",
-      "description": "Detailed explanation",
-      "lineStart": number,
-      "lineEnd": number,
-      "column": number,
-      "codeSnippet": "problematic code",
-      "suggestedFix": "how to fix",
-      "fixedCode": "corrected code",
-      "cweId": "CWE-XXX if applicable",
-      "confidence": number (0.0-1.0)
-    }
-  ],
-  "performanceIssues": [],
   "codeSmells": [],
   "bugRisks": [],
   "styleSuggestions": [],
   "summary": "Executive summary of findings",
-  "recommendations": [
-    {
-      "priority": number (1-5),
-      "category": "security | performance | quality",
-      "title": "Recommendation title",
-      "impact": "Impact description",
-      "effort": "low | medium | high"
-    }
-  ]
+  "recommendations": []
 }
 
 Respond ONLY with valid JSON. No markdown, no explanations outside JSON.`;
 
   try {
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are an expert code reviewer specializing in security, performance, and code quality analysis. Always respond with valid JSON only.",
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      model: GROQ_MODELS.LLAMA_70B,
-      temperature: 0.2,
-      max_tokens: 4096,
-      response_format: { type: "json_object" },
-    });
+    const [securityAnalysis, performanceAnalysis, generalAnalysis] =
+      await Promise.all([
+        groq.chat.completions.create({
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are an expert security analyst. Always respond with valid JSON only.",
+            },
+            {
+              role: "user",
+              content: securityPrompt,
+            },
+          ],
+          model: GROQ_MODELS.LLAMA_70B,
+          temperature: 0.2,
+          max_tokens: 4096,
+          response_format: { type: "json_object" },
+        }),
+        groq.chat.completions.create({
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are an expert performance analyst. Always respond with valid JSON only.",
+            },
+            {
+              role: "user",
+              content: performancePrompt,
+            },
+          ],
+          model: GROQ_MODELS.LLAMA_70B,
+          temperature: 0.2,
+          max_tokens: 4096,
+          response_format: { type: "json_object" },
+        }),
+        groq.chat.completions.create({
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are an expert code quality analyst. Always respond with valid JSON only.",
+            },
+            {
+              role: "user",
+              content: generalPrompt,
+            },
+          ],
+          model: GROQ_MODELS.LLAMA_70B,
+          temperature: 0.2,
+          max_tokens: 4096,
+          response_format: { type: "json_object" },
+        }),
+      ]);
 
     const analysisTime = Date.now() - startTime;
 
-    const content = completion.choices[0]?.message?.content;
-    if (!content) {
+    const securityContent = securityAnalysis.choices[0]?.message?.content;
+    const performanceContent = performanceAnalysis.choices[0]?.message?.content;
+    const generalContent = generalAnalysis.choices[0]?.message?.content;
+
+    if (!securityContent || !performanceContent || !generalContent) {
       throw new Error("No response from Groq API");
     }
 
-    const parsed = JSON.parse(content);
+    const securityData = JSON.parse(securityContent);
+    const performanceData = JSON.parse(performanceContent);
+    const generalData = JSON.parse(generalContent);
 
-    const issues = [
-      ...(parsed.securityIssues || []),
-      ...(parsed.performanceIssues || []),
-      ...(parsed.codeSmells || []),
-      ...(parsed.bugRisks || []),
-      ...(parsed.styleSuggestions || []),
-    ];
+    let securityIssues = filterSecurityIssuesByTier(
+      securityData.securityIssues || [],
+      securityConfig
+    );
+    let performanceIssues = filterPerformanceIssuesByTier(
+      performanceData.performanceIssues || [],
+      performanceConfig
+    );
 
-    issues.forEach((issue, index) => {
-      issue.id = `issue-${index + 1}`;
-      issue.automatable = issue.suggestedFix ? true : false;
-    });
+    securityIssues = securityIssues.map((issue, index) => ({
+      ...issue,
+      id: `sec-${index + 1}`,
+      automatable: !!issue.suggestedFix,
+    }));
+
+    performanceIssues = performanceIssues.map((issue, index) => ({
+      ...issue,
+      id: `perf-${index + 1}`,
+      automatable: !!issue.suggestedFix,
+    }));
+
+    const codeSmells = (generalData.codeSmells || []).map(
+      (issue: Omit<Issue, "id" | "automatable">, index: number) => ({
+        ...issue,
+        id: `smell-${index + 1}`,
+        automatable: !!issue.suggestedFix,
+      })
+    );
+    const bugRisks = (generalData.bugRisks || []).map(
+      (issue: Omit<Issue, "id" | "automatable">, index: number) => ({
+        ...issue,
+        id: `bug-${index + 1}`,
+        automatable: !!issue.suggestedFix,
+      })
+    );
+    const styleSuggestions = (generalData.styleSuggestions || []).map(
+      (issue: Omit<Issue, "id" | "automatable">, index: number) => ({
+        ...issue,
+        id: `style-${index + 1}`,
+        automatable: !!issue.suggestedFix,
+      })
+    );
+
+    const securityScore = calculateSecurityScore(securityIssues, tier);
+    const performanceScore = calculatePerformanceScore(performanceIssues, tier);
+    const qualityScore = generalData.qualityScore || 0;
+    const complexityScore = generalData.complexityScore || 0;
+    const maintainabilityScore = generalData.maintainabilityScore || 0;
 
     const overallScore = Math.round(
-      (parsed.securityScore +
-        parsed.performanceScore +
-        parsed.qualityScore +
-        parsed.complexityScore +
-        parsed.maintainabilityScore) /
+      (securityScore +
+        performanceScore +
+        qualityScore +
+        complexityScore +
+        maintainabilityScore) /
         5
     );
 
+    const totalTokens =
+      (securityAnalysis.usage?.prompt_tokens || 0) +
+      (performanceAnalysis.usage?.prompt_tokens || 0) +
+      (generalAnalysis.usage?.prompt_tokens || 0);
+
+    const totalCompletionTokens =
+      (securityAnalysis.usage?.completion_tokens || 0) +
+      (performanceAnalysis.usage?.completion_tokens || 0) +
+      (generalAnalysis.usage?.completion_tokens || 0);
+
     return {
-      securityScore: parsed.securityScore || 0,
-      performanceScore: parsed.performanceScore || 0,
-      qualityScore: parsed.qualityScore || 0,
-      complexityScore: parsed.complexityScore || 0,
-      maintainabilityScore: parsed.maintainabilityScore || 0,
+      securityScore,
+      performanceScore,
+      qualityScore,
+      complexityScore,
+      maintainabilityScore,
       overallScore,
-      securityIssues: parsed.securityIssues || [],
-      performanceIssues: parsed.performanceIssues || [],
-      codeSmells: parsed.codeSmells || [],
-      bugRisks: parsed.bugRisks || [],
-      styleSuggestions: parsed.styleSuggestions || [],
-      summary: parsed.summary || "No summary available",
-      recommendations: parsed.recommendations || [],
+      securityIssues,
+      performanceIssues,
+      codeSmells,
+      bugRisks,
+      styleSuggestions,
+      summary:
+        generalData.summary ||
+        `Completed ${securityConfig.level} security analysis and ${performanceConfig.level} performance analysis.`,
+      recommendations: generalData.recommendations || [],
       aiModel: GROQ_MODELS.LLAMA_70B,
       aiProvider: "groq",
-      promptTokens: completion.usage?.prompt_tokens || 0,
-      completionTokens: completion.usage?.completion_tokens || 0,
+      promptTokens: totalTokens,
+      completionTokens: totalCompletionTokens,
       analysisTime,
+      securityMetadata: getSecurityCheckMetadata(tier, securityConfig),
+      performanceMetadata: getPerformanceCheckMetadata(tier, performanceConfig),
     };
   } catch (error) {
-    console.error("Groq analysis error:", error);
+    console.error("Enhanced analysis error:", error);
     throw new Error(
       `Code analysis failed: ${
         error instanceof Error ? error.message : "Unknown error"
       }`
     );
   }
+}
+
+function calculateSecurityScore(
+  issues: Issue[],
+  tier: SubscriptionTier
+): number {
+  if (issues.length === 0) return 100;
+
+  const weights = {
+    critical: 20,
+    high: 10,
+    medium: 5,
+    low: 2,
+    info: 1,
+  };
+
+  const totalWeight = issues.reduce(
+    (sum, issue) => sum + weights[issue.severity],
+    0
+  );
+
+  const maxPossibleWeight =
+    tier === "STARTER" ? 100 : tier === "HERO" ? 200 : 300;
+
+  const score = Math.max(0, 100 - (totalWeight / maxPossibleWeight) * 100);
+
+  return Math.round(score);
+}
+
+function calculatePerformanceScore(
+  issues: Issue[],
+  tier: SubscriptionTier
+): number {
+  if (issues.length === 0) return 100;
+
+  const weights = {
+    critical: 20,
+    high: 10,
+    medium: 5,
+    low: 2,
+    info: 1,
+  };
+
+  const totalWeight = issues.reduce(
+    (sum, issue) => sum + weights[issue.severity],
+    0
+  );
+
+  const maxPossibleWeight =
+    tier === "STARTER" ? 100 : tier === "HERO" ? 200 : 300;
+
+  const score = Math.max(0, 100 - (totalWeight / maxPossibleWeight) * 100);
+
+  return Math.round(score);
 }

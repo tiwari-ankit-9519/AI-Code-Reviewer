@@ -1,5 +1,3 @@
-// app/dashboard/submissions/[id]/page.tsx
-
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
@@ -8,12 +6,6 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { AnalysisProgress } from "@/components/analysis-progress";
 import { ExportButtons } from "@/components/export-buttons";
-import { SecurityBadge } from "@/components/submissions/security-badge";
-import { PerformanceBadge } from "@/components/submissions/performance-badge";
-import {
-  getSecurityCheckMetadata,
-  getPerformanceCheckMetadata,
-} from "@/lib/actions/analysis-metadata";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,11 +51,6 @@ export default async function SubmissionDetailPage({
       issues: {
         orderBy: [{ severity: "asc" }, { lineStart: "asc" }],
       },
-      user: {
-        select: {
-          subscriptionTier: true,
-        },
-      },
     },
   });
 
@@ -74,9 +61,6 @@ export default async function SubmissionDetailPage({
   if (submission.userId !== session.user.id) {
     redirect("/dashboard");
   }
-
-  const securityMeta = await getSecurityCheckMetadata(id);
-  const performanceMeta = await getPerformanceCheckMetadata(id);
 
   const getStatusBadge = (status: string) => {
     const config = {
@@ -149,6 +133,7 @@ export default async function SubmissionDetailPage({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
+      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-6">
         <div className="space-y-3">
           <Link href="/dashboard/submissions">
@@ -181,34 +166,6 @@ export default async function SubmissionDetailPage({
               <Calendar className="h-3 w-3" />
               {new Date(submission.createdAt).toLocaleDateString()}
             </div>
-            <span>•</span>
-            <Badge variant="outline">{submission.user.subscriptionTier}</Badge>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            {securityMeta && (
-              <SecurityBadge
-                level={
-                  securityMeta.securityLevel as
-                    | "BASIC"
-                    | "ADVANCED"
-                    | "ENTERPRISE"
-                }
-                checksPerformed={securityMeta.checksPerformed as string[]}
-                checksSkipped={securityMeta.checksSkipped as string[]}
-              />
-            )}
-            {performanceMeta && (
-              <PerformanceBadge
-                level={
-                  performanceMeta.performanceLevel as
-                    | "BASIC"
-                    | "ADVANCED"
-                    | "ENTERPRISE"
-                }
-                checksPerformed={performanceMeta.checksPerformed as string[]}
-                checksSkipped={performanceMeta.checksSkipped as string[]}
-              />
-            )}
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -226,13 +183,16 @@ export default async function SubmissionDetailPage({
         </div>
       </div>
 
+      {/* Analysis Progress */}
       {(submission.status === "pending" ||
         submission.status === "analyzing") && (
         <AnalysisProgress submissionId={submission.id} />
       )}
 
+      {/* Analysis Results */}
       {submission.analysis ? (
         <>
+          {/* Score Cards */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <Card
               className={`border-2 ${getScoreBg(
@@ -271,11 +231,6 @@ export default async function SubmissionDetailPage({
                 >
                   {submission.analysis.securityScore}%
                 </p>
-                {securityMeta && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {securityMeta.securityLevel} Analysis
-                  </p>
-                )}
               </CardContent>
             </Card>
 
@@ -294,11 +249,6 @@ export default async function SubmissionDetailPage({
                 >
                   {submission.analysis.performanceScore}%
                 </p>
-                {performanceMeta && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {performanceMeta.performanceLevel} Analysis
-                  </p>
-                )}
               </CardContent>
             </Card>
 
@@ -339,6 +289,7 @@ export default async function SubmissionDetailPage({
             </Card>
           </div>
 
+          {/* Summary Card */}
           <Card className="border-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -353,100 +304,7 @@ export default async function SubmissionDetailPage({
             </CardContent>
           </Card>
 
-          {securityMeta && (
-            <Card className="border-2 border-blue-500/30">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-blue-500" />
-                  Security Analysis Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-2 flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    Checks Performed
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {(securityMeta.checksPerformed as string[]).map((check) => (
-                      <Badge key={check} variant="secondary">
-                        {check.replace(/_/g, " ")}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-                {(securityMeta.checksSkipped as string[]).length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-2 flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4 text-amber-600" />
-                      Advanced Checks (Upgrade to Access)
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {(securityMeta.checksSkipped as string[]).map((check) => (
-                        <Badge
-                          key={check}
-                          variant="outline"
-                          className="opacity-50"
-                        >
-                          {check.replace(/_/g, " ")}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {performanceMeta && (
-            <Card className="border-2 border-purple-500/30">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-purple-500" />
-                  Performance Analysis Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-2 flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    Checks Performed
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {(performanceMeta.checksPerformed as string[]).map(
-                      (check) => (
-                        <Badge key={check} variant="secondary">
-                          {check.replace(/_/g, " ")}
-                        </Badge>
-                      )
-                    )}
-                  </div>
-                </div>
-                {(performanceMeta.checksSkipped as string[]).length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-2 flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4 text-amber-600" />
-                      Advanced Checks (Upgrade to Access)
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {(performanceMeta.checksSkipped as string[]).map(
-                        (check) => (
-                          <Badge
-                            key={check}
-                            variant="outline"
-                            className="opacity-50"
-                          >
-                            {check.replace(/_/g, " ")}
-                          </Badge>
-                        )
-                      )}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
+          {/* Issues Section */}
           {submission.issues.length > 0 && (
             <Card className="border-2 border-destructive/50">
               <CardHeader className="bg-destructive/5">
@@ -529,6 +387,7 @@ export default async function SubmissionDetailPage({
                                 </div>
                               </div>
 
+                              {/* Problem Code */}
                               <Card className="mb-4 border-destructive/50">
                                 <CardHeader className="bg-destructive/5 py-3">
                                   <div className="flex items-center gap-2 text-sm font-semibold text-destructive">
@@ -553,6 +412,7 @@ export default async function SubmissionDetailPage({
                                 </CardContent>
                               </Card>
 
+                              {/* Suggested Fix */}
                               {issue.suggestedFix && (
                                 <Card className="mb-4 border-emerald-500/50 bg-emerald-500/5">
                                   <CardContent className="p-4">
@@ -571,6 +431,7 @@ export default async function SubmissionDetailPage({
                                 </Card>
                               )}
 
+                              {/* Fixed Code */}
                               {issue.fixedCode && (
                                 <Card className="border-emerald-500/50">
                                   <CardHeader className="bg-emerald-500/5 py-3">
@@ -608,6 +469,7 @@ export default async function SubmissionDetailPage({
         </>
       ) : null}
 
+      {/* Code Display */}
       <Card className="border-2 overflow-hidden">
         <CardHeader className="bg-muted/50 py-3">
           <div className="flex items-center justify-between">

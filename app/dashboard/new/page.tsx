@@ -1,3 +1,5 @@
+// app/dashboard/new/page.tsx
+
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -26,7 +28,9 @@ import {
 } from "@/components/ui/dialog";
 import { UsageProgress } from "@/components/subscription/usage-progress";
 import SubmissionEligibilityWrapper from "@/components/submissions/submission-eligibility-wrapper";
+import { FileSizeValidator } from "@/components/submissions/file-size-validator";
 import { createSubmission } from "@/lib/actions/submissions";
+import { getFileSizeLimit } from "@/lib/services/file-size-limits";
 import {
   ArrowLeft,
   FileCode,
@@ -35,11 +39,13 @@ import {
   Zap,
   CheckCircle,
   Loader2,
+  Shield,
 } from "lucide-react";
 
 export default function NewSubmissionPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [codeSize, setCodeSize] = useState(0);
   const [usageData, setUsageData] = useState<{
     tier: string;
     used: number;
@@ -76,14 +82,34 @@ export default function NewSubmissionPage() {
       ...prev,
       [name]: value,
     }));
+
+    if (name === "code") {
+      setCodeSize(new Blob([value]).size);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!usageData) {
+      toast.error("Unable to verify subscription status");
+      return;
+    }
+
+    const fileSizeLimit = getFileSizeLimit(
+      usageData.tier as "STARTER" | "HERO" | "LEGEND"
+    );
+
+    if (codeSize > fileSizeLimit) {
+      toast.error("File too large", {
+        description: `Your file exceeds the ${usageData.tier} tier limit. Please reduce the file size or upgrade your plan.`,
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      // Create FormData object for the server action
       const formDataObj = new FormData();
       formDataObj.append("code", formData.code);
       formDataObj.append("language", formData.language);
@@ -135,9 +161,30 @@ export default function NewSubmissionPage() {
       })
     : "";
 
+  const fileSizeLimit = usageData
+    ? getFileSizeLimit(usageData.tier as "STARTER" | "HERO" | "LEGEND")
+    : 0;
+
+  const getSecurityCheckLevel = (tier: string) => {
+    const levels = {
+      STARTER: "Basic (6 checks)",
+      HERO: "Advanced (13 checks)",
+      LEGEND: "Enterprise (20 checks)",
+    };
+    return levels[tier as keyof typeof levels] || "Basic";
+  };
+
+  const getPerformanceCheckLevel = (tier: string) => {
+    const levels = {
+      STARTER: "Basic (5 checks)",
+      HERO: "Advanced (13 checks)",
+      LEGEND: "Enterprise (20 checks)",
+    };
+    return levels[tier as keyof typeof levels] || "Basic";
+  };
+
   return (
     <div className="container max-w-4xl mx-auto py-8 space-y-6">
-      {/* Header */}
       <div>
         <Link href="/dashboard">
           <Button variant="ghost" className="gap-2 -ml-2 mb-4">
@@ -154,9 +201,46 @@ export default function NewSubmissionPage() {
         </p>
       </div>
 
-      {/* Wrap everything in SubmissionEligibilityWrapper */}
       <SubmissionEligibilityWrapper>
-        {/* Usage Warning for Starter Tier */}
+        {usageData && (
+          <Card className="border-2 border-primary/20 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Shield className="h-5 w-5" />
+                Your Analysis Level - {usageData.tier}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    Security Checks:
+                  </span>
+                  <span className="font-semibold">
+                    {getSecurityCheckLevel(usageData.tier)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    Performance Checks:
+                  </span>
+                  <span className="font-semibold">
+                    {getPerformanceCheckLevel(usageData.tier)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    File Size Limit:
+                  </span>
+                  <span className="font-semibold">
+                    {(fileSizeLimit / 1024).toFixed(0)}KB
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {usageData?.tier === "STARTER" && usageData.remaining > 0 && (
           <Alert className="border-blue-500/50 bg-blue-500/10">
             <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -182,7 +266,6 @@ export default function NewSubmissionPage() {
           </Alert>
         )}
 
-        {/* Limit Reached */}
         {usageData?.remaining === 0 ? (
           <Card className="border-destructive">
             <CardContent className="p-8 text-center space-y-4">
@@ -203,7 +286,7 @@ export default function NewSubmissionPage() {
               <div className="space-y-2">
                 <Link href="/pricing">
                   <Button size="lg" className="w-full sm:w-auto">
-                    Upgrade to Hero - ₹2999/month
+                    Upgrade to Hero - $29/month
                   </Button>
                 </Link>
                 <p className="text-sm text-muted-foreground">
@@ -213,14 +296,12 @@ export default function NewSubmissionPage() {
             </CardContent>
           </Card>
         ) : (
-          /* Submission Form */
           <form onSubmit={handleSubmit} className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Code Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* File Name */}
                 <div className="space-y-2">
                   <Label htmlFor="fileName">File Name *</Label>
                   <Input
@@ -233,7 +314,7 @@ export default function NewSubmissionPage() {
                     className="font-mono"
                   />
                 </div>
-                {/* Language */}
+
                 <div className="space-y-2">
                   <Label htmlFor="language">Programming Language *</Label>
                   <Select
@@ -261,7 +342,7 @@ export default function NewSubmissionPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                {/* Code */}
+
                 <div className="space-y-2">
                   <Label htmlFor="code">Code *</Label>
                   <Textarea
@@ -275,13 +356,21 @@ export default function NewSubmissionPage() {
                     className="font-mono text-sm resize-none"
                   />
                 </div>
+
+                {codeSize > 0 && usageData && (
+                  <FileSizeValidator
+                    fileSize={codeSize}
+                    tier={usageData.tier as "STARTER" | "HERO" | "LEGEND"}
+                    limit={fileSizeLimit}
+                  />
+                )}
               </CardContent>
             </Card>
-            {/* Actions */}
+
             <div className="flex gap-4">
               <Button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || codeSize > fileSizeLimit}
                 className="flex-1 gap-2"
                 size="lg"
               >
@@ -307,7 +396,6 @@ export default function NewSubmissionPage() {
         )}
       </SubmissionEligibilityWrapper>
 
-      {/* Upgrade Modal */}
       <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -327,11 +415,23 @@ export default function NewSubmissionPage() {
             </div>
             <div className="flex items-center gap-2 text-sm">
               <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-              <span>Priority AI reviews</span>
+              <span>Advanced security checks (13 checks)</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-              <span>Advanced analytics</span>
+              <span>Advanced performance analysis (13 checks)</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <span>100KB file size limit</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <span>Priority support</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <span>API access</span>
             </div>
           </div>
           <DialogFooter className="flex gap-2 sm:gap-2">
