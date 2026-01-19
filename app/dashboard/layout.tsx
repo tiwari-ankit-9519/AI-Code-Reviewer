@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import DashboardNav from "@/components/dashboard-nav";
-import { TrialBanner } from "@/components/trial-banner";
+import TrialBanner from "@/components/trial-banner";
 import { checkTrialStatus } from "@/lib/subscription/subscription-utils";
 import { redirect } from "next/navigation";
 
@@ -26,6 +26,7 @@ export default async function DashboardLayout({
       subscriptionTier: true,
       subscriptionStatus: true,
       trialEndsAt: true,
+      role: true,
     },
   });
 
@@ -41,7 +42,7 @@ export default async function DashboardLayout({
 
       {trialStatus.isInTrial && (
         <div className="sticky top-16 z-40 animate-in slide-in-from-top duration-300">
-          <TrialBanner trialStatus={trialStatus} />
+          <TrialBanner userId={user.id} />
         </div>
       )}
 

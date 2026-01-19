@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+// components/export-buttons.tsx
+
 "use client";
 
 import { useState } from "react";
@@ -7,10 +8,18 @@ import {
   exportAnalysisMarkdown,
 } from "@/lib/actions/exports";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Download, FileJson, FileText, FileType, Loader2 } from "lucide-react";
 
 export function ExportButtons({ submissionId }: { submissionId: string }) {
   const [loading, setLoading] = useState<"json" | "markdown" | "pdf" | null>(
-    null
+    null,
   );
 
   const downloadFile = (content: string, filename: string, type: string) => {
@@ -33,6 +42,7 @@ export function ExportButtons({ submissionId }: { submissionId: string }) {
       downloadFile(json, `analysis-${submissionId}.json`, "application/json");
       toast.success("JSON exported successfully");
     } catch (error) {
+      console.log(error);
       toast.error("Failed to export JSON");
     } finally {
       setLoading(null);
@@ -46,6 +56,7 @@ export function ExportButtons({ submissionId }: { submissionId: string }) {
       downloadFile(markdown, `analysis-${submissionId}.md`, "text/markdown");
       toast.success("Markdown exported successfully");
     } catch (error) {
+      console.log(error);
       toast.error("Failed to export Markdown");
     } finally {
       setLoading(null);
@@ -101,7 +112,7 @@ export function ExportButtons({ submissionId }: { submissionId: string }) {
 
         const wrapped = doc.splitTextToSize(
           line.replace(/^#+\s/, ""),
-          maxWidth
+          maxWidth,
         );
 
         for (const txt of wrapped) {
@@ -119,6 +130,7 @@ export function ExportButtons({ submissionId }: { submissionId: string }) {
       doc.save(`analysis-${submissionId}.pdf`);
       toast.success("PDF exported successfully");
     } catch (error) {
+      console.log(error);
       toast.error("Failed to export PDF");
     } finally {
       setLoading(null);
@@ -126,138 +138,42 @@ export function ExportButtons({ submissionId }: { submissionId: string }) {
   };
 
   return (
-    <div className="flex flex-wrap gap-3">
-      <button
-        onClick={handleExportJSON}
-        disabled={loading !== null}
-        className="flex items-center gap-2 px-5 py-3 bg-linear-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-black hover:from-cyan-500 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-cyan-500/50 hover:shadow-cyan-500/70 hover:-translate-y-1 font-mono uppercase border-4 border-cyan-700"
-      >
-        {loading === "json" ? (
-          <svg
-            className="animate-spin h-5 w-5"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            />
-          </svg>
-        ) : (
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-        )}
-        <span>📄 JSON</span>
-      </button>
-
-      <button
-        onClick={handleExportMarkdown}
-        disabled={loading !== null}
-        className="flex items-center gap-2 px-5 py-3 bg-linear-to-r from-purple-600 to-pink-600 text-white rounded-xl font-black hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 hover:-translate-y-1 font-mono uppercase border-4 border-purple-700"
-      >
-        {loading === "markdown" ? (
-          <svg
-            className="animate-spin h-5 w-5"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            />
-          </svg>
-        ) : (
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-        )}
-        <span>📝 Markdown</span>
-      </button>
-
-      <button
-        onClick={handleExportPDF}
-        disabled={loading !== null}
-        className="flex items-center gap-2 px-5 py-3 bg-linear-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-xl font-black hover:from-yellow-300 hover:to-orange-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-yellow-500/50 hover:shadow-yellow-500/70 hover:-translate-y-1 font-mono uppercase border-4 border-yellow-600"
-      >
-        {loading === "pdf" ? (
-          <svg
-            className="animate-spin h-5 w-5"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            />
-          </svg>
-        ) : (
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-        )}
-        <span>📋 PDF</span>
-      </button>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" disabled={loading !== null}>
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Exporting...
+            </>
+          ) : (
+            <>
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          onClick={handleExportJSON}
+          disabled={loading !== null}
+        >
+          <FileJson className="h-4 w-4 mr-2" />
+          Export as JSON
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={handleExportMarkdown}
+          disabled={loading !== null}
+        >
+          <FileText className="h-4 w-4 mr-2" />
+          Export as Markdown
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleExportPDF} disabled={loading !== null}>
+          <FileType className="h-4 w-4 mr-2" />
+          Export as PDF
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

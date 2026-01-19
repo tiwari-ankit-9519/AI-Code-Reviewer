@@ -23,6 +23,8 @@ import {
   Settings,
   LogOut,
   Menu,
+  Ticket,
+  Contact,
 } from "lucide-react";
 
 interface User {
@@ -33,6 +35,7 @@ interface User {
   subscriptionTier: string;
   subscriptionStatus: string;
   trialEndsAt: Date | null;
+  role: string | null;
 }
 
 interface DashboardNavProps {
@@ -60,7 +63,21 @@ export default function DashboardNav({ user }: DashboardNavProps) {
       label: "New Review",
       icon: PlusCircle,
     },
-  ];
+    {
+      href: "/dashboard/support",
+      label: "Support",
+      icon: Ticket,
+      showForRoles: ["USER"],
+    },
+    {
+      href: "/contact",
+      label: "Contact Us",
+      icon: Contact,
+      showForRoles: ["USER"],
+    },
+  ].filter(
+    (link) => !link.showForRoles || link.showForRoles.includes(user.role || ""),
+  );
 
   const isActive = (href: string) => {
     if (href === "/dashboard") {
@@ -75,7 +92,7 @@ export default function DashboardNav({ user }: DashboardNavProps) {
   };
 
   const getTierVariant = (
-    tier: string
+    tier: string,
   ): "default" | "secondary" | "outline" | "destructive" => {
     switch (tier) {
       case "HERO":
@@ -95,6 +112,10 @@ export default function DashboardNav({ user }: DashboardNavProps) {
     }
     return name.substring(0, 2).toUpperCase();
   };
+
+  console.log(user.role);
+  console.log(user.role === "USER");
+  console.log(user.role !== "ADMIN");
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
@@ -135,33 +156,35 @@ export default function DashboardNav({ user }: DashboardNavProps) {
                     </svg>
                     <span className="font-bold text-lg">Code Reviewer</span>
                   </Link>
-
                   <div className="mb-4">
                     <Badge variant={getTierVariant(user.subscriptionTier)}>
                       {user.subscriptionTier}
                     </Badge>
                   </div>
 
-                  {navLinks.map((link) => {
-                    const Icon = link.icon;
-                    const active = isActive(link.href);
-                    return (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        onClick={() => setMobileOpen(false)}
-                        className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                          active
-                            ? "bg-secondary text-secondary-foreground"
-                            : "hover:bg-secondary/50"
-                        }`}
-                      >
-                        <Icon className="h-4 w-4" />
-                        {link.label}
-                      </Link>
-                    );
-                  })}
-
+                  {
+                    <>
+                      {navLinks.map((link) => {
+                        const Icon = link.icon;
+                        const active = isActive(link.href);
+                        return (
+                          <Link
+                            key={link.href}
+                            href={link.href}
+                            onClick={() => setMobileOpen(false)}
+                            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                              active
+                                ? "bg-secondary text-secondary-foreground"
+                                : "hover:bg-secondary/50"
+                            }`}
+                          >
+                            <Icon className="h-4 w-4" />
+                            {link.label}
+                          </Link>
+                        );
+                      })}
+                    </>
+                  }
                   <div className="mt-auto border-t pt-4 space-y-2">
                     <Link
                       href="/dashboard/settings"
@@ -207,24 +230,28 @@ export default function DashboardNav({ user }: DashboardNavProps) {
 
           {/* Center: Navigation Links */}
           <nav className="hidden md:flex items-center gap-6">
-            {navLinks.map((link) => {
-              const Icon = link.icon;
-              const active = isActive(link.href);
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                    active
-                      ? "text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {link.label}
-                </Link>
-              );
-            })}
+            {
+              <>
+                {navLinks.map((link) => {
+                  const Icon = link.icon;
+                  const active = isActive(link.href);
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                        active
+                          ? "text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {link.label}
+                    </Link>
+                  );
+                })}
+              </>
+            }
           </nav>
 
           {/* Right: Badge and User Menu */}
