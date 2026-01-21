@@ -1,19 +1,28 @@
-// lib/ai/enhanced-code-analyzer.ts
+// lib/ai/code-analyzer.ts - COMPLETE TIER-BASED VERSION
 
 import { groq, GROQ_MODELS } from "./groq-client";
 import { SubscriptionTier } from "@prisma/client";
-import {
-  getSecurityCheckConfig,
-  buildSecurityAnalysisPrompt,
-  filterSecurityIssuesByTier,
-  getSecurityCheckMetadata,
-} from "@/lib/services/security-check-service";
-import {
-  getPerformanceCheckConfig,
-  buildPerformanceAnalysisPrompt,
-  filterPerformanceIssuesByTier,
-  getPerformanceCheckMetadata,
-} from "@/lib/services/performance-check-service";
+
+export interface AnalysisResult {
+  securityScore: number;
+  performanceScore: number;
+  qualityScore: number;
+  complexityScore: number;
+  maintainabilityScore: number;
+  overallScore: number;
+  securityIssues: Issue[];
+  performanceIssues: Issue[];
+  codeSmells: Issue[];
+  bugRisks: Issue[];
+  styleSuggestions: Issue[];
+  summary: string;
+  recommendations: Recommendation[];
+  aiModel: string;
+  aiProvider: string;
+  promptTokens: number;
+  completionTokens: number;
+  analysisTime: number;
+}
 
 export interface Issue {
   id: string;
@@ -40,293 +49,243 @@ export interface Recommendation {
   effort: "low" | "medium" | "high";
 }
 
-export interface EnhancedAnalysisResult {
-  securityScore: number;
-  performanceScore: number;
-  qualityScore: number;
-  complexityScore: number;
-  maintainabilityScore: number;
-  overallScore: number;
-  securityIssues: Issue[];
-  performanceIssues: Issue[];
-  codeSmells: Issue[];
-  bugRisks: Issue[];
-  styleSuggestions: Issue[];
-  summary: string;
-  recommendations: Recommendation[];
-  aiModel: string;
-  aiProvider: string;
-  promptTokens: number;
-  completionTokens: number;
-  analysisTime: number;
-  securityMetadata: ReturnType<typeof getSecurityCheckMetadata>;
-  performanceMetadata: ReturnType<typeof getPerformanceCheckMetadata>;
+// Tier-based analysis configuration
+const TIER_ANALYSIS_CONFIG = {
+  STARTER: {
+    securityChecks: 6,
+    performanceChecks: 5,
+    maxIssues: 10,
+    detailLevel: "basic",
+    includeFixSuggestions: false,
+  },
+  HERO: {
+    securityChecks: 13,
+    performanceChecks: 13,
+    maxIssues: 25,
+    detailLevel: "advanced",
+    includeFixSuggestions: true,
+  },
+  LEGEND: {
+    securityChecks: 20,
+    performanceChecks: 20,
+    maxIssues: -1, // unlimited
+    detailLevel: "comprehensive",
+    includeFixSuggestions: true,
+  },
+} as const;
+
+function isValidIssue(issue: Issue): issue is Issue {
+  return (
+    typeof issue === "object" &&
+    issue !== null &&
+    typeof issue.type === "string" &&
+    typeof issue.title === "string" &&
+    typeof issue.description === "string" &&
+    typeof issue.severity === "string" &&
+    typeof issue.lineStart === "number" &&
+    typeof issue.lineEnd === "number" &&
+    typeof issue.codeSnippet === "string" &&
+    typeof issue.confidence === "number"
+  );
 }
 
-export async function analyzeCodeWithTier(
-  code: string,
+function sanitizeIssues(issues: Issue[], maxIssues: number): Issue[] {
+  if (!Array.isArray(issues)) return [];
+
+  const validIssues = issues.filter(isValidIssue).map((issue, index) => ({
+    ...issue,
+    id: issue.id || `issue-${index + 1}`,
+    automatable: Boolean(issue.suggestedFix),
+  }));
+
+  // Limit issues based on tier
+  if (maxIssues === -1) {
+    return validIssues;
+  }
+  return validIssues.slice(0, maxIssues);
+}
+
+function getTierPrompt(
+  tier: SubscriptionTier,
   language: string,
-  tier: SubscriptionTier
-): Promise<EnhancedAnalysisResult> {
-  const startTime = Date.now();
+  code: string,
+): string {
+  const config = TIER_ANALYSIS_CONFIG[tier];
 
-  const securityConfig = getSecurityCheckConfig(tier);
-  const performanceConfig = getPerformanceCheckConfig(tier);
+  const basePrompt = `You are an expert code reviewer. Analyze the following ${language} code.`;
 
-  const securityPrompt = buildSecurityAnalysisPrompt(
-    code,
-    language,
-    securityConfig
-  );
-  const performancePrompt = buildPerformanceAnalysisPrompt(
-    code,
-    language,
-    performanceConfig
-  );
+  const tierSpecificInstructions = {
+    STARTER: `
+Focus on the most critical issues only. Provide:
+- Top ${config.securityChecks} security vulnerabilities
+- Top ${config.performanceChecks} performance issues
+- Basic code quality assessment
+Keep analysis concise and focus on high-impact issues.`,
 
-  const generalPrompt = `You are an expert code reviewer. Analyze the following ${language} code for code quality, complexity, maintainability, code smells, bug risks, and style issues.
+    HERO: `
+Provide comprehensive analysis including:
+- Up to ${config.securityChecks} security vulnerabilities with fix suggestions
+- Up to ${config.performanceChecks} performance issues with optimizations
+- Code smells and maintainability concerns
+- Detailed recommendations with code examples`,
+
+    LEGEND: `
+Provide enterprise-grade comprehensive analysis including:
+- Complete security audit (up to ${config.securityChecks} checks)
+- Complete performance analysis (up to ${config.performanceChecks} checks)
+- Architectural and design pattern recommendations
+- Detailed fix suggestions with before/after code examples
+- CWE mappings for security issues
+- Confidence scores and automated fix potential`,
+  };
+
+  return `${basePrompt}
+
+${tierSpecificInstructions[tier]}
 
 CODE:
 \`\`\`${language}
 ${code}
 \`\`\`
 
-Provide a detailed JSON response with:
+Provide a JSON response with this structure. ALL ISSUES MUST BE COMPLETE OBJECTS:
 {
+  "securityScore": number (0-100),
+  "performanceScore": number (0-100),
   "qualityScore": number (0-100),
   "complexityScore": number (0-100),
   "maintainabilityScore": number (0-100),
+  "securityIssues": [
+    {
+      "type": "sql_injection | xss | hardcoded_secret | etc",
+      "severity": "critical | high | medium | low | info",
+      "title": "Brief title",
+      "description": "Detailed explanation",
+      "lineStart": number,
+      "lineEnd": number,
+      "column": number,
+      "codeSnippet": "problematic code",
+      ${config.includeFixSuggestions ? '"suggestedFix": "how to fix",\n      "fixedCode": "corrected code",' : ""}
+      ${tier === "LEGEND" ? '"cweId": "CWE-XXX if applicable",' : ""}
+      "confidence": number (0.0-1.0)
+    }
+  ],
+  "performanceIssues": [],
   "codeSmells": [],
   "bugRisks": [],
   "styleSuggestions": [],
-  "summary": "Executive summary of findings",
-  "recommendations": []
+  "summary": "Executive summary",
+  "recommendations": [
+    {
+      "priority": number (1-5),
+      "category": "security | performance | quality",
+      "title": "Recommendation title",
+      "impact": "Impact description",
+      "effort": "low | medium | high"
+    }
+  ]
 }
 
-Respond ONLY with valid JSON. No markdown, no explanations outside JSON.`;
+CRITICAL: Each issue MUST be a complete object with all required fields. DO NOT return simple strings.
+Respond ONLY with valid JSON.`;
+}
+
+export async function analyzeCode(
+  code: string,
+  language: string,
+  tier: SubscriptionTier = "STARTER",
+): Promise<AnalysisResult> {
+  const startTime = Date.now();
+  const config = TIER_ANALYSIS_CONFIG[tier];
 
   try {
-    const [securityAnalysis, performanceAnalysis, generalAnalysis] =
-      await Promise.all([
-        groq.chat.completions.create({
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are an expert security analyst. Always respond with valid JSON only.",
-            },
-            {
-              role: "user",
-              content: securityPrompt,
-            },
-          ],
-          model: GROQ_MODELS.LLAMA_70B,
-          temperature: 0.2,
-          max_tokens: 4096,
-          response_format: { type: "json_object" },
-        }),
-        groq.chat.completions.create({
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are an expert performance analyst. Always respond with valid JSON only.",
-            },
-            {
-              role: "user",
-              content: performancePrompt,
-            },
-          ],
-          model: GROQ_MODELS.LLAMA_70B,
-          temperature: 0.2,
-          max_tokens: 4096,
-          response_format: { type: "json_object" },
-        }),
-        groq.chat.completions.create({
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are an expert code quality analyst. Always respond with valid JSON only.",
-            },
-            {
-              role: "user",
-              content: generalPrompt,
-            },
-          ],
-          model: GROQ_MODELS.LLAMA_70B,
-          temperature: 0.2,
-          max_tokens: 4096,
-          response_format: { type: "json_object" },
-        }),
-      ]);
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert code reviewer. Analyze code at ${config.detailLevel} level. Always respond with valid JSON only. All issues must be complete objects, never simple strings.`,
+        },
+        {
+          role: "user",
+          content: getTierPrompt(tier, language, code),
+        },
+      ],
+      model: GROQ_MODELS.LLAMA_70B,
+      temperature: 0.2,
+      max_tokens: tier === "LEGEND" ? 8192 : tier === "HERO" ? 4096 : 2048,
+      response_format: { type: "json_object" },
+    });
 
     const analysisTime = Date.now() - startTime;
 
-    const securityContent = securityAnalysis.choices[0]?.message?.content;
-    const performanceContent = performanceAnalysis.choices[0]?.message?.content;
-    const generalContent = generalAnalysis.choices[0]?.message?.content;
-
-    if (!securityContent || !performanceContent || !generalContent) {
+    const content = completion.choices[0]?.message?.content;
+    if (!content) {
       throw new Error("No response from Groq API");
     }
 
-    const securityData = JSON.parse(securityContent);
-    const performanceData = JSON.parse(performanceContent);
-    const generalData = JSON.parse(generalContent);
+    const parsed = JSON.parse(content);
 
-    let securityIssues = filterSecurityIssuesByTier(
-      securityData.securityIssues || [],
-      securityConfig
+    // Sanitize and limit issues based on tier
+    const securityIssues = sanitizeIssues(
+      parsed.securityIssues || [],
+      config.maxIssues === -1
+        ? config.securityChecks
+        : Math.min(config.maxIssues, config.securityChecks),
     );
-    let performanceIssues = filterPerformanceIssuesByTier(
-      performanceData.performanceIssues || [],
-      performanceConfig
+    const performanceIssues = sanitizeIssues(
+      parsed.performanceIssues || [],
+      config.maxIssues === -1
+        ? config.performanceChecks
+        : Math.min(config.maxIssues, config.performanceChecks),
     );
-
-    securityIssues = securityIssues.map((issue, index) => ({
-      ...issue,
-      id: `sec-${index + 1}`,
-      automatable: !!issue.suggestedFix,
-    }));
-
-    performanceIssues = performanceIssues.map((issue, index) => ({
-      ...issue,
-      id: `perf-${index + 1}`,
-      automatable: !!issue.suggestedFix,
-    }));
-
-    const codeSmells = (generalData.codeSmells || []).map(
-      (issue: Omit<Issue, "id" | "automatable">, index: number) => ({
-        ...issue,
-        id: `smell-${index + 1}`,
-        automatable: !!issue.suggestedFix,
-      })
+    const codeSmells = sanitizeIssues(
+      parsed.codeSmells || [],
+      config.maxIssues === -1 ? 999 : Math.ceil(config.maxIssues / 3),
     );
-    const bugRisks = (generalData.bugRisks || []).map(
-      (issue: Omit<Issue, "id" | "automatable">, index: number) => ({
-        ...issue,
-        id: `bug-${index + 1}`,
-        automatable: !!issue.suggestedFix,
-      })
+    const bugRisks = sanitizeIssues(
+      parsed.bugRisks || [],
+      config.maxIssues === -1 ? 999 : Math.ceil(config.maxIssues / 3),
     );
-    const styleSuggestions = (generalData.styleSuggestions || []).map(
-      (issue: Omit<Issue, "id" | "automatable">, index: number) => ({
-        ...issue,
-        id: `style-${index + 1}`,
-        automatable: !!issue.suggestedFix,
-      })
+    const styleSuggestions = sanitizeIssues(
+      parsed.styleSuggestions || [],
+      config.maxIssues === -1 ? 999 : Math.ceil(config.maxIssues / 3),
     );
-
-    const securityScore = calculateSecurityScore(securityIssues, tier);
-    const performanceScore = calculatePerformanceScore(performanceIssues, tier);
-    const qualityScore = generalData.qualityScore || 0;
-    const complexityScore = generalData.complexityScore || 0;
-    const maintainabilityScore = generalData.maintainabilityScore || 0;
 
     const overallScore = Math.round(
-      (securityScore +
-        performanceScore +
-        qualityScore +
-        complexityScore +
-        maintainabilityScore) /
-        5
+      (parsed.securityScore +
+        parsed.performanceScore +
+        parsed.qualityScore +
+        parsed.complexityScore +
+        parsed.maintainabilityScore) /
+        5,
     );
 
-    const totalTokens =
-      (securityAnalysis.usage?.prompt_tokens || 0) +
-      (performanceAnalysis.usage?.prompt_tokens || 0) +
-      (generalAnalysis.usage?.prompt_tokens || 0);
-
-    const totalCompletionTokens =
-      (securityAnalysis.usage?.completion_tokens || 0) +
-      (performanceAnalysis.usage?.completion_tokens || 0) +
-      (generalAnalysis.usage?.completion_tokens || 0);
-
     return {
-      securityScore,
-      performanceScore,
-      qualityScore,
-      complexityScore,
-      maintainabilityScore,
+      securityScore: parsed.securityScore || 0,
+      performanceScore: parsed.performanceScore || 0,
+      qualityScore: parsed.qualityScore || 0,
+      complexityScore: parsed.complexityScore || 0,
+      maintainabilityScore: parsed.maintainabilityScore || 0,
       overallScore,
       securityIssues,
       performanceIssues,
       codeSmells,
       bugRisks,
       styleSuggestions,
-      summary:
-        generalData.summary ||
-        `Completed ${securityConfig.level} security analysis and ${performanceConfig.level} performance analysis.`,
-      recommendations: generalData.recommendations || [],
+      summary: parsed.summary || "No summary available",
+      recommendations: parsed.recommendations || [],
       aiModel: GROQ_MODELS.LLAMA_70B,
       aiProvider: "groq",
-      promptTokens: totalTokens,
-      completionTokens: totalCompletionTokens,
+      promptTokens: completion.usage?.prompt_tokens || 0,
+      completionTokens: completion.usage?.completion_tokens || 0,
       analysisTime,
-      securityMetadata: getSecurityCheckMetadata(tier, securityConfig),
-      performanceMetadata: getPerformanceCheckMetadata(tier, performanceConfig),
     };
   } catch (error) {
-    console.error("Enhanced analysis error:", error);
+    console.error("Groq analysis error:", error);
     throw new Error(
       `Code analysis failed: ${
         error instanceof Error ? error.message : "Unknown error"
-      }`
+      }`,
     );
   }
-}
-
-function calculateSecurityScore(
-  issues: Issue[],
-  tier: SubscriptionTier
-): number {
-  if (issues.length === 0) return 100;
-
-  const weights = {
-    critical: 20,
-    high: 10,
-    medium: 5,
-    low: 2,
-    info: 1,
-  };
-
-  const totalWeight = issues.reduce(
-    (sum, issue) => sum + weights[issue.severity],
-    0
-  );
-
-  const maxPossibleWeight =
-    tier === "STARTER" ? 100 : tier === "HERO" ? 200 : 300;
-
-  const score = Math.max(0, 100 - (totalWeight / maxPossibleWeight) * 100);
-
-  return Math.round(score);
-}
-
-function calculatePerformanceScore(
-  issues: Issue[],
-  tier: SubscriptionTier
-): number {
-  if (issues.length === 0) return 100;
-
-  const weights = {
-    critical: 20,
-    high: 10,
-    medium: 5,
-    low: 2,
-    info: 1,
-  };
-
-  const totalWeight = issues.reduce(
-    (sum, issue) => sum + weights[issue.severity],
-    0
-  );
-
-  const maxPossibleWeight =
-    tier === "STARTER" ? 100 : tier === "HERO" ? 200 : 300;
-
-  const score = Math.max(0, 100 - (totalWeight / maxPossibleWeight) * 100);
-
-  return Math.round(score);
 }

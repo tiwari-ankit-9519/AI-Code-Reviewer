@@ -29,7 +29,7 @@ interface UsageData {
 
 export function SubscriptionTabClient({ userId }: { userId: string }) {
   const [subscription, setSubscription] = useState<SubscriptionData | null>(
-    null
+    null,
   );
   const [usage, setUsage] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -126,7 +126,7 @@ export function SubscriptionTabClient({ userId }: { userId: string }) {
             subscription={subscription}
             isInTrial={usage?.isInTrial || false}
           />
-          {usage && <UsageSection usage={usage} tier={subscription.tier} />}
+          {usage && <UsageSection usage={usage} />}
           <PlanManagementSection
             subscription={subscription}
             onManage={handleManageSubscription}
@@ -160,254 +160,130 @@ function CurrentPlanSection({
         icon: "⚡",
       },
       LEGEND: {
-        bg: "bg-linear-to-r from-yellow-400 to-orange-500",
-        text: "text-gray-900",
+        bg: "bg-linear-to-r from-yellow-500 to-orange-500",
+        text: "text-white",
         icon: "👑",
       },
     };
     return badges[tier];
   };
 
-  const getStatusBadge = (status: SubscriptionStatus) => {
-    const badges = {
-      ACTIVE: {
-        bg: "bg-green-500/20",
-        text: "text-green-300",
-        border: "border-green-400",
-      },
-      TRIALING: {
-        bg: "bg-yellow-500/20",
-        text: "text-yellow-300",
-        border: "border-yellow-400",
-      },
-      CANCELLED: {
-        bg: "bg-red-500/20",
-        text: "text-red-300",
-        border: "border-red-400",
-      },
-      EXPIRED: {
-        bg: "bg-gray-500/20",
-        text: "text-gray-300",
-        border: "border-gray-400",
-      },
-      PAST_DUE: {
-        bg: "bg-orange-500/20",
-        text: "text-orange-300",
-        border: "border-orange-400",
-      },
-    };
-    return badges[status];
-  };
-
-  const tierBadge = getTierBadge(subscription.tier);
-  const statusBadge = getStatusBadge(subscription.status);
-
-  const calculateDaysRemaining = (trialEnd: Date | null) => {
-    if (!trialEnd) return 0;
-    const now = new Date();
-    const end = new Date(trialEnd);
-    const diffTime = end.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return Math.max(0, diffDays);
-  };
-
-  const daysRemaining = subscription.trialEndsAt
-    ? calculateDaysRemaining(subscription.trialEndsAt)
-    : 0;
+  const badge = getTierBadge(subscription.tier);
 
   return (
-    <div className="bg-gray-800/50 rounded-xl border-2 border-purple-500/30 p-6">
-      <h3 className="text-lg font-black text-white mb-4 font-mono uppercase">
-        📊 Current Plan Overview
-      </h3>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <p className="text-sm text-gray-400 font-mono mb-2">Plan</p>
-          <div
-            className={`inline-flex items-center gap-2 px-4 py-2 ${tierBadge.bg} ${tierBadge.text} rounded-lg font-black text-sm border-2 border-white/20 shadow-lg font-mono uppercase`}
-          >
-            <span>{tierBadge.icon}</span>
-            {subscription.tier}
-            {isInTrial && subscription.tier === "HERO" && (
-              <span className="ml-1 text-xs">(Trial)</span>
-            )}
-          </div>
+    <div className="border-4 border-purple-500/30 rounded-xl p-6 bg-linear-to-br from-purple-900/20 to-pink-900/20">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-xl font-black text-white font-mono uppercase">
+          Current Plan
+        </h3>
+        <div
+          className={`${badge.bg} ${badge.text} px-4 py-2 rounded-lg font-black text-sm flex items-center gap-2 border-2 border-white/20`}
+        >
+          <span>{badge.icon}</span>
+          {subscription.tier}
         </div>
-
-        <div>
-          <p className="text-sm text-gray-400 font-mono mb-2">Status</p>
-          <div
-            className={`inline-flex items-center gap-2 px-4 py-2 ${statusBadge.bg} ${statusBadge.text} rounded-lg font-black text-sm border-2 ${statusBadge.border} font-mono uppercase`}
-          >
-            {subscription.status}
-          </div>
-        </div>
-
-        {subscription.currentPeriodEnd && (
-          <div>
-            <p className="text-sm text-gray-400 font-mono mb-2">
-              {subscription.cancelAtPeriodEnd ? "Cancels On" : "Next Billing"}
-            </p>
-            <p className="text-white font-black font-mono">
-              {new Date(subscription.currentPeriodEnd).toLocaleDateString(
-                "en-IN",
-                {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                }
-              )}
-            </p>
-          </div>
-        )}
-
-        {subscription.tier !== "STARTER" && subscription.amount > 0 && (
-          <div>
-            <p className="text-sm text-gray-400 font-mono mb-2">Amount</p>
-            <p className="text-white font-black font-mono">
-              ₹{(subscription.amount / 100).toLocaleString("en-IN")}/month
-            </p>
-          </div>
-        )}
       </div>
 
-      {subscription.cancelAtPeriodEnd && subscription.currentPeriodEnd && (
-        <div className="mt-4 bg-orange-500/20 border-2 border-orange-400 rounded-lg p-3">
-          <p className="text-orange-300 text-sm font-mono font-bold">
-            ⚠️ Your subscription will be cancelled on{" "}
-            {new Date(subscription.currentPeriodEnd).toLocaleDateString(
-              "en-IN"
-            )}
+      {isInTrial && subscription.trialEndsAt && (
+        <div className="bg-yellow-500/20 border-2 border-yellow-400 rounded-lg p-4 mb-4">
+          <p className="text-yellow-200 font-mono text-sm">
+            🎯 Trial ends on{" "}
+            {new Date(subscription.trialEndsAt).toLocaleDateString()}
           </p>
         </div>
       )}
 
-      {isInTrial &&
-        subscription.tier === "HERO" &&
-        subscription.trialEndsAt && (
-          <div className="mt-4 bg-yellow-500/20 border-2 border-yellow-400 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">🎉</span>
-              <div className="flex-1">
-                <p className="text-yellow-300 text-sm font-mono font-bold mb-2">
-                  You&apos;re on a 7-Day Hero Trial!
-                </p>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-yellow-300 text-xs font-mono">
-                    Trial ends in:
-                  </span>
-                  <span className="px-2 py-1 bg-yellow-400 text-gray-900 rounded font-black text-xs font-mono">
-                    {daysRemaining} {daysRemaining === 1 ? "DAY" : "DAYS"}
-                  </span>
-                </div>
-                <p className="text-yellow-400 text-xs font-mono">
-                  {new Date(subscription.trialEndsAt).toLocaleDateString(
-                    "en-IN",
-                    {
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    }
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+      {subscription.cancelAtPeriodEnd && (
+        <div className="bg-red-500/20 border-2 border-red-400 rounded-lg p-4">
+          <p className="text-red-200 font-mono text-sm">
+            ⚠️ Subscription will cancel at period end
+          </p>
+        </div>
+      )}
     </div>
   );
 }
 
-function UsageSection({
-  usage,
-  tier,
-}: {
-  usage: UsageData;
-  tier: SubscriptionTier;
-}) {
-  const isUnlimited =
-    usage.limit === "unlimited" || tier === "HERO" || tier === "LEGEND";
-  const percentage = usage.percentage;
+function UsageSection({ usage }: { usage: UsageData }) {
+  const getTierColor = (tier: SubscriptionTier) => {
+    const colors = {
+      STARTER: "from-gray-600 to-gray-500",
+      HERO: "from-purple-500 to-pink-500",
+      LEGEND: "from-yellow-500 to-orange-500",
+    };
+    return colors[tier];
+  };
 
-  const getProgressColor = () => {
-    if (percentage >= 100) return "from-red-500 to-red-600";
-    if (percentage >= 80) return "from-yellow-400 to-orange-500";
-    if (percentage >= 51) return "from-blue-500 to-cyan-500";
-    return "from-green-500 to-emerald-500";
+  const getTierLabel = (tier: SubscriptionTier) => {
+    const labels = {
+      STARTER: "Starter Plan",
+      HERO: "Hero Plan",
+      LEGEND: "Legend Plan",
+    };
+    return labels[tier];
   };
 
   return (
-    <div className="bg-gray-800/50 rounded-xl border-2 border-purple-500/30 p-6">
-      <h3 className="text-lg font-black text-white mb-4 font-mono uppercase">
-        📈 Usage This Month
+    <div className="border-4 border-purple-500/30 rounded-xl p-6 bg-linear-to-br from-blue-900/20 to-purple-900/20">
+      <h3 className="text-xl font-black text-white font-mono uppercase mb-4">
+        Usage This Month
       </h3>
 
-      {isUnlimited ? (
-        <div className="text-center py-6">
-          <div className="inline-flex items-center gap-2 text-3xl font-black text-white font-mono mb-2">
-            <span>∞</span>
-            <span className="bg-linear-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-              Unlimited
+      <div className="space-y-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm text-gray-400 font-mono">Plan Type</span>
+          <span className="text-white font-bold font-mono">
+            {getTierLabel(usage.tier)}
+          </span>
+        </div>
+
+        <div>
+          <div className="flex justify-between text-sm font-mono mb-2">
+            <span className="text-gray-300">Submissions</span>
+            <span className="text-white font-bold">
+              {usage.currentCount} /{" "}
+              {typeof usage.limit === "number" ? usage.limit : usage.limit}
             </span>
           </div>
-          <p className="text-gray-400 font-mono text-sm">
-            {usage.currentCount} submissions used this month
-          </p>
-          {usage.isInTrial && (
-            <div className="mt-4 inline-flex items-center gap-2 bg-yellow-500/20 border-2 border-yellow-400 rounded-lg px-4 py-2">
-              <span className="text-yellow-400 text-lg">🎉</span>
-              <span className="text-yellow-300 text-sm font-mono font-bold">
-                Trial Period
-              </span>
-            </div>
-          )}
-        </div>
-      ) : (
-        <>
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-gray-300 font-mono font-bold">
-              Submissions Used
-            </p>
-            <p className="text-white font-black font-mono text-lg">
-              {usage.currentCount} / {usage.limit}
-            </p>
-          </div>
-
-          <div className="w-full bg-gray-800 rounded-full h-4 overflow-hidden border-2 border-purple-500/50 mb-4">
+          <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
             <div
-              className={`h-full bg-linear-to-r ${getProgressColor()} transition-all duration-500`}
-              style={{ width: `${Math.min(percentage, 100)}%` }}
+              className={`h-full bg-linear-to-r ${getTierColor(usage.tier)} transition-all duration-500`}
+              style={{ width: `${Math.min(usage.percentage, 100)}%` }}
             />
           </div>
+        </div>
 
-          {usage.remaining >= 0 && (
-            <p className="text-gray-400 text-sm font-mono">
-              {usage.remaining}{" "}
-              {usage.remaining === 1 ? "submission" : "submissions"} remaining
+        {typeof usage.limit === "number" && usage.remaining > 0 && (
+          <p className="text-sm text-gray-400 font-mono">
+            {usage.remaining} submissions remaining this month
+          </p>
+        )}
+
+        {usage.tier === "STARTER" && usage.percentage > 80 && (
+          <div className="bg-orange-500/20 border-2 border-orange-400 rounded-lg p-3 mt-4">
+            <p className="text-orange-200 font-mono text-sm">
+              ⚠️ You&apos;re running low on submissions. Upgrade to Hero for
+              unlimited!
             </p>
-          )}
+          </div>
+        )}
 
-          {percentage >= 80 && percentage < 100 && (
-            <div className="mt-4 bg-yellow-500/20 border-2 border-yellow-400 rounded-lg p-3">
-              <p className="text-yellow-300 text-sm font-mono font-bold">
-                ⚠️ You&apos;ve used {percentage}% of your monthly limit.
-                Consider upgrading to Hero for unlimited reviews!
-              </p>
-            </div>
-          )}
+        {usage.tier === "HERO" && (
+          <div className="bg-green-500/20 border-2 border-green-400 rounded-lg p-3 mt-4">
+            <p className="text-green-200 font-mono text-sm">
+              ✨ Enjoying unlimited submissions with Hero!
+            </p>
+          </div>
+        )}
 
-          {percentage >= 100 && (
-            <div className="mt-4 bg-red-500/20 border-2 border-red-400 rounded-lg p-3">
-              <p className="text-red-300 text-sm font-mono font-bold">
-                🚫 Monthly limit reached. Upgrade to Hero to continue submitting
-                code.
-              </p>
-            </div>
-          )}
-        </>
-      )}
+        {usage.tier === "LEGEND" && (
+          <div className="bg-yellow-500/20 border-2 border-yellow-400 rounded-lg p-3 mt-4">
+            <p className="text-yellow-200 font-mono text-sm">
+              👑 Legend status: All premium features unlocked!
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -422,44 +298,42 @@ function PlanManagementSection({
   onCancel: () => void;
 }) {
   return (
-    <div className="bg-gray-800/50 rounded-xl border-2 border-purple-500/30 p-6">
-      <h3 className="text-lg font-black text-white mb-4 font-mono uppercase">
-        ⚙️ Plan Management
+    <div className="border-4 border-purple-500/30 rounded-xl p-6 bg-linear-to-br from-gray-900/40 to-purple-900/20">
+      <h3 className="text-xl font-black text-white font-mono uppercase mb-4">
+        Manage Plan
       </h3>
 
       <div className="space-y-3">
+        {subscription.tier !== "STARTER" && (
+          <button
+            onClick={onManage}
+            className="w-full px-6 py-4 bg-purple-600 text-white rounded-xl font-black hover:bg-purple-500 transition-all shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 hover:-translate-y-1 font-mono uppercase border-4 border-purple-800"
+          >
+            💳 Manage Billing
+          </button>
+        )}
+
+        {subscription.tier !== "STARTER" && !subscription.cancelAtPeriodEnd && (
+          <button
+            onClick={onCancel}
+            className="w-full px-6 py-4 bg-red-600 text-white rounded-xl font-black hover:bg-red-500 transition-all shadow-lg font-mono uppercase border-4 border-red-800"
+          >
+            ❌ Cancel Subscription
+          </button>
+        )}
+
         {subscription.tier === "STARTER" && (
           <Link
-            href="/pricing"
-            className="block w-full text-center px-6 py-4 bg-linear-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-xl font-black hover:from-yellow-300 hover:to-orange-400 transition-all shadow-lg shadow-yellow-500/50 hover:shadow-yellow-500/70 hover:-translate-y-1 font-mono uppercase border-4 border-yellow-600"
+            href="/dashboard/subscription"
+            className="block w-full text-center px-6 py-4 bg-linear-to-r from-purple-600 to-pink-600 text-white rounded-xl font-black hover:from-purple-500 hover:to-pink-500 transition-all shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 hover:-translate-y-1 font-mono uppercase border-4 border-purple-800"
           >
-            🚀 Upgrade to Hero
+            ⚡ Upgrade to Hero
           </Link>
         )}
 
-        {subscription.tier === "HERO" &&
-          subscription.status !== "TRIALING" &&
-          !subscription.cancelAtPeriodEnd && (
-            <>
-              <button
-                onClick={onManage}
-                className="w-full px-6 py-4 bg-purple-600 text-white rounded-xl font-black hover:bg-purple-500 transition-all shadow-lg font-mono uppercase border-4 border-purple-800"
-              >
-                💳 Manage Subscription
-              </button>
-
-              <button
-                onClick={onCancel}
-                className="w-full px-6 py-4 bg-red-600/20 text-red-300 rounded-xl font-black hover:bg-red-600/30 transition-all border-2 border-red-400 font-mono uppercase"
-              >
-                ⚠️ Cancel Subscription
-              </button>
-            </>
-          )}
-
-        {subscription.tier === "HERO" && subscription.status === "TRIALING" && (
+        {subscription.tier === "HERO" && !subscription.cancelAtPeriodEnd && (
           <Link
-            href="/pricing"
+            href="/dashboard/subscription"
             className="block w-full text-center px-6 py-4 bg-linear-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-xl font-black hover:from-yellow-300 hover:to-orange-400 transition-all shadow-lg shadow-yellow-500/50 hover:shadow-yellow-500/70 hover:-translate-y-1 font-mono uppercase border-4 border-yellow-600"
           >
             🔥 Keep Hero Forever - ₹2999/month

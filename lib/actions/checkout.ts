@@ -5,11 +5,15 @@ import { prisma } from "@/lib/prisma";
 import { stripe, STRIPE_CONFIG } from "@/lib/payment/stripe-client";
 import { TIER_CONFIG } from "@/lib/subscription/tier-config";
 
-export async function createCheckoutSession(tier: "HERO") {
+export async function createCheckoutSession(tier: "HERO" | "LEGEND") {
   const session = await auth();
 
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
+  }
+
+  if (tier !== "HERO" && tier !== "LEGEND") {
+    throw new Error("Invalid subscription tier");
   }
 
   const user = await prisma.user.findUnique({
@@ -28,11 +32,8 @@ export async function createCheckoutSession(tier: "HERO") {
     throw new Error("User not found");
   }
 
-  if (
-    user.subscriptionTier === "HERO" &&
-    user.subscriptionStatus === "ACTIVE"
-  ) {
-    throw new Error("You already have an active Hero subscription");
+  if (user.subscriptionTier === tier && user.subscriptionStatus === "ACTIVE") {
+    throw new Error(`You already have an active ${tier} subscription`);
   }
 
   let customerId = user.stripeCustomerId;
@@ -54,13 +55,19 @@ export async function createCheckoutSession(tier: "HERO") {
     });
   }
 
+  const priceId = TIER_CONFIG[tier].stripePriceId;
+
+  if (!priceId) {
+    throw new Error(`Price ID not configured for tier: ${tier}`);
+  }
+
   const checkoutSession = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: "subscription",
     payment_method_types: ["card"],
     line_items: [
       {
-        price: TIER_CONFIG.HERO.stripePriceId,
+        price: priceId,
         quantity: 1,
       },
     ],
@@ -83,30 +90,4 @@ export async function createCheckoutSession(tier: "HERO") {
   }
 
   return { url: checkoutSession.url };
-}
-
-export async function createPortalSession() {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      stripeCustomerId: true,
-    },
-  });
-
-  if (!user?.stripeCustomerId) {
-    throw new Error("No subscription found");
-  }
-
-  const portalSession = await stripe.billingPortal.sessions.create({
-    customer: user.stripeCustomerId,
-    return_url: `${process.env.NEXTAUTH_URL}/dashboard/settings`,
-  });
-
-  return { url: portalSession.url };
 }

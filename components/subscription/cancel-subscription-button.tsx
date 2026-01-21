@@ -1,5 +1,3 @@
-// components/subscription/cancel-subscription-button.tsx
-
 "use client";
 
 import { useState } from "react";
@@ -18,14 +16,16 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Loader2, XCircle, RotateCcw } from "lucide-react";
+import {
+  cancelSubscription,
+  reactivateSubscription,
+} from "@/lib/actions/billing";
 
 interface CancelSubscriptionButtonProps {
-  subscriptionId: string;
   isCanceled: boolean;
 }
 
 export function CancelSubscriptionButton({
-  subscriptionId,
   isCanceled,
 }: CancelSubscriptionButtonProps) {
   const router = useRouter();
@@ -35,17 +35,7 @@ export function CancelSubscriptionButton({
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/subscription/cancel", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ subscriptionId }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to cancel subscription");
-      }
+      await cancelSubscription();
 
       toast.success(
         "Subscription canceled. You'll have access until the end of your billing period.",
@@ -66,17 +56,7 @@ export function CancelSubscriptionButton({
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/subscription/reactivate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ subscriptionId }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to reactivate subscription");
-      }
+      await reactivateSubscription();
 
       toast.success("Subscription reactivated successfully!");
       router.refresh();
@@ -139,7 +119,7 @@ export function CancelSubscriptionButton({
           <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleCancel}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 text-white"
           >
             Cancel Subscription
           </AlertDialogAction>

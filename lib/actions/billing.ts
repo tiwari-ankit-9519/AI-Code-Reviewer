@@ -24,7 +24,7 @@ export async function createPortalSession() {
 
   const portalSession = await stripe.billingPortal.sessions.create({
     customer: user.stripeCustomerId,
-    return_url: `${process.env.NEXTAUTH_URL}/dashboard/settings`,
+    return_url: `${process.env.AUTH_URL}/dashboard/settings`,
   });
 
   if (!portalSession.url) {

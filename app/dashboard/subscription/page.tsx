@@ -1,13 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check, CreditCard, Calendar, AlertCircle } from "lucide-react";
@@ -15,8 +9,13 @@ import Link from "next/link";
 import { CancelSubscriptionButton } from "@/components/subscription/cancel-subscription-button";
 import { formatDistanceToNow } from "date-fns";
 import { PaymentHistory } from "@/components/subscription/payment-history";
+import { createCheckoutSession } from "@/lib/actions/checkout";
+import { SubscriptionSuccessHandler } from "@/components/subscription/subscription-success-handler";
 
-export default async function SubscriptionPage() {
+export default async function SubscriptionPage(props: {
+  searchParams: Promise<{ success?: string; canceled?: string }>;
+}) {
+  const searchParams = await props.searchParams;
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -98,120 +97,133 @@ export default async function SubscriptionPage() {
         "Enterprise analysis",
         "20 security checks",
         "20 performance checks",
-        "Dedicated support (4-8h)",
-        "Advanced analytics",
+        "Dedicated support",
         "Custom integrations",
-        "Team collaboration",
-        "SLA guarantee",
+        "SLA guarantees",
       ],
       current: user.subscriptionTier === "LEGEND",
       isEnterprise: true,
     },
   ];
 
+  async function handleUpgrade(tier: "HERO") {
+    "use server";
+    const { url } = await createCheckoutSession(tier);
+    redirect(url);
+  }
+
   return (
     <div className="space-y-8">
+      <SubscriptionSuccessHandler
+        success={searchParams.success === "true"}
+        canceled={searchParams.canceled === "true"}
+      />
+
       <div>
-        <h1 className="text-4xl font-bold tracking-tight flex items-center gap-3">
-          <CreditCard className="h-10 w-10" />
-          Subscription
+        <h1 className="text-4xl font-bold tracking-tight mb-2">
+          Subscription & Billing
         </h1>
-        <p className="text-muted-foreground mt-2">
-          Manage your subscription and billing
+        <p className="text-muted-foreground">
+          Manage your subscription and view billing details
         </p>
       </div>
 
-      {hasActiveSubscription && (
-        <Card className="border-primary">
-          <CardHeader>
-            <div className="flex items-center justify-between">
+      {isTrialing && user.trialEndsAt && (
+        <Card className="border-2 border-yellow-500/50">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-4">
+              <AlertCircle className="h-6 w-6 text-yellow-600 dark:text-yellow-400 mt-1" />
               <div>
-                <CardTitle>Current Subscription</CardTitle>
-                <CardDescription>Your active plan details</CardDescription>
+                <h3 className="font-semibold mb-1">Trial Active</h3>
+                <p className="text-sm text-muted-foreground">
+                  Your Hero trial ends{" "}
+                  {formatDistanceToNow(new Date(user.trialEndsAt), {
+                    addSuffix: true,
+                  })}
+                  . Upgrade now to continue with unlimited access.
+                </p>
               </div>
-              <Badge variant="default" className="text-base px-4 py-1">
-                {user.subscriptionTier}
-              </Badge>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Status</p>
-                <Badge variant={isCanceled ? "destructive" : "default"}>
-                  {isCanceled ? "Canceling" : "Active"}
-                </Badge>
-              </div>
-              {activeSubscription.currentPeriodStart && (
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Started</p>
-                  <p className="font-semibold">
-                    {formatDistanceToNow(
-                      new Date(activeSubscription.currentPeriodStart),
-                      {
-                        addSuffix: true,
-                      },
-                    )}
-                  </p>
-                </div>
-              )}
-              {activeSubscription.currentPeriodEnd && (
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">
-                    {isCanceled ? "Expires" : "Renews"}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    <p className="font-semibold">
-                      {formatDistanceToNow(
-                        new Date(activeSubscription.currentPeriodEnd),
-                        {
-                          addSuffix: true,
-                        },
-                      )}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {user.subscriptionTier === "HERO" &&
-              activeSubscription.stripeSubscriptionId && (
-                <div className="pt-4 border-t">
-                  <CancelSubscriptionButton
-                    subscriptionId={activeSubscription.stripeSubscriptionId}
-                    isCanceled={isCanceled}
-                  />
-                </div>
-              )}
           </CardContent>
         </Card>
       )}
 
-      {isTrialing && user.trialEndsAt && (
-        <Card className="border-yellow-500">
+      {hasActiveSubscription && (
+        <Card>
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-yellow-500" />
-              <CardTitle>Trial Period</CardTitle>
-            </div>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Current Subscription
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Your trial ends{" "}
-              <span className="font-semibold text-foreground">
-                {formatDistanceToNow(new Date(user.trialEndsAt), {
-                  addSuffix: true,
-                })}
-              </span>
-            </p>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Plan</p>
+                <p className="text-lg font-semibold">{user.subscriptionTier}</p>
+              </div>
+              <Badge
+                variant={
+                  isCanceled
+                    ? "destructive"
+                    : isTrialing
+                      ? "secondary"
+                      : "default"
+                }
+              >
+                {isCanceled
+                  ? "Canceling"
+                  : isTrialing
+                    ? "Trial"
+                    : user.subscriptionStatus}
+              </Badge>
+            </div>
+
+            {activeSubscription && (
+              <>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Current Period
+                    </p>
+                    <p className="text-sm">
+                      {new Date(
+                        activeSubscription.currentPeriodStart,
+                      ).toLocaleDateString()}{" "}
+                      -{" "}
+                      {new Date(
+                        activeSubscription.currentPeriodEnd,
+                      ).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Amount</p>
+                    <p className="text-lg font-semibold">
+                      {new Intl.NumberFormat("en-IN", {
+                        style: "currency",
+                        currency: activeSubscription.currency,
+                      }).format(activeSubscription.amount / 100)}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {user.subscriptionTier !== "STARTER" && (
+              <div className="pt-4">
+                <CancelSubscriptionButton isCanceled={isCanceled} />
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
 
       <div>
         <h2 className="text-2xl font-bold mb-6">Available Plans</h2>
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid md:grid-cols-3 gap-6">
           {plans.map((plan) => (
             <Card
               key={plan.name}
@@ -248,13 +260,9 @@ export default async function SubscriptionPage() {
                         Current Plan
                       </Button>
                     ) : (
-                      <form action="/api/checkout" method="POST">
-                        <input
-                          type="hidden"
-                          name="priceId"
-                          value={plan.priceId}
-                        />
-                        <input type="hidden" name="tier" value={plan.name} />
+                      <form
+                        action={handleUpgrade.bind(null, plan.name as "HERO")}
+                      >
                         <Button type="submit" className="w-full">
                           Upgrade to {plan.name}
                         </Button>

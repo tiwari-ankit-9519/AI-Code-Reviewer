@@ -1,41 +1,37 @@
+// lib/actions/usage.ts
+
 "use server";
 
 import { auth } from "@/lib/auth";
-import {
-  getUserSubscription,
-  getTierLimits,
-} from "@/lib/subscription/subscription-utils";
+import { canUserSubmit } from "@/lib/subscription/subscription-utils";
 
-export async function getUserUsage() {
-  try {
-    const session = await auth();
+export async function getUsageData() {
+  const session = await auth();
 
-    if (!session?.user?.id) {
-      throw new Error("Unauthorized");
-    }
-
-    const user = await getUserSubscription(session.user.id);
-    const limits = getTierLimits(user.subscriptionTier);
-
-    const isUnlimited = limits.monthlySubmissions === -1;
-    const percentage = isUnlimited
-      ? 0
-      : Math.round(
-          (user.monthlySubmissionCount / limits.monthlySubmissions) * 100
-        );
-
-    return {
-      currentCount: user.monthlySubmissionCount,
-      limit: isUnlimited ? "unlimited" : limits.monthlySubmissions,
-      percentage,
-      tier: user.subscriptionTier,
-      isInTrial: user.subscriptionStatus === "TRIALING",
-      remaining: isUnlimited
-        ? -1
-        : limits.monthlySubmissions - user.monthlySubmissionCount,
-    };
-  } catch (error) {
-    console.error("Usage fetch error:", error);
-    throw new Error("Failed to fetch usage");
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
   }
+
+  const data = await canUserSubmit(session.user.id);
+
+  const tierLimits: Record<string, { size: number; label: string }> = {
+    STARTER: { size: 50 * 1024, label: "50KB" },
+    HERO: { size: 100 * 1024, label: "100KB" },
+    LEGEND: { size: 500 * 1024, label: "500KB" },
+  };
+
+  const limits = tierLimits[data.tier] || tierLimits.STARTER;
+  const limit = typeof data.limit === "number" ? data.limit : 999999;
+  const remaining = limit - data.currentCount;
+  const percentage = limit > 0 ? (data.currentCount / limit) * 100 : 0;
+
+  return {
+    tier: data.tier,
+    used: data.currentCount,
+    limit: data.limit,
+    remaining,
+    percentage,
+    maxFileSize: limits.size,
+    maxFileSizeLabel: limits.label,
+  };
 }

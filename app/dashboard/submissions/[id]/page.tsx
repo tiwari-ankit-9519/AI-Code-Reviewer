@@ -32,9 +32,28 @@ import {
   AlertCircle,
   Lightbulb,
   CheckSquare,
+  Bug,
+  Sparkles,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
+
+interface Issue {
+  id: string;
+  type: string;
+  severity: "critical" | "high" | "medium" | "low" | "info";
+  title: string;
+  description: string;
+  lineStart: number;
+  lineEnd: number;
+  column?: number;
+  codeSnippet: string;
+  suggestedFix?: string;
+  fixedCode?: string;
+  cweId?: string;
+  confidence: number;
+  automatable: boolean;
+}
 
 export default async function SubmissionDetailPage({
   params,
@@ -56,9 +75,6 @@ export default async function SubmissionDetailPage({
     where: { id },
     include: {
       analysis: true,
-      issues: {
-        orderBy: [{ severity: "asc" }, { lineStart: "asc" }],
-      },
       user: {
         select: {
           subscriptionTier: true,
@@ -77,6 +93,35 @@ export default async function SubmissionDetailPage({
 
   const securityMeta = await getSecurityCheckMetadata(id);
   const performanceMeta = await getPerformanceCheckMetadata(id);
+
+  const allIssues: Issue[] = [];
+  if (submission.analysis) {
+    const securityIssues = Array.isArray(submission.analysis.securityIssues)
+      ? (submission.analysis.securityIssues as unknown as Issue[])
+      : [];
+    const performanceIssues = Array.isArray(
+      submission.analysis.performanceIssues,
+    )
+      ? (submission.analysis.performanceIssues as unknown as Issue[])
+      : [];
+    const codeSmells = Array.isArray(submission.analysis.codeSmells)
+      ? (submission.analysis.codeSmells as unknown as Issue[])
+      : [];
+    const bugRisks = Array.isArray(submission.analysis.bugRisks)
+      ? (submission.analysis.bugRisks as unknown as Issue[])
+      : [];
+    const styleSuggestions = Array.isArray(submission.analysis.styleSuggestions)
+      ? (submission.analysis.styleSuggestions as unknown as Issue[])
+      : [];
+
+    allIssues.push(
+      ...securityIssues,
+      ...performanceIssues,
+      ...codeSmells,
+      ...bugRisks,
+      ...styleSuggestions,
+    );
+  }
 
   const getStatusBadge = (status: string) => {
     const config = {
@@ -128,24 +173,40 @@ export default async function SubmissionDetailPage({
     return config[severity as keyof typeof config] || config.info;
   };
 
-  type IssueItem = (typeof submission.issues)[number];
-  type IssueGroup = Record<string, IssueItem[]>;
-
-  const groupedIssues: IssueGroup = submission.issues.reduce(
-    (acc: IssueGroup, issue: IssueItem) => {
+  const groupedIssues: Record<string, Issue[]> = allIssues.reduce(
+    (acc: Record<string, Issue[]>, issue: Issue) => {
       if (!acc[issue.severity]) {
         acc[issue.severity] = [];
       }
       acc[issue.severity].push(issue);
       return acc;
     },
-    {} as IssueGroup
+    {} as Record<string, Issue[]>,
   );
 
   const severityOrder = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
-
   const statusConfig = getStatusBadge(submission.status);
   const StatusIcon = statusConfig.icon;
+
+  const getIssueTypeIcon = (type: string) => {
+    if (
+      type.includes("security") ||
+      type.includes("xss") ||
+      type.includes("sql")
+    ) {
+      return Shield;
+    }
+    if (type.includes("performance") || type.includes("slow")) {
+      return Zap;
+    }
+    if (type.includes("bug") || type.includes("error")) {
+      return Bug;
+    }
+    if (type.includes("style") || type.includes("format")) {
+      return Sparkles;
+    }
+    return AlertTriangle;
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -236,7 +297,7 @@ export default async function SubmissionDetailPage({
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <Card
               className={`border-2 ${getScoreBg(
-                submission.analysis.overallScore
+                submission.analysis.overallScore,
               )} hover:scale-105 transition-transform duration-300`}
             >
               <CardContent className="p-6">
@@ -248,7 +309,7 @@ export default async function SubmissionDetailPage({
                 </div>
                 <p
                   className={`text-5xl font-bold ${getScoreColor(
-                    submission.analysis.overallScore
+                    submission.analysis.overallScore,
                   )}`}
                 >
                   {submission.analysis.overallScore}%
@@ -266,7 +327,7 @@ export default async function SubmissionDetailPage({
                 </div>
                 <p
                   className={`text-5xl font-bold ${getScoreColor(
-                    submission.analysis.securityScore
+                    submission.analysis.securityScore,
                   )}`}
                 >
                   {submission.analysis.securityScore}%
@@ -289,7 +350,7 @@ export default async function SubmissionDetailPage({
                 </div>
                 <p
                   className={`text-5xl font-bold ${getScoreColor(
-                    submission.analysis.performanceScore
+                    submission.analysis.performanceScore,
                   )}`}
                 >
                   {submission.analysis.performanceScore}%
@@ -312,7 +373,7 @@ export default async function SubmissionDetailPage({
                 </div>
                 <p
                   className={`text-5xl font-bold ${getScoreColor(
-                    submission.analysis.qualityScore
+                    submission.analysis.qualityScore,
                   )}`}
                 >
                   {submission.analysis.qualityScore}%
@@ -330,7 +391,7 @@ export default async function SubmissionDetailPage({
                 </div>
                 <p
                   className={`text-5xl font-bold ${getScoreColor(
-                    submission.analysis.maintainabilityScore
+                    submission.analysis.maintainabilityScore,
                   )}`}
                 >
                   {submission.analysis.maintainabilityScore}%
@@ -418,7 +479,7 @@ export default async function SubmissionDetailPage({
                         <Badge key={check} variant="secondary">
                           {check.replace(/_/g, " ")}
                         </Badge>
-                      )
+                      ),
                     )}
                   </div>
                 </div>
@@ -438,7 +499,7 @@ export default async function SubmissionDetailPage({
                           >
                             {check.replace(/_/g, " ")}
                           </Badge>
-                        )
+                        ),
                       )}
                     </div>
                   </div>
@@ -447,20 +508,20 @@ export default async function SubmissionDetailPage({
             </Card>
           )}
 
-          {submission.issues.length > 0 && (
+          {allIssues.length > 0 && (
             <Card className="border-2 border-destructive/50">
               <CardHeader className="bg-destructive/5">
                 <div className="flex items-center justify-between flex-wrap gap-4">
                   <CardTitle className="flex items-center gap-2">
                     <AlertTriangle className="h-6 w-6 text-destructive" />
-                    Issues Found ({submission.issues.length})
+                    Issues Found ({allIssues.length})
                   </CardTitle>
                   <div className="flex gap-2 flex-wrap">
                     {Object.entries(groupedIssues)
                       .sort(
                         ([a], [b]) =>
                           severityOrder[a as keyof typeof severityOrder] -
-                          severityOrder[b as keyof typeof severityOrder]
+                          severityOrder[b as keyof typeof severityOrder],
                       )
                       .map(([severity, issues]) => {
                         const config = getSeverityConfig(severity);
@@ -483,12 +544,13 @@ export default async function SubmissionDetailPage({
                     .sort(
                       ([a], [b]) =>
                         severityOrder[a as keyof typeof severityOrder] -
-                        severityOrder[b as keyof typeof severityOrder]
+                        severityOrder[b as keyof typeof severityOrder],
                     )
                     .map(([severity, issues]) => (
                       <div key={severity}>
                         {issues.map((issue, index) => {
                           const config = getSeverityConfig(issue.severity);
+                          const IssueIcon = getIssueTypeIcon(issue.type);
                           return (
                             <div
                               key={issue.id}
@@ -502,7 +564,7 @@ export default async function SubmissionDetailPage({
                                       variant={config.variant}
                                       className={`gap-1 ${config.className}`}
                                     >
-                                      <AlertCircle className="h-3 w-3" />
+                                      <IssueIcon className="h-3 w-3" />
                                       {issue.severity}
                                     </Badge>
                                     <Badge

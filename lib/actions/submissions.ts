@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+// lib/actions/submissions.ts
+
 "use server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { analyzeCodeWithTier } from "@/lib/ai/code-analyzer";
+import { analyzeCode } from "@/lib/ai/code-analyzer";
 import { revalidatePath } from "next/cache";
 import {
   canUserSubmit,
@@ -29,7 +30,6 @@ import {
 } from "@/lib/services/edge-case-handlers";
 import { validateFileSize } from "@/lib/services/file-size-limits";
 import { CoolingPeriodError } from "@/lib/errors/submission-errors";
-import { SubscriptionTier } from "@prisma/client";
 
 export async function createSubmission(formData: FormData) {
   const session = await auth();
@@ -56,7 +56,7 @@ export async function createSubmission(formData: FormData) {
 
   const fileSizeCheck = validateFileSize(
     fileSize,
-    subscription.subscriptionTier
+    subscription.subscriptionTier,
   );
   if (!fileSizeCheck.valid) {
     throw new Error(fileSizeCheck.message);
@@ -67,7 +67,7 @@ export async function createSubmission(formData: FormData) {
     throw new CoolingPeriodError(
       `Please wait ${coolingStatus.hoursRemaining} hours before submitting again`,
       coolingStatus.endsAt!,
-      coolingStatus.hoursRemaining
+      coolingStatus.hoursRemaining,
     );
   }
 
@@ -88,7 +88,7 @@ export async function createSubmission(formData: FormData) {
 
   const concurrentCheck = await handleConcurrentSubmissionAttempt(
     session.user.id,
-    user?.currentSessionId || null
+    user?.currentSessionId || null,
   );
 
   if (!concurrentCheck.canProceed) {
@@ -129,7 +129,7 @@ export async function createSubmission(formData: FormData) {
     await trackSubmissionCreated(
       session.user.id,
       submission.id,
-      subscription.subscriptionTier
+      subscription.subscriptionTier,
     );
 
     const threshold = await checkSubmissionThreshold(session.user.id);
@@ -142,7 +142,7 @@ export async function createSubmission(formData: FormData) {
       await trackLimitWarningSent(
         session.user.id,
         subscription.subscriptionTier,
-        threshold.remaining || 0
+        threshold.remaining || 0,
       );
     }
 
@@ -150,7 +150,7 @@ export async function createSubmission(formData: FormData) {
       submission.id,
       code,
       language,
-      subscription.subscriptionTier
+      session.user.id,
     );
 
     return {
@@ -171,7 +171,7 @@ export async function runAnalysisAndRevalidate(
   submissionId: string,
   code: string,
   language: string,
-  tier: SubscriptionTier
+  userId: string,
 ) {
   try {
     await prisma.codeSubmission.update({
@@ -179,30 +179,16 @@ export async function runAnalysisAndRevalidate(
       data: { status: "analyzing" },
     });
 
-    const analysis = await analyzeCodeWithTier(code, language, tier);
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { subscriptionTier: true },
+    });
 
-    const issues = [
-      ...analysis.securityIssues.map((issue) => {
-        const { id: _id, ...issueData } = issue;
-        return { ...issueData, submissionId };
-      }),
-      ...analysis.performanceIssues.map((issue) => {
-        const { id: _id, ...issueData } = issue;
-        return { ...issueData, submissionId };
-      }),
-      ...analysis.codeSmells.map((issue) => {
-        const { id: _id, ...issueData } = issue;
-        return { ...issueData, submissionId };
-      }),
-      ...analysis.bugRisks.map((issue) => {
-        const { id: _id, ...issueData } = issue;
-        return { ...issueData, submissionId };
-      }),
-      ...analysis.styleSuggestions.map((issue) => {
-        const { id: _id, ...issueData } = issue;
-        return { ...issueData, submissionId };
-      }),
-    ];
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const analysis = await analyzeCode(code, language, user.subscriptionTier);
 
     await prisma.$transaction([
       prisma.analysisResult.create({
@@ -216,12 +202,12 @@ export async function runAnalysisAndRevalidate(
           overallScore: analysis.overallScore,
           securityIssues: JSON.parse(JSON.stringify(analysis.securityIssues)),
           performanceIssues: JSON.parse(
-            JSON.stringify(analysis.performanceIssues)
+            JSON.stringify(analysis.performanceIssues),
           ),
           codeSmells: JSON.parse(JSON.stringify(analysis.codeSmells)),
           bugRisks: JSON.parse(JSON.stringify(analysis.bugRisks)),
           styleSuggestions: JSON.parse(
-            JSON.stringify(analysis.styleSuggestions)
+            JSON.stringify(analysis.styleSuggestions),
           ),
           aiModel: analysis.aiModel,
           aiProvider: analysis.aiProvider,
@@ -232,41 +218,6 @@ export async function runAnalysisAndRevalidate(
           recommendations: JSON.parse(JSON.stringify(analysis.recommendations)),
         },
       }),
-      prisma.securityCheckMetadata.create({
-        data: {
-          submissionId,
-          tier: analysis.securityMetadata.tier,
-          securityLevel: analysis.securityMetadata.securityLevel,
-          checksPerformed: JSON.parse(
-            JSON.stringify(analysis.securityMetadata.checksPerformed)
-          ),
-          checksSkipped: JSON.parse(
-            JSON.stringify(analysis.securityMetadata.checksSkipped)
-          ),
-          analysisDepth: analysis.securityMetadata.analysisDepth,
-        },
-      }),
-      prisma.performanceCheckMetadata.create({
-        data: {
-          submissionId,
-          tier: analysis.performanceMetadata.tier,
-          performanceLevel: analysis.performanceMetadata.performanceLevel,
-          checksPerformed: JSON.parse(
-            JSON.stringify(analysis.performanceMetadata.checksPerformed)
-          ),
-          checksSkipped: JSON.parse(
-            JSON.stringify(analysis.performanceMetadata.checksSkipped)
-          ),
-          analysisDepth: analysis.performanceMetadata.analysisDepth,
-        },
-      }),
-      ...(issues.length > 0
-        ? [
-            prisma.issue.createMany({
-              data: issues,
-            }),
-          ]
-        : []),
       prisma.codeSubmission.update({
         where: { id: submissionId },
         data: { status: "completed" },

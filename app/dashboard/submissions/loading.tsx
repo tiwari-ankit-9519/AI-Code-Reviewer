@@ -1,38 +1,92 @@
-import { TableSkeleton } from "@/components/skeleton";
-import { DashboardSkeleton } from "@/components/skeleton";
+// app/dashboard/submissions/loading.tsx
+
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export default function SubmissionsLoading() {
   return (
     <div className="space-y-8">
-      {/* Header DashboardSkeleton */}
       <div className="flex items-center justify-between">
-        <div>
-          <DashboardSkeleton />
-          <DashboardSkeleton />
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-4 w-64" />
         </div>
-        <DashboardSkeleton />
+        <Skeleton className="h-10 w-32" />
       </div>
 
-      {/* Filter Card DashboardSkeleton */}
-      <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 p-6 shadow-2xl">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <DashboardSkeleton />
-            <DashboardSkeleton />
+      <Card>
+        <CardHeader>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="flex items-end gap-2">
+              <Skeleton className="h-10 flex-1" />
+              <Skeleton className="h-10 w-20" />
+            </div>
           </div>
-          <div>
-            <DashboardSkeleton />
-            <DashboardSkeleton />
-          </div>
-          <div className="flex items-end gap-2">
-            <DashboardSkeleton />
-            <DashboardSkeleton />
-          </div>
-        </div>
-      </div>
+        </CardHeader>
+      </Card>
 
-      {/* Table Skeleton */}
-      <TableSkeleton rows={10} />
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b">
+                <tr>
+                  <th className="p-4 text-left">
+                    <Skeleton className="h-4 w-24" />
+                  </th>
+                  <th className="p-4 text-left">
+                    <Skeleton className="h-4 w-20" />
+                  </th>
+                  <th className="p-4 text-left">
+                    <Skeleton className="h-4 w-16" />
+                  </th>
+                  <th className="p-4 text-left">
+                    <Skeleton className="h-4 w-16" />
+                  </th>
+                  <th className="p-4 text-left">
+                    <Skeleton className="h-4 w-20" />
+                  </th>
+                  <th className="p-4 text-left">
+                    <Skeleton className="h-4 w-16" />
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <tr key={i} className="border-b">
+                    <td className="p-4">
+                      <Skeleton className="h-4 w-32" />
+                    </td>
+                    <td className="p-4">
+                      <Skeleton className="h-6 w-20" />
+                    </td>
+                    <td className="p-4">
+                      <Skeleton className="h-4 w-12" />
+                    </td>
+                    <td className="p-4">
+                      <Skeleton className="h-4 w-16" />
+                    </td>
+                    <td className="p-4">
+                      <Skeleton className="h-6 w-24" />
+                    </td>
+                    <td className="p-4">
+                      <Skeleton className="h-8 w-16" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

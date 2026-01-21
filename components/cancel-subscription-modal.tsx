@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SubscriptionTier, SubscriptionStatus } from "@prisma/client";
+import { cancelSubscription } from "@/lib/actions/billing";
 
 interface CancelSubscriptionModalProps {
   isOpen: boolean;
@@ -20,7 +21,7 @@ export function CancelSubscriptionModal({
 }: CancelSubscriptionModalProps) {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<"confirm" | "alternatives" | "success">(
-    "confirm"
+    "confirm",
   );
 
   if (!isOpen) return null;
@@ -28,18 +29,11 @@ export function CancelSubscriptionModal({
   const handleCancel = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/subscription/cancel", {
-        method: "POST",
-      });
-
-      if (response.ok) {
-        setStep("success");
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
-      } else {
-        throw new Error("Cancellation failed");
-      }
+      await cancelSubscription();
+      setStep("success");
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
     } catch (error) {
       console.error("Cancel error:", error);
       alert("Failed to cancel subscription. Please try again.");
@@ -103,7 +97,7 @@ export function CancelSubscriptionModal({
                       Your plan will remain active until{" "}
                       {subscription.currentPeriodEnd &&
                         new Date(
-                          subscription.currentPeriodEnd
+                          subscription.currentPeriodEnd,
                         ).toLocaleDateString("en-IN", {
                           month: "long",
                           day: "numeric",
@@ -142,33 +136,7 @@ export function CancelSubscriptionModal({
                   disabled={loading}
                   className="flex-1 px-6 py-4 bg-red-600 text-white rounded-xl font-black hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-red-500/50 font-mono uppercase border-4 border-red-700"
                 >
-                  {loading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg
-                        className="animate-spin h-5 w-5"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                        />
-                      </svg>
-                      Cancelling...
-                    </span>
-                  ) : (
-                    "Yes, Cancel"
-                  )}
+                  {loading ? "Cancelling..." : "Yes, Cancel"}
                 </button>
               </div>
             </>
@@ -208,30 +176,11 @@ export function CancelSubscriptionModal({
               </h2>
 
               <p className="text-gray-300 text-lg mb-6 font-mono leading-relaxed">
-                Here are some alternatives to cancelling:
+                Consider these alternatives to cancellation:
               </p>
 
               <div className="space-y-4 mb-6">
-                <button
-                  onClick={onClose}
-                  className="w-full bg-linear-to-r from-yellow-400 to-orange-500 text-gray-900 p-6 rounded-xl text-left hover:from-yellow-300 hover:to-orange-400 transition-all shadow-lg border-4 border-yellow-600"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-gray-900 rounded-xl flex items-center justify-center text-2xl shrink-0">
-                      ⚡
-                    </div>
-                    <div>
-                      <h3 className="font-black text-lg font-mono uppercase mb-1">
-                        Keep Hero Plan
-                      </h3>
-                      <p className="text-sm font-mono">
-                        Continue with unlimited reviews and advanced features
-                      </p>
-                    </div>
-                  </div>
-                </button>
-
-                <button className="w-full bg-gray-800/50 border-2 border-purple-500/30 text-white p-6 rounded-xl text-left hover:bg-gray-800 transition-all">
+                <button className="w-full bg-purple-500/20 border-2 border-purple-400 text-purple-300 p-6 rounded-xl text-left hover:bg-purple-500/30 transition-all opacity-50 cursor-not-allowed">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center text-2xl shrink-0">
                       ⏸️

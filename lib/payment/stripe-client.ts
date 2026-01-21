@@ -13,8 +13,8 @@ export const STRIPE_CONFIG = {
   heroPrice: process.env.STRIPE_HERO_PRICE_ID || "",
   webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || "",
   currency: "usd",
-  successUrl: `${process.env.NEXTAUTH_URL}/dashboard/subscription/success`,
-  cancelUrl: `${process.env.NEXTAUTH_URL}/dashboard/subscription/cancelled`,
+  successUrl: `${process.env.AUTH_URL}/dashboard/subscription/success`,
+  cancelUrl: `${process.env.AUTH_URL}/dashboard/subscription/cancelled`,
 } as const;
 
 export function validateStripeConfig() {
@@ -30,7 +30,7 @@ export function validateStripeConfig() {
 
   if (missingVars.length > 0) {
     throw new Error(
-      `Missing required Stripe environment variables: ${missingVars.join(", ")}`
+      `Missing required Stripe environment variables: ${missingVars.join(", ")}`,
     );
   }
 
