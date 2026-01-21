@@ -1,5 +1,3 @@
-// scripts/update-user-check-levels.ts
-
 import { PrismaClient, SubscriptionTier } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
@@ -10,7 +8,7 @@ dotenvConfig();
 const adapter = new PrismaPg(
   new pg.Pool({
     connectionString: process.env.DATABASE_URL!,
-  })
+  }),
 );
 
 const prisma = new PrismaClient({

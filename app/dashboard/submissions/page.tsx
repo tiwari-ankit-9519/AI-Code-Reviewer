@@ -1,4 +1,3 @@
-// app/dashboard/submissions/page.tsx
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
@@ -94,7 +93,7 @@ export default async function SubmissionsPage() {
             </p>
           </div>
 
-          <Link href="/dashboard/submissions/new">
+          <Link href="/dashboard/new">
             <Button size="lg" className="gap-2 group shadow-lg">
               <Sparkles className="h-5 w-5" />
               New Review
@@ -140,7 +139,7 @@ export default async function SubmissionsPage() {
               Start your coding journey now!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/dashboard/submissions/new">
+              <Link href="/dashboard/new">
                 <Button size="lg" className="gap-2 group">
                   <Sparkles className="h-5 w-5" />
                   Start First Review
@@ -171,7 +170,7 @@ export default async function SubmissionsPage() {
             <p className="text-muted-foreground mb-8 text-lg">
               Start your coding journey now!
             </p>
-            <Link href="/dashboard/submissions/new">
+            <Link href="/dashboard/new">
               <Button size="lg" className="gap-2 group">
                 <Sparkles className="h-5 w-5" />
                 Start Review
@@ -215,7 +214,7 @@ export default async function SubmissionsPage() {
                               month: "short",
                               day: "numeric",
                               year: "numeric",
-                            }
+                            },
                           )}
                         </div>
                         <span>•</span>
@@ -239,7 +238,7 @@ export default async function SubmissionsPage() {
                           <div className="text-center">
                             <div
                               className={`text-5xl font-bold ${getScoreColor(
-                                submission.analysis.overallScore
+                                submission.analysis.overallScore,
                               )} mb-2`}
                             >
                               {submission.analysis.overallScore}%
@@ -254,7 +253,7 @@ export default async function SubmissionsPage() {
                             <Badge
                               variant="outline"
                               className={`${getScoreBg(
-                                submission.analysis.securityScore
+                                submission.analysis.securityScore,
                               )} border-2 justify-start gap-2`}
                             >
                               <Shield className="h-3 w-3" />
@@ -263,7 +262,7 @@ export default async function SubmissionsPage() {
                             <Badge
                               variant="outline"
                               className={`${getScoreBg(
-                                submission.analysis.performanceScore
+                                submission.analysis.performanceScore,
                               )} border-2 justify-start gap-2`}
                             >
                               <Zap className="h-3 w-3" />
