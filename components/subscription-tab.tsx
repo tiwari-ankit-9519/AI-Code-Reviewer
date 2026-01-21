@@ -1,3 +1,4 @@
+// components/subscription-tab.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -5,7 +6,8 @@ import { SubscriptionTier, SubscriptionStatus } from "@prisma/client";
 import Link from "next/link";
 import { CancelSubscriptionModal } from "./cancel-subscription-modal";
 import { createPortalSession } from "@/lib/actions/billing";
-import { getUserUsage } from "@/lib/actions/usage";
+import { getUsageData } from "@/lib/actions/usage";
+import { getUserSubscriptionWithStripe } from "@/lib/actions/user-subscription";
 
 interface SubscriptionData {
   tier: SubscriptionTier;
@@ -19,12 +21,13 @@ interface SubscriptionData {
 }
 
 interface UsageData {
-  currentCount: number;
-  limit: number | string;
-  percentage: number;
   tier: SubscriptionTier;
-  isInTrial: boolean;
+  used: number;
+  limit: number | string;
   remaining: number;
+  percentage: number;
+  maxFileSize: number;
+  maxFileSizeLabel: string;
 }
 
 export function SubscriptionTabClient({ userId }: { userId: string }) {
@@ -38,39 +41,29 @@ export function SubscriptionTabClient({ userId }: { userId: string }) {
   useEffect(() => {
     async function fetchData() {
       try {
-        const usageData = await getUserUsage();
+        // Fetch usage data
+        const usageData = await getUsageData();
         setUsage(usageData);
 
-        const userSubResponse = await fetch("/api/user/subscription", {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
+        // Fetch subscription details
+        const subData = await getUserSubscriptionWithStripe();
+
+        setSubscription({
+          tier: subData.subscriptionTier,
+          status: subData.subscriptionStatus,
+          currentPeriodEnd: subData.currentPeriodEnd
+            ? new Date(subData.currentPeriodEnd)
+            : null,
+          currentPeriodStart: subData.currentPeriodStart
+            ? new Date(subData.currentPeriodStart)
+            : null,
+          amount: subData.amount || 0,
+          currency: subData.currency || "inr",
+          cancelAtPeriodEnd: subData.cancelAtPeriodEnd || false,
+          trialEndsAt: subData.trialEndsAt
+            ? new Date(subData.trialEndsAt)
+            : null,
         });
-
-        if (userSubResponse.ok) {
-          const userSubData = await userSubResponse.json();
-
-          setSubscription({
-            tier: userSubData.subscriptionTier,
-            status: userSubData.subscriptionStatus,
-            currentPeriodEnd: userSubData.currentPeriodEnd || null,
-            currentPeriodStart: userSubData.currentPeriodStart || null,
-            amount: userSubData.amount || 0,
-            currency: userSubData.currency || "inr",
-            cancelAtPeriodEnd: userSubData.cancelAtPeriodEnd || false,
-            trialEndsAt: userSubData.trialEndsAt || null,
-          });
-        } else {
-          setSubscription({
-            tier: usageData.tier,
-            status: usageData.isInTrial ? "TRIALING" : "ACTIVE",
-            currentPeriodEnd: null,
-            currentPeriodStart: null,
-            amount: 0,
-            currency: "inr",
-            cancelAtPeriodEnd: false,
-            trialEndsAt: null,
-          });
-        }
       } catch (error) {
         console.error("Failed to fetch subscription data:", error);
       } finally {
@@ -108,6 +101,13 @@ export function SubscriptionTabClient({ userId }: { userId: string }) {
     return null;
   }
 
+  // Fix: Ensure isInTrial is always boolean, never null
+  const isInTrial = Boolean(
+    subscription.status === "TRIALING" &&
+    subscription.trialEndsAt &&
+    new Date(subscription.trialEndsAt) > new Date(),
+  );
+
   return (
     <>
       <div className="bg-linear-to-br from-[#1a1f3a] to-[#0a0e27] rounded-2xl border-4 border-purple-500/50 shadow-2xl overflow-hidden">
@@ -124,9 +124,11 @@ export function SubscriptionTabClient({ userId }: { userId: string }) {
         <div className="p-6 space-y-6">
           <CurrentPlanSection
             subscription={subscription}
-            isInTrial={usage?.isInTrial || false}
+            isInTrial={isInTrial}
           />
+
           {usage && <UsageSection usage={usage} />}
+
           <PlanManagementSection
             subscription={subscription}
             onManage={handleManageSubscription}
@@ -241,7 +243,7 @@ function UsageSection({ usage }: { usage: UsageData }) {
           <div className="flex justify-between text-sm font-mono mb-2">
             <span className="text-gray-300">Submissions</span>
             <span className="text-white font-bold">
-              {usage.currentCount} /{" "}
+              {usage.used} /{" "}
               {typeof usage.limit === "number" ? usage.limit : usage.limit}
             </span>
           </div>
