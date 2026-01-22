@@ -50,7 +50,10 @@ import {
   deleteAccount,
 } from "@/lib/actions/user-settings";
 import { Upload, X } from "lucide-react";
-import { uploadAvatar, removeAvatar } from "@/lib/actions/avatar-upload";
+import {
+  uploadAvatar,
+  removeAvatar,
+} from "@/lib/actions/avatar-upload-cloudinary";
 
 interface SettingsClientProps {
   user: {
