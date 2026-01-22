@@ -1,4 +1,3 @@
-// app/dashboard/settings/settings-client.tsx
 "use client";
 
 import { useState } from "react";
@@ -109,7 +108,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
       router.refresh();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to update profile"
+        error instanceof Error ? error.message : "Failed to update profile",
       );
     } finally {
       setIsLoading(false);
@@ -151,7 +150,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
       router.refresh();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to change password"
+        error instanceof Error ? error.message : "Failed to change password",
       );
     } finally {
       setIsChangingPassword(false);
@@ -166,7 +165,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
 
       if (!result.success) {
         throw new Error(
-          result.error || "Failed to update notification settings"
+          result.error || "Failed to update notification settings",
         );
       }
 
@@ -176,7 +175,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to update notification settings"
+          : "Failed to update notification settings",
       );
     } finally {
       setIsSavingNotifications(false);
@@ -197,7 +196,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
       router.push("/");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to delete account"
+        error instanceof Error ? error.message : "Failed to delete account",
       );
       setIsDeleting(false);
     }
@@ -212,7 +211,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
   };
 
   const handlePasswordInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const { name, value } = e.target;
     setPasswordData((prev) => ({
@@ -236,7 +235,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
     }
     return `Last changed ${formatDistanceToNow(
       new Date(user.passwordChangedAt),
-      { addSuffix: true }
+      { addSuffix: true },
     )}`;
   };
 
