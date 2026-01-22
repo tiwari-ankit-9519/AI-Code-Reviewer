@@ -88,7 +88,7 @@ export async function triggerExpireTrials() {
   await logCronExecution(
     "manual-expire-trials",
     { expiredCount: expiredUsers.length },
-    startTime
+    startTime,
   );
 
   return {
@@ -132,7 +132,7 @@ export async function triggerTrialReminders() {
   await logCronExecution(
     "manual-trial-reminders",
     { remindedCount: endingSoon.length },
-    startTime
+    startTime,
   );
 
   return {
@@ -151,7 +151,7 @@ export async function triggerResetSubmissions() {
   await logCronExecution(
     "manual-reset-submissions",
     { resetCount: result.resetCount },
-    startTime
+    startTime,
   );
 
   return {
@@ -176,8 +176,12 @@ export async function triggerSyncStripe() {
   };
 }
 
-export async function triggerGenerateSnapshot() {
+export async function triggerGenerateSnapshotAndEmail() {
   await requireAdmin();
+
+  if (!process.env.ADMIN_EMAIL) {
+    throw new Error("ADMIN_EMAIL environment variable not set");
+  }
 
   const startTime = Date.now();
   const now = new Date();
@@ -188,19 +192,22 @@ export async function triggerGenerateSnapshot() {
 
   const snapshot = await generateMonthlySnapshot(
     lastMonth.year,
-    lastMonth.month
+    lastMonth.month,
   );
 
+  await emailMonthlyReport(process.env.ADMIN_EMAIL, snapshot);
+
   await logCronExecution(
-    "manual-generate-snapshot",
-    { period: snapshot.period },
-    startTime
+    "manual-generate-snapshot-and-email",
+    { period: snapshot.period, sentTo: process.env.ADMIN_EMAIL },
+    startTime,
   );
 
   return {
     success: true,
-    snapshot,
-    message: `Generated snapshot for ${snapshot.period}`,
+    period: snapshot.period,
+    sentTo: process.env.ADMIN_EMAIL,
+    message: `Generated snapshot for ${snapshot.period} and sent email`,
   };
 }
 
@@ -220,7 +227,7 @@ export async function triggerEmailAdminReport() {
 
   const snapshot = await generateMonthlySnapshot(
     lastMonth.year,
-    lastMonth.month
+    lastMonth.month,
   );
 
   await emailMonthlyReport(process.env.ADMIN_EMAIL, snapshot);
@@ -228,7 +235,7 @@ export async function triggerEmailAdminReport() {
   await logCronExecution(
     "manual-email-report",
     { period: snapshot.period, sentTo: process.env.ADMIN_EMAIL },
-    startTime
+    startTime,
   );
 
   return {

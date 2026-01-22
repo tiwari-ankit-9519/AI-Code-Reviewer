@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -49,6 +49,8 @@ import {
   updateNotificationSettings,
   deleteAccount,
 } from "@/lib/actions/user-settings";
+import { Upload, X } from "lucide-react";
+import { uploadAvatar, removeAvatar } from "@/lib/actions/avatar-upload";
 
 interface SettingsClientProps {
   user: {
@@ -74,6 +76,10 @@ export function SettingsClient({ user }: SettingsClientProps) {
   const [showNotificationDialog, setShowNotificationDialog] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: user.name,
@@ -182,6 +188,75 @@ export function SettingsClient({ user }: SettingsClientProps) {
     }
   };
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Invalid file type", {
+        description: "Please upload a JPEG, PNG, or WebP image",
+      });
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File too large", {
+        description: "Maximum file size is 5MB",
+      });
+      return;
+    }
+
+    // Upload file immediately without preview
+    setIsUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      const result = await uploadAvatar(formData);
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to upload avatar");
+      }
+
+      toast.success("Avatar updated successfully!");
+      router.refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to upload avatar",
+      );
+    } finally {
+      setIsUploadingAvatar(false);
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    setIsRemovingAvatar(true);
+    try {
+      const result = await removeAvatar();
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to remove avatar");
+      }
+
+      toast.success("Avatar removed successfully!");
+      setAvatarPreview(null);
+      router.refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to remove avatar",
+      );
+    } finally {
+      setIsRemovingAvatar(false);
+    }
+  };
+
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
 
@@ -262,19 +337,87 @@ export function SettingsClient({ user }: SettingsClientProps) {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Avatar Section */}
-          <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20 border-2">
-              {user.avatar ? (
-                <AvatarImage src={user.avatar} alt={user.name} />
-              ) : (
-                <AvatarFallback className="text-xl font-bold">
-                  {getInitials(user.name)}
-                </AvatarFallback>
+          <div className="flex items-start gap-6">
+            <div className="relative">
+              <Avatar className="h-24 w-24 border-2">
+                {avatarPreview || user.avatar ? (
+                  <AvatarImage
+                    src={avatarPreview || user.avatar || undefined}
+                    alt={user.name}
+                  />
+                ) : (
+                  <AvatarFallback className="text-2xl font-bold">
+                    {getInitials(user.name)}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              {/* Only show loading overlay on the avatar when uploading */}
+              {isUploadingAvatar && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-full">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
               )}
-            </Avatar>
-            <div>
-              <h3 className="font-semibold text-lg">{user.name}</h3>
-              <p className="text-sm text-muted-foreground">{user.email}</p>
+            </div>
+
+            <div className="flex-1 space-y-3">
+              <div>
+                <h3 className="font-semibold text-lg">{user.name}</h3>
+                <p className="text-sm text-muted-foreground">{user.email}</p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleAvatarChange}
+                  className="hidden"
+                  id="avatar-upload"
+                  disabled={isUploadingAvatar || isRemovingAvatar}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingAvatar || isRemovingAvatar}
+                  className="gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  {user.avatar ? "Change Avatar" : "Upload Avatar"}
+                </Button>
+
+                {user.avatar && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRemoveAvatar}
+                    disabled={isUploadingAvatar || isRemovingAvatar}
+                    className="gap-2 text-destructive hover:text-destructive"
+                  >
+                    <X className="h-4 w-4" />
+                    Remove
+                  </Button>
+                )}
+              </div>
+
+              {/* Status message only when actively uploading/removing */}
+              {(isUploadingAvatar || isRemovingAvatar) && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <span>
+                    {isUploadingAvatar ? "Uploading..." : "Removing..."}
+                  </span>
+                </div>
+              )}
+
+              {/* Help text only when not uploading */}
+              {!isUploadingAvatar && !isRemovingAvatar && (
+                <p className="text-xs text-muted-foreground">
+                  JPG, PNG or WebP. Max size 5MB.
+                </p>
+              )}
             </div>
           </div>
 

@@ -20,7 +20,7 @@ import {
   triggerTrialReminders,
   triggerResetSubmissions,
   triggerSyncStripe,
-  triggerGenerateSnapshot,
+  triggerGenerateSnapshotAndEmail,
   triggerEmailAdminReport,
 } from "@/lib/actions/admin-cron";
 
@@ -42,13 +42,34 @@ interface TriggerButton {
 export default function ManualTriggerPanel() {
   const [loading, setLoading] = useState<string | null>(null);
 
+  const formatResultValue = (key: string, value: unknown): string => {
+    // Handle snapshot object specially
+    if (key === "snapshot" && typeof value === "object" && value !== null) {
+      const snapshot = value as { period?: string; [key: string]: unknown };
+      return snapshot.period || "Snapshot generated";
+    }
+
+    // Handle arrays
+    if (Array.isArray(value)) {
+      return value.length === 0 ? "None" : value.length.toString();
+    }
+
+    // Handle objects
+    if (typeof value === "object" && value !== null) {
+      return JSON.stringify(value);
+    }
+
+    // Handle primitives
+    return String(value);
+  };
+
   const handleTrigger = async (button: TriggerButton) => {
     setLoading(button.id);
     try {
       const result = await button.action();
 
       if (result.success) {
-        // Format result for display
+        // Format result for display, excluding 'success' and handling snapshot
         const resultData = Object.entries(result)
           .filter(([key]) => key !== "success")
           .map(([key, value]) => {
@@ -56,16 +77,21 @@ export default function ManualTriggerPanel() {
               .replace(/([A-Z])/g, " $1")
               .replace(/^./, (str) => str.toUpperCase())
               .trim();
-            return `${formattedKey}: ${value}`;
+
+            const formattedValue = formatResultValue(key, value);
+
+            return `${formattedKey}: ${formattedValue}`;
           })
           .join("\n");
 
         toast.success(`${button.label} completed!`, {
           description: resultData || "Operation completed successfully",
+          duration: 5000,
         });
       } else {
         toast.error(`${button.label} failed`, {
           description: result.error || "Unknown error",
+          duration: 5000,
         });
       }
     } catch (error) {
@@ -73,6 +99,7 @@ export default function ManualTriggerPanel() {
         error instanceof Error ? error.message : "Unknown error";
       toast.error("Error", {
         description: errorMessage,
+        duration: 5000,
       });
     } finally {
       setLoading(null);
@@ -115,15 +142,15 @@ export default function ManualTriggerPanel() {
     {
       id: "generate-snapshot",
       label: "Generate Snapshot",
-      description: "Create analytics snapshot for last month",
+      description: "Create analytics snapshot and send email",
       icon: BarChart3,
-      action: triggerGenerateSnapshot,
+      action: triggerGenerateSnapshotAndEmail,
       variant: "default",
     },
     {
       id: "email-report",
       label: "Email Report",
-      description: "Generate and email monthly report",
+      description: "Generate snapshot and email monthly report",
       icon: Send,
       action: triggerEmailAdminReport,
       variant: "default",
@@ -143,6 +170,32 @@ export default function ManualTriggerPanel() {
       </CardHeader>
 
       <CardContent className="space-y-6">
+        {/* Warning Alert */}
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Caution</AlertTitle>
+          <AlertDescription>
+            These actions trigger actual system operations. Use carefully in
+            production.
+          </AlertDescription>
+        </Alert>
+
+        {/* Info Alert for Snapshot vs Email */}
+        <Alert className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+          <BarChart3 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <AlertTitle className="text-blue-900 dark:text-blue-100">
+            Snapshot vs Email Report
+          </AlertTitle>
+          <AlertDescription className="text-blue-800 dark:text-blue-200">
+            <strong>Generate Snapshot:</strong> Creates analytics data and sends
+            email
+            <br />
+            <strong>Email Report:</strong> Alternative way to generate and email
+            the report
+          </AlertDescription>
+        </Alert>
+
+        {/* Action Buttons Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {buttons.map((button) => {
             const Icon = button.icon;
@@ -153,32 +206,60 @@ export default function ManualTriggerPanel() {
               <Card
                 key={button.id}
                 className={`${
-                  isLoading ? "border-primary" : ""
-                } transition-colors`}
+                  isLoading
+                    ? "border-primary bg-primary/5"
+                    : "hover:border-primary/50"
+                } transition-all duration-200`}
               >
                 <CardContent className="p-6">
                   <div className="flex flex-col items-center text-center space-y-4">
-                    <div className="p-3 rounded-full bg-primary/10">
-                      <Icon className="h-8 w-8 text-primary" />
+                    <div
+                      className={`p-4 rounded-full ${
+                        isLoading
+                          ? "bg-primary/10"
+                          : button.variant === "destructive"
+                            ? "bg-destructive/10"
+                            : "bg-muted"
+                      }`}
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      ) : (
+                        <Icon
+                          className={`h-6 w-6 ${
+                            button.variant === "destructive"
+                              ? "text-destructive"
+                              : "text-primary"
+                          }`}
+                        />
+                      )}
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-lg mb-1">
-                        {button.label}
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
+
+                    <div className="space-y-2">
+                      <h3 className="font-semibold">{button.label}</h3>
+                      <p className="text-sm text-muted-foreground">
                         {button.description}
                       </p>
                     </div>
+
                     <Button
                       onClick={() => handleTrigger(button)}
                       disabled={isDisabled}
                       variant={button.variant}
                       className="w-full"
+                      size="sm"
                     >
-                      {isLoading && (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Running...
+                        </>
+                      ) : (
+                        <>
+                          <Icon className="h-4 w-4 mr-2" />
+                          Run
+                        </>
                       )}
-                      {isLoading ? "Running..." : "Trigger"}
                     </Button>
                   </div>
                 </CardContent>
@@ -186,19 +267,6 @@ export default function ManualTriggerPanel() {
             );
           })}
         </div>
-
-        <Alert>
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Important Notes</AlertTitle>
-          <AlertDescription>
-            <ul className="text-sm space-y-1 mt-2">
-              <li>• All manual triggers are logged to the database</li>
-              <li>• Triggering will execute the job immediately</li>
-              <li>• Check the job status cards above for results</li>
-              <li>• Avoid triggering multiple jobs simultaneously</li>
-            </ul>
-          </AlertDescription>
-        </Alert>
       </CardContent>
     </Card>
   );

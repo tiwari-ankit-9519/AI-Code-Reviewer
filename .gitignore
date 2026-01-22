@@ -42,5 +42,5 @@ next-env.d.ts
 
 /app/generated/prisma
 /scripts
-create-admin.ts
-test-groq.ts
+/create-admin.ts
+/test-groq.ts

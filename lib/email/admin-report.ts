@@ -43,7 +43,7 @@ interface MonthlySnapshot {
 
 export async function emailMonthlyReport(
   adminEmail: string,
-  snapshot: MonthlySnapshot
+  snapshot: MonthlySnapshot,
 ) {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-IN", {
@@ -58,254 +58,366 @@ export async function emailMonthlyReport(
   };
 
   const getGrowthColor = (value: number) => {
-    if (value > 0) return "#10b981";
-    if (value < 0) return "#ef4444";
-    return "#6b7280";
+    if (value > 0) return "#10b981"; // green
+    if (value < 0) return "#ef4444"; // red
+    return "#6b7280"; // gray
   };
 
   const html = `
-    <html>
+    <!DOCTYPE html>
+    <html lang="en">
     <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <title>Monthly Report - ${snapshot.period}</title>
+      <!--[if mso]>
+      <style type="text/css">
+        table {border-collapse: collapse;}
+      </style>
+      <![endif]-->
       <style>
+        /* Reset styles */
+        body, table, td, a { 
+          -webkit-text-size-adjust: 100%; 
+          -ms-text-size-adjust: 100%; 
+        }
+        table, td { 
+          mso-table-lspace: 0pt; 
+          mso-table-rspace: 0pt; 
+        }
+        img { 
+          -ms-interpolation-mode: bicubic; 
+          border: 0; 
+          height: auto; 
+          line-height: 100%; 
+          outline: none; 
+          text-decoration: none; 
+        }
+        
+        /* Base styles */
+        body {
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+          background-color: #f9fafb;
+        }
+        
+        /* Responsive styles */
+        @media only screen and (max-width: 600px) {
+          .email-container {
+            width: 100% !important;
+            margin: 0 !important;
+          }
+          .mobile-padding {
+            padding: 20px !important;
+          }
+          .mobile-text {
+            font-size: 14px !important;
+          }
+          .mobile-title {
+            font-size: 24px !important;
+          }
+          .metric-value {
+            font-size: 28px !important;
+          }
+          .two-column {
+            display: block !important;
+            width: 100% !important;
+          }
+          .column {
+            display: block !important;
+            width: 100% !important;
+            padding-bottom: 12px !important;
+          }
+        }
+        
+        /* Component styles */
         .metric-card {
-          background: #1a1f3a;
+          background-color: #ffffff;
+          border: 1px solid #e5e7eb;
           border-radius: 8px;
           padding: 20px;
-          margin-bottom: 16px;
+          margin-bottom: 12px;
         }
         .metric-title {
-          color: #9ca3af;
+          color: #6b7280;
           font-size: 14px;
+          font-weight: 500;
           margin: 0 0 8px 0;
         }
         .metric-value {
-          color: #ffffff;
+          color: #111827;
           font-size: 32px;
-          font-weight: 900;
+          font-weight: 700;
           margin: 0 0 4px 0;
+          line-height: 1.2;
         }
-        .metric-change {
+        .metric-subtitle {
+          color: #6b7280;
           font-size: 14px;
-          font-weight: 600;
+          margin: 0;
         }
         .section-title {
-          color: #fbbf24;
-          font-size: 20px;
-          font-weight: 900;
-          margin: 24px 0 16px 0;
+          color: #111827;
+          font-size: 18px;
+          font-weight: 600;
+          margin: 24px 0 12px 0;
+        }
+        .button {
+          display: inline-block;
+          padding: 12px 24px;
+          background-color: #6366f1;
+          color: #ffffff !important;
+          text-decoration: none;
+          border-radius: 6px;
+          font-weight: 600;
+          font-size: 14px;
         }
       </style>
     </head>
-    <body style="margin:0; padding:0; background:#0a0e27; font-family:Arial, sans-serif">
-      <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0e27; padding:40px 0">
+    <body style="margin: 0; padding: 0; background-color: #f9fafb;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f9fafb;">
         <tr>
-          <td align="center">
-            <table width="600" cellpadding="0" cellspacing="0" style="background:#1a1f3a; border-radius:12px; border:2px solid #7c3aed">
-              
-              <tr>
-                <td align="center" style="padding:40px 40px 20px 40px; background:linear-gradient(135deg, #7c3aed, #a855f7); border-radius:12px 12px 0 0">
-                  <h1 style="font-size:32px; color:#ffffff; margin:0 0 8px 0; font-weight:900">📊 Monthly Report</h1>
-                  <p style="font-size:18px; color:#e5e7eb; margin:0">${
-                    snapshot.period
-                  }</p>
-                </td>
-              </tr>
-
-              <tr>
-                <td style="padding:30px 40px">
-                  
-                  <h2 class="section-title">💰 Revenue Metrics</h2>
-                  
-                  <div class="metric-card">
-                    <p class="metric-title">Monthly Recurring Revenue</p>
-                    <p class="metric-value">${formatCurrency(snapshot.mrr)}</p>
-                    <p class="metric-change" style="color: ${getGrowthColor(
-                      snapshot.revenueGrowthRate
-                    )}">
-                      ${formatPercent(
-                        snapshot.revenueGrowthRate
-                      )} from last month
+          <td style="padding: 20px 0;">
+            <center>
+              <!-- Main Container -->
+              <table role="presentation" class="email-container" cellpadding="0" cellspacing="0" border="0" width="600" style="margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                
+                <!-- Header -->
+                <tr>
+                  <td style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 40px 40px 30px 40px; border-radius: 12px 12px 0 0; text-align: center;">
+                    <h1 style="margin: 0 0 8px 0; color: #ffffff; font-size: 32px; font-weight: 700; line-height: 1.2;" class="mobile-title">
+                      Monthly Report
+                    </h1>
+                    <p style="margin: 0; color: #e0e7ff; font-size: 16px;">
+                      ${snapshot.period}
                     </p>
-                  </div>
+                  </td>
+                </tr>
 
-                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px">
-                    <div class="metric-card">
-                      <p class="metric-title">ARR</p>
-                      <p class="metric-value" style="font-size:24px">${formatCurrency(
-                        snapshot.arr
-                      )}</p>
-                    </div>
-                    <div class="metric-card">
-                      <p class="metric-title">ARPU</p>
-                      <p class="metric-value" style="font-size:24px">${formatCurrency(
-                        snapshot.arpu
-                      )}</p>
-                    </div>
-                  </div>
-
-                  <h2 class="section-title">👥 User Metrics</h2>
-                  
-                  <div class="metric-card">
-                    <p class="metric-title">Total Users</p>
-                    <p class="metric-value">${snapshot.totalUsers.toLocaleString()}</p>
-                    <p class="metric-change" style="color: ${getGrowthColor(
-                      snapshot.userGrowthRate
-                    )}">
-                      ${formatPercent(snapshot.userGrowthRate)} growth
-                    </p>
-                  </div>
-
-                  <div style="background:#0a0e27; border-radius:8px; padding:20px; margin-bottom:16px">
-                    <table width="100%" cellpadding="8" cellspacing="0">
+                <!-- Content -->
+                <tr>
+                  <td class="mobile-padding" style="padding: 32px 40px;">
+                    
+                    <!-- Revenue Section -->
+                    <h2 class="section-title">💰 Revenue Metrics</h2>
+                    
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="metric-card">
                       <tr>
-                        <td style="color:#9ca3af; font-size:14px">Starter Users</td>
-                        <td align="right" style="color:#ffffff; font-size:16px; font-weight:700">${
-                          snapshot.starterUsers
-                        }</td>
-                      </tr>
-                      <tr>
-                        <td style="color:#9ca3af; font-size:14px">Hero Users</td>
-                        <td align="right" style="color:#a855f7; font-size:16px; font-weight:700">${
-                          snapshot.heroUsers
-                        }</td>
-                      </tr>
-                      <tr>
-                        <td style="color:#9ca3af; font-size:14px">Legend Users</td>
-                        <td align="right" style="color:#fbbf24; font-size:16px; font-weight:700">${
-                          snapshot.legendUsers
-                        }</td>
-                      </tr>
-                      <tr style="border-top:1px solid #374151">
-                        <td style="color:#9ca3af; font-size:14px; padding-top:12px">Active</td>
-                        <td align="right" style="color:#10b981; font-size:16px; font-weight:700; padding-top:12px">${
-                          snapshot.activeUsers
-                        }</td>
-                      </tr>
-                      <tr>
-                        <td style="color:#9ca3af; font-size:14px">Trialing</td>
-                        <td align="right" style="color:#fbbf24; font-size:16px; font-weight:700">${
-                          snapshot.trialingUsers
-                        }</td>
-                      </tr>
-                      <tr>
-                        <td style="color:#9ca3af; font-size:14px">Cancelled</td>
-                        <td align="right" style="color:#ef4444; font-size:16px; font-weight:700">${
-                          snapshot.cancelledUsers
-                        }</td>
+                        <td>
+                          <p class="metric-title">Monthly Recurring Revenue</p>
+                          <p class="metric-value">${formatCurrency(snapshot.mrr)}</p>
+                          <p class="metric-subtitle" style="color: ${getGrowthColor(snapshot.revenueGrowthRate)}; font-weight: 600;">
+                            ${formatPercent(snapshot.revenueGrowthRate)} from last month
+                          </p>
+                        </td>
                       </tr>
                     </table>
-                  </div>
 
-                  <h2 class="section-title">🎯 Trial Performance</h2>
-                  
-                  <div class="metric-card">
-                    <p class="metric-title">Trial Conversion Rate</p>
-                    <p class="metric-value">${snapshot.trialConversionRate.toFixed(
-                      1
-                    )}%</p>
-                    <p style="color:#9ca3af; font-size:14px; margin:0">
-                      ${snapshot.trialsConverted} / ${
-    snapshot.trialsStarted
-  } trials converted
-                    </p>
-                  </div>
-
-                  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:16px">
-                    <div class="metric-card">
-                      <p class="metric-title" style="font-size:12px">Started</p>
-                      <p class="metric-value" style="font-size:20px">${
-                        snapshot.trialsStarted
-                      }</p>
-                    </div>
-                    <div class="metric-card">
-                      <p class="metric-title" style="font-size:12px">Converted</p>
-                      <p class="metric-value" style="font-size:20px; color:#10b981">${
-                        snapshot.trialsConverted
-                      }</p>
-                    </div>
-                    <div class="metric-card">
-                      <p class="metric-title" style="font-size:12px">Expired</p>
-                      <p class="metric-value" style="font-size:20px; color:#ef4444">${
-                        snapshot.trialsExpired
-                      }</p>
-                    </div>
-                  </div>
-
-                  <h2 class="section-title">📊 Usage Stats</h2>
-                  
-                  <div class="metric-card">
-                    <p class="metric-title">Total Submissions</p>
-                    <p class="metric-value">${snapshot.totalSubmissions.toLocaleString()}</p>
-                    <p style="color:#9ca3af; font-size:14px; margin:0">
-                      ${snapshot.avgSubmissionsPerUser.toFixed(1)} avg per user
-                    </p>
-                  </div>
-
-                  <div style="background:#0a0e27; border-radius:8px; padding:20px">
-                    <p style="color:#9ca3af; font-size:14px; margin:0 0 12px 0">Submissions by Tier</p>
-                    <table width="100%" cellpadding="8" cellspacing="0">
+                    <!-- Two Column Metrics -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="two-column">
                       <tr>
-                        <td style="color:#e5e7eb">Starter</td>
-                        <td align="right" style="color:#ffffff; font-weight:700">${
-                          snapshot.submissionsByTier.starter
-                        }</td>
-                        <td align="right" style="color:#9ca3af; font-size:14px">${(
-                          (snapshot.submissionsByTier.starter /
-                            snapshot.totalSubmissions) *
-                          100
-                        ).toFixed(1)}%</td>
-                      </tr>
-                      <tr>
-                        <td style="color:#e5e7eb">Hero</td>
-                        <td align="right" style="color:#a855f7; font-weight:700">${
-                          snapshot.submissionsByTier.hero
-                        }</td>
-                        <td align="right" style="color:#9ca3af; font-size:14px">${(
-                          (snapshot.submissionsByTier.hero /
-                            snapshot.totalSubmissions) *
-                          100
-                        ).toFixed(1)}%</td>
-                      </tr>
-                      <tr>
-                        <td style="color:#e5e7eb">Legend</td>
-                        <td align="right" style="color:#fbbf24; font-weight:700">${
-                          snapshot.submissionsByTier.legend
-                        }</td>
-                        <td align="right" style="color:#9ca3af; font-size:14px">${(
-                          (snapshot.submissionsByTier.legend /
-                            snapshot.totalSubmissions) *
-                          100
-                        ).toFixed(1)}%</td>
+                        <td class="column" width="48%" valign="top" style="padding-right: 8px;">
+                          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="metric-card">
+                            <tr>
+                              <td>
+                                <p class="metric-title">ARR</p>
+                                <p class="metric-value" style="font-size: 24px;">${formatCurrency(snapshot.arr)}</p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                        <td class="column" width="48%" valign="top" style="padding-left: 8px;">
+                          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="metric-card">
+                            <tr>
+                              <td>
+                                <p class="metric-title">ARPU</p>
+                                <p class="metric-value" style="font-size: 24px;">${formatCurrency(snapshot.arpu)}</p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
                       </tr>
                     </table>
-                  </div>
 
-                </td>
-              </tr>
+                    <!-- User Metrics Section -->
+                    <h2 class="section-title">👥 User Metrics</h2>
+                    
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="metric-card">
+                      <tr>
+                        <td>
+                          <p class="metric-title">Total Users</p>
+                          <p class="metric-value">${snapshot.totalUsers.toLocaleString()}</p>
+                          <p class="metric-subtitle" style="color: ${getGrowthColor(snapshot.userGrowthRate)}; font-weight: 600;">
+                            ${formatPercent(snapshot.userGrowthRate)} growth
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
 
-              <tr>
-                <td style="padding:20px 40px; background:#0a0e27; border-radius:0 0 12px 12px">
-                  <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin:0 auto">
-                    <tr>
-                      <td align="center" style="border-radius:8px; background:linear-gradient(135deg, #7c3aed, #a855f7)">
-                        <a href="${
-                          process.env.NEXTAUTH_URL
-                        }/dashboard/admin/analytics" 
-                          style="display:inline-block; padding:14px 32px; color:#ffffff; text-decoration:none; font-size:16px; font-weight:900; border-radius:8px">
-                          VIEW FULL ANALYTICS
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-                  <p style="margin:16px 0 0 0; font-size:12px; color:#6b7280; text-align:center">
-                    Report generated on ${new Date().toLocaleDateString(
-                      "en-IN",
-                      { dateStyle: "full" }
-                    )}
-                  </p>
-                </td>
-              </tr>
-            </table>
+                    <!-- User Breakdown -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="metric-card">
+                      <tr>
+                        <td>
+                          <table role="presentation" cellpadding="8" cellspacing="0" border="0" width="100%">
+                            <tr>
+                              <td style="color: #6b7280; font-size: 14px; padding: 8px 0;">Starter Users</td>
+                              <td align="right" style="color: #111827; font-size: 16px; font-weight: 600; padding: 8px 0;">${snapshot.starterUsers}</td>
+                            </tr>
+                            <tr>
+                              <td style="color: #6b7280; font-size: 14px; padding: 8px 0;">Hero Users</td>
+                              <td align="right" style="color: #6366f1; font-size: 16px; font-weight: 600; padding: 8px 0;">${snapshot.heroUsers}</td>
+                            </tr>
+                            <tr>
+                              <td style="color: #6b7280; font-size: 14px; padding: 8px 0;">Legend Users</td>
+                              <td align="right" style="color: #f59e0b; font-size: 16px; font-weight: 600; padding: 8px 0;">${snapshot.legendUsers}</td>
+                            </tr>
+                            <tr style="border-top: 1px solid #e5e7eb;">
+                              <td style="color: #6b7280; font-size: 14px; padding: 12px 0 8px 0;">Active</td>
+                              <td align="right" style="color: #10b981; font-size: 16px; font-weight: 600; padding: 12px 0 8px 0;">${snapshot.activeUsers}</td>
+                            </tr>
+                            <tr>
+                              <td style="color: #6b7280; font-size: 14px; padding: 8px 0;">Trialing</td>
+                              <td align="right" style="color: #f59e0b; font-size: 16px; font-weight: 600; padding: 8px 0;">${snapshot.trialingUsers}</td>
+                            </tr>
+                            <tr>
+                              <td style="color: #6b7280; font-size: 14px; padding: 8px 0;">Cancelled</td>
+                              <td align="right" style="color: #ef4444; font-size: 16px; font-weight: 600; padding: 8px 0;">${snapshot.cancelledUsers}</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Trial Performance Section -->
+                    <h2 class="section-title">🎯 Trial Performance</h2>
+                    
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="metric-card">
+                      <tr>
+                        <td>
+                          <p class="metric-title">Trial Conversion Rate</p>
+                          <p class="metric-value">${snapshot.trialConversionRate.toFixed(1)}%</p>
+                          <p class="metric-subtitle">
+                            ${snapshot.trialsConverted} / ${snapshot.trialsStarted} trials converted
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Three Column Trial Stats -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                      <tr>
+                        <td width="32%" valign="top" style="padding-right: 8px;">
+                          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="metric-card">
+                            <tr>
+                              <td style="text-align: center;">
+                                <p class="metric-title">Started</p>
+                                <p class="metric-value" style="font-size: 24px;">${snapshot.trialsStarted}</p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                        <td width="32%" valign="top" style="padding: 0 4px;">
+                          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="metric-card">
+                            <tr>
+                              <td style="text-align: center;">
+                                <p class="metric-title">Converted</p>
+                                <p class="metric-value" style="font-size: 24px; color: #10b981;">${snapshot.trialsConverted}</p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                        <td width="32%" valign="top" style="padding-left: 8px;">
+                          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="metric-card">
+                            <tr>
+                              <td style="text-align: center;">
+                                <p class="metric-title">Expired</p>
+                                <p class="metric-value" style="font-size: 24px; color: #ef4444;">${snapshot.trialsExpired}</p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Usage Stats Section -->
+                    <h2 class="section-title">📊 Usage Statistics</h2>
+                    
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="metric-card">
+                      <tr>
+                        <td>
+                          <p class="metric-title">Total Submissions</p>
+                          <p class="metric-value">${snapshot.totalSubmissions.toLocaleString()}</p>
+                          <p class="metric-subtitle">
+                            ${snapshot.avgSubmissionsPerUser.toFixed(1)} average per user
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Submissions by Tier -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="metric-card">
+                      <tr>
+                        <td>
+                          <p class="metric-title" style="margin-bottom: 12px;">Submissions by Tier</p>
+                          <table role="presentation" cellpadding="8" cellspacing="0" border="0" width="100%">
+                            <tr>
+                              <td style="color: #111827; font-size: 14px; padding: 8px 0;">Starter</td>
+                              <td align="right" style="color: #111827; font-weight: 600; padding: 8px 0;">${snapshot.submissionsByTier.starter}</td>
+                              <td align="right" style="color: #6b7280; font-size: 14px; padding: 8px 0;">${((snapshot.submissionsByTier.starter / snapshot.totalSubmissions) * 100).toFixed(1)}%</td>
+                            </tr>
+                            <tr>
+                              <td style="color: #111827; font-size: 14px; padding: 8px 0;">Hero</td>
+                              <td align="right" style="color: #6366f1; font-weight: 600; padding: 8px 0;">${snapshot.submissionsByTier.hero}</td>
+                              <td align="right" style="color: #6b7280; font-size: 14px; padding: 8px 0;">${((snapshot.submissionsByTier.hero / snapshot.totalSubmissions) * 100).toFixed(1)}%</td>
+                            </tr>
+                            <tr>
+                              <td style="color: #111827; font-size: 14px; padding: 8px 0;">Legend</td>
+                              <td align="right" style="color: #f59e0b; font-weight: 600; padding: 8px 0;">${snapshot.submissionsByTier.legend}</td>
+                              <td align="right" style="color: #6b7280; font-size: 14px; padding: 8px 0;">${((snapshot.submissionsByTier.legend / snapshot.totalSubmissions) * 100).toFixed(1)}%</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                  </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                  <td style="padding: 32px 40px; background-color: #f9fafb; border-radius: 0 0 12px 12px; text-align: center;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
+                      <tr>
+                        <td>
+                          <a href="${process.env.NEXTAUTH_URL}/dashboard/admin/analytics" class="button" style="background-color: #6366f1; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 14px;">
+                            View Full Analytics
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                    <p style="margin: 16px 0 0 0; font-size: 12px; color: #6b7280;">
+                      Report generated on ${new Date().toLocaleDateString("en-IN", { dateStyle: "full" })}
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+              <!-- End Main Container -->
+
+              <!-- Footer Note -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="margin: 16px auto 0 auto;" class="email-container">
+                <tr>
+                  <td style="text-align: center; padding: 16px; color: #6b7280; font-size: 12px;">
+                    <p style="margin: 0;">Code Review AI</p>
+                    <p style="margin: 4px 0 0 0;">This is an automated monthly report</p>
+                  </td>
+                </tr>
+              </table>
+
+            </center>
           </td>
         </tr>
       </table>
@@ -316,9 +428,7 @@ export async function emailMonthlyReport(
   await transporter.sendMail({
     from: process.env.EMAIL_FROM,
     to: adminEmail,
-    subject: `📊 Monthly Report - ${snapshot.period} | MRR: ${formatCurrency(
-      snapshot.mrr
-    )}`,
+    subject: `📊 Monthly Report - ${snapshot.period} | MRR: ${formatCurrency(snapshot.mrr)}`,
     html,
   });
 

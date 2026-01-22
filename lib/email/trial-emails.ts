@@ -24,85 +24,225 @@ export async function sendTrialEndingEmail(userId: string, trialEndsAt: Date) {
   }
 
   const hoursRemaining = Math.ceil(
-    (trialEndsAt.getTime() - Date.now()) / (1000 * 60 * 60)
+    (trialEndsAt.getTime() - Date.now()) / (1000 * 60 * 60),
   );
 
   const html = `
-    <html>
-    <body style="margin:0; padding:0; background:#0a0e27; font-family:Arial, sans-serif">
-      <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0e27; padding:40px 0">
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <title>Your Trial is Ending Soon</title>
+      <style>
+        body, table, td, a { 
+          -webkit-text-size-adjust: 100%; 
+          -ms-text-size-adjust: 100%; 
+        }
+        table, td { 
+          mso-table-lspace: 0pt; 
+          mso-table-rspace: 0pt; 
+        }
+        body {
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+          background-color: #f9fafb;
+        }
+        @media only screen and (max-width: 600px) {
+          .email-container { width: 100% !important; margin: 0 !important; }
+          .mobile-padding { padding: 24px !important; }
+          .mobile-title { font-size: 24px !important; }
+          .button { padding: 14px 28px !important; font-size: 16px !important; }
+        }
+        .button {
+          display: inline-block;
+          padding: 16px 32px;
+          background-color: #f59e0b;
+          color: #ffffff !important;
+          text-decoration: none;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 16px;
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f9fafb;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f9fafb;">
         <tr>
-          <td align="center">
-            <table width="600" cellpadding="0" cellspacing="0" style="background:#1a1f3a; border-radius:12px; border:2px solid #fbbf24">
-              <tr>
-                <td align="center" style="padding:40px 40px 20px 40px">
-                  <div style="width:80px; height:80px; background:linear-gradient(135deg, #fbbf24, #f59e0b); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px">
-                    <span style="font-size:40px">⏰</span>
-                  </div>
-                  <h1 style="font-size:28px; color:#fbbf24; margin:0 0 12px 0; font-weight:900">Your Trial is Ending Soon!</h1>
-                  <p style="font-size:16px; color:#e5e7eb; margin:0 0 8px 0">Hi ${user.name},</p>
-                  <p style="font-size:16px; color:#e5e7eb; margin:0 0 24px 0">
-                    Your 7-day Hero trial ends in <strong style="color:#fbbf24">${hoursRemaining} hours</strong>.
-                  </p>
-                </td>
-              </tr>
-              
-              <tr>
-                <td style="padding:0 40px 30px 40px">
-                  <div style="background:#0a0e27; border-radius:8px; padding:20px; margin-bottom:20px">
-                    <h2 style="font-size:18px; color:#fbbf24; margin:0 0 12px 0">What You'll Lose:</h2>
-                    <ul style="margin:0; padding:0; list-style:none">
-                      <li style="color:#9ca3af; margin-bottom:8px; padding-left:24px; position:relative">
-                        <span style="position:absolute; left:0">❌</span> Unlimited code reviews
-                      </li>
-                      <li style="color:#9ca3af; margin-bottom:8px; padding-left:24px; position:relative">
-                        <span style="position:absolute; left:0">❌</span> Advanced security analysis
-                      </li>
-                      <li style="color:#9ca3af; margin-bottom:8px; padding-left:24px; position:relative">
-                        <span style="position:absolute; left:0">❌</span> Priority support
-                      </li>
-                      <li style="color:#9ca3af; padding-left:24px; position:relative">
-                        <span style="position:absolute; left:0">❌</span> Access to all features
-                      </li>
-                    </ul>
-                  </div>
+          <td style="padding: 40px 20px;">
+            <center>
+              <table role="presentation" class="email-container" cellpadding="0" cellspacing="0" border="0" width="600" style="margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                
+                <!-- Header -->
+                <tr>
+                  <td style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 40px; text-align: center; border-radius: 12px 12px 0 0;">
+                    <div style="background-color: rgba(255, 255, 255, 0.2); width: 80px; height: 80px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                      <span style="font-size: 40px;">⏰</span>
+                    </div>
+                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; line-height: 1.2;" class="mobile-title">
+                      Your Trial is Ending Soon!
+                    </h1>
+                  </td>
+                </tr>
 
-                  <div style="background:linear-gradient(135deg, #7c3aed, #a855f7); border-radius:8px; padding:20px; margin-bottom:24px">
-                    <h2 style="font-size:18px; color:#ffffff; margin:0 0 12px 0">Continue Your Journey for ₹2999/month</h2>
-                    <ul style="margin:0; padding:0; list-style:none">
-                      <li style="color:#ffffff; margin-bottom:8px; padding-left:24px; position:relative">
-                        <span style="position:absolute; left:0">✓</span> Unlimited submissions
-                      </li>
-                      <li style="color:#ffffff; margin-bottom:8px; padding-left:24px; position:relative">
-                        <span style="position:absolute; left:0">✓</span> Advanced AI analysis
-                      </li>
-                      <li style="color:#ffffff; padding-left:24px; position:relative">
-                        <span style="position:absolute; left:0">✓</span> Cancel anytime
-                      </li>
-                    </ul>
-                  </div>
+                <!-- Content -->
+                <tr>
+                  <td class="mobile-padding" style="padding: 40px;">
+                    <p style="margin: 0 0 8px 0; color: #111827; font-size: 18px; font-weight: 600;">
+                      Hi ${user.name},
+                    </p>
+                    <p style="margin: 0 0 24px 0; color: #374151; font-size: 16px; line-height: 1.6;">
+                      Your 7-day Hero trial ends in <strong style="color: #f59e0b;">${hoursRemaining} hours</strong>. Don't lose access to unlimited code reviews and advanced features!
+                    </p>
 
-                  <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin:0 auto">
-                    <tr>
-                      <td align="center" style="border-radius:8px; background:linear-gradient(135deg, #fbbf24, #f59e0b)">
-                        <a href="${process.env.NEXTAUTH_URL}/pricing" 
-                          style="display:inline-block; padding:16px 40px; color:#0a0e27; text-decoration:none; font-size:18px; font-weight:900; border-radius:8px">
-                          UPGRADE TO HERO
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
+                    <!-- Warning Notice -->
+                    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px; padding: 16px; margin-bottom: 24px;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td style="padding-right: 12px; vertical-align: top;">
+                            <span style="font-size: 20px;">⚠️</span>
+                          </td>
+                          <td>
+                            <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.5; font-weight: 600;">
+                              After your trial ends, you'll be moved to the Starter plan with only 5 reviews per month.
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
 
-              <tr>
-                <td style="padding:20px 40px; background:#0a0e27; border-radius:0 0 12px 12px">
-                  <p style="margin:0; font-size:12px; color:#6b7280; text-align:center">
-                    If you don't upgrade, you'll be moved to the Starter plan (5 reviews/month)
-                  </p>
-                </td>
-              </tr>
-            </table>
+                    <!-- What You'll Lose -->
+                    <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+                      <h2 style="margin: 0 0 16px 0; color: #991b1b; font-size: 16px; font-weight: 600;">
+                        What You'll Lose:
+                      </h2>
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td style="padding: 8px 0;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                              <tr>
+                                <td style="padding-right: 8px; vertical-align: top;">
+                                  <span style="color: #dc2626;">✗</span>
+                                </td>
+                                <td style="color: #7f1d1d; font-size: 14px;">Unlimited code reviews</td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 8px 0;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                              <tr>
+                                <td style="padding-right: 8px; vertical-align: top;">
+                                  <span style="color: #dc2626;">✗</span>
+                                </td>
+                                <td style="color: #7f1d1d; font-size: 14px;">Advanced security analysis</td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 8px 0;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                              <tr>
+                                <td style="padding-right: 8px; vertical-align: top;">
+                                  <span style="color: #dc2626;">✗</span>
+                                </td>
+                                <td style="color: #7f1d1d; font-size: 14px;">Priority support</td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 8px 0;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                              <tr>
+                                <td style="padding-right: 8px; vertical-align: top;">
+                                  <span style="color: #dc2626;">✗</span>
+                                </td>
+                                <td style="color: #7f1d1d; font-size: 14px;">Access to all premium features</td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+
+                    <!-- Continue Your Journey -->
+                    <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+                      <h2 style="margin: 0 0 8px 0; color: #ffffff; font-size: 18px; font-weight: 600;">
+                        Continue Your Journey
+                      </h2>
+                      <p style="margin: 0 0 16px 0; color: #e0e7ff; font-size: 16px;">
+                        Keep unlimited reviews for just ₹2,999/month
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td style="padding: 8px 0;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                              <tr>
+                                <td style="padding-right: 8px; vertical-align: top;">
+                                  <span style="color: #ffffff;">✓</span>
+                                </td>
+                                <td style="color: #ffffff; font-size: 14px;">Unlimited submissions</td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 8px 0;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                              <tr>
+                                <td style="padding-right: 8px; vertical-align: top;">
+                                  <span style="color: #ffffff;">✓</span>
+                                </td>
+                                <td style="color: #ffffff; font-size: 14px;">Advanced AI analysis</td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 8px 0;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                              <tr>
+                                <td style="padding-right: 8px; vertical-align: top;">
+                                  <span style="color: #ffffff;">✓</span>
+                                </td>
+                                <td style="color: #ffffff; font-size: 14px;">Cancel anytime, no commitment</td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+
+                    <!-- CTA Button -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                      <tr>
+                        <td style="text-align: center; padding: 8px 0;">
+                          <a href="${process.env.NEXTAUTH_URL}/pricing" class="button" style="background-color: #f59e0b; color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 16px;">
+                            Upgrade to Hero Now
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                  <td style="background-color: #f9fafb; padding: 24px 40px; border-radius: 0 0 12px 12px; border-top: 1px solid #e5e7eb; text-align: center;">
+                    <p style="margin: 0; color: #6b7280; font-size: 12px;">
+                      If you don't upgrade, you'll automatically move to the Starter plan (5 reviews/month)
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+            </center>
           </td>
         </tr>
       </table>
@@ -131,79 +271,209 @@ export async function sendTrialExpiredEmail(userId: string) {
   }
 
   const html = `
-    <html>
-    <body style="margin:0; padding:0; background:#0a0e27; font-family:Arial, sans-serif">
-      <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0e27; padding:40px 0">
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <title>Your Trial Has Ended</title>
+      <style>
+        body, table, td, a { 
+          -webkit-text-size-adjust: 100%; 
+          -ms-text-size-adjust: 100%; 
+        }
+        table, td { 
+          mso-table-lspace: 0pt; 
+          mso-table-rspace: 0pt; 
+        }
+        body {
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+          background-color: #f9fafb;
+        }
+        @media only screen and (max-width: 600px) {
+          .email-container { width: 100% !important; margin: 0 !important; }
+          .mobile-padding { padding: 24px !important; }
+          .mobile-title { font-size: 24px !important; }
+          .button { padding: 14px 28px !important; font-size: 16px !important; }
+        }
+        .button {
+          display: inline-block;
+          padding: 16px 32px;
+          background-color: #6366f1;
+          color: #ffffff !important;
+          text-decoration: none;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 16px;
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f9fafb;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f9fafb;">
         <tr>
-          <td align="center">
-            <table width="600" cellpadding="0" cellspacing="0" style="background:#1a1f3a; border-radius:12px; border:2px solid #6b7280">
-              <tr>
-                <td align="center" style="padding:40px 40px 20px 40px">
-                  <div style="width:80px; height:80px; background:#374151; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px">
-                    <span style="font-size:40px">📊</span>
-                  </div>
-                  <h1 style="font-size:28px; color:#e5e7eb; margin:0 0 12px 0; font-weight:900">Your Trial Has Ended</h1>
-                  <p style="font-size:16px; color:#e5e7eb; margin:0 0 8px 0">Hi ${user.name},</p>
-                  <p style="font-size:16px; color:#e5e7eb; margin:0 0 24px 0">
-                    Your 7-day Hero trial has ended. You've been moved to the <strong>Starter plan</strong>.
-                  </p>
-                </td>
-              </tr>
-              
-              <tr>
-                <td style="padding:0 40px 30px 40px">
-                  <div style="background:#0a0e27; border-radius:8px; padding:20px; margin-bottom:20px">
-                    <h2 style="font-size:18px; color:#e5e7eb; margin:0 0 12px 0">Your Starter Plan:</h2>
-                    <ul style="margin:0; padding:0; list-style:none">
-                      <li style="color:#9ca3af; margin-bottom:8px; padding-left:24px; position:relative">
-                        <span style="position:absolute; left:0">✓</span> 5 code reviews per month
-                      </li>
-                      <li style="color:#9ca3af; margin-bottom:8px; padding-left:24px; position:relative">
-                        <span style="position:absolute; left:0">✓</span> Basic security checks
-                      </li>
-                      <li style="color:#9ca3af; padding-left:24px; position:relative">
-                        <span style="position:absolute; left:0">✓</span> Community support
-                      </li>
-                    </ul>
-                  </div>
+          <td style="padding: 40px 20px;">
+            <center>
+              <table role="presentation" class="email-container" cellpadding="0" cellspacing="0" border="0" width="600" style="margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                
+                <!-- Header -->
+                <tr>
+                  <td style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); padding: 40px; text-align: center; border-radius: 12px 12px 0 0;">
+                    <div style="background-color: rgba(255, 255, 255, 0.2); width: 80px; height: 80px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                      <span style="font-size: 40px;">📊</span>
+                    </div>
+                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; line-height: 1.2;" class="mobile-title">
+                      Your Trial Has Ended
+                    </h1>
+                  </td>
+                </tr>
 
-                  <div style="background:linear-gradient(135deg, #7c3aed, #a855f7); border-radius:8px; padding:20px; margin-bottom:24px">
-                    <h2 style="font-size:18px; color:#ffffff; margin:0 0 12px 0">Want More? Upgrade to Hero</h2>
-                    <p style="color:#ffffff; margin:0 0 12px 0">Get unlimited reviews for just ₹2999/month</p>
-                    <ul style="margin:0; padding:0; list-style:none">
-                      <li style="color:#ffffff; margin-bottom:8px; padding-left:24px; position:relative">
-                        <span style="position:absolute; left:0">🚀</span> Unlimited submissions
-                      </li>
-                      <li style="color:#ffffff; margin-bottom:8px; padding-left:24px; position:relative">
-                        <span style="position:absolute; left:0">🔒</span> Advanced security analysis
-                      </li>
-                      <li style="color:#ffffff; padding-left:24px; position:relative">
-                        <span style="position:absolute; left:0">⚡</span> Priority support
-                      </li>
-                    </ul>
-                  </div>
+                <!-- Content -->
+                <tr>
+                  <td class="mobile-padding" style="padding: 40px;">
+                    <p style="margin: 0 0 8px 0; color: #111827; font-size: 18px; font-weight: 600;">
+                      Hi ${user.name},
+                    </p>
+                    <p style="margin: 0 0 24px 0; color: #374151; font-size: 16px; line-height: 1.6;">
+                      Your 7-day Hero trial has ended. You've been moved to the <strong>Starter plan</strong>, but you can upgrade anytime to get unlimited reviews back!
+                    </p>
 
-                  <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin:0 auto">
-                    <tr>
-                      <td align="center" style="border-radius:8px; background:linear-gradient(135deg, #fbbf24, #f59e0b)">
-                        <a href="${process.env.NEXTAUTH_URL}/pricing" 
-                          style="display:inline-block; padding:16px 40px; color:#0a0e27; text-decoration:none; font-size:18px; font-weight:900; border-radius:8px">
-                          UPGRADE NOW
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
+                    <!-- Info Notice -->
+                    <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 4px; padding: 16px; margin-bottom: 24px;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td style="padding-right: 12px; vertical-align: top;">
+                            <span style="font-size: 20px;">ℹ️</span>
+                          </td>
+                          <td>
+                            <p style="margin: 0; color: #1e40af; font-size: 14px; line-height: 1.5; font-weight: 600;">
+                              You're now on the Starter plan with 5 free reviews per month
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
 
-              <tr>
-                <td style="padding:20px 40px; background:#0a0e27; border-radius:0 0 12px 12px">
-                  <p style="margin:0; font-size:12px; color:#6b7280; text-align:center">
-                    Questions? Reply to this email or visit our support page
-                  </p>
-                </td>
-              </tr>
-            </table>
+                    <!-- Your Starter Plan -->
+                    <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+                      <h2 style="margin: 0 0 16px 0; color: #111827; font-size: 16px; font-weight: 600;">
+                        Your Starter Plan Includes:
+                      </h2>
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td style="padding: 8px 0;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                              <tr>
+                                <td style="padding-right: 8px; vertical-align: top;">
+                                  <span style="color: #10b981;">✓</span>
+                                </td>
+                                <td style="color: #374151; font-size: 14px;">5 code reviews per month</td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 8px 0;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                              <tr>
+                                <td style="padding-right: 8px; vertical-align: top;">
+                                  <span style="color: #10b981;">✓</span>
+                                </td>
+                                <td style="color: #374151; font-size: 14px;">Basic security checks</td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 8px 0;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                              <tr>
+                                <td style="padding-right: 8px; vertical-align: top;">
+                                  <span style="color: #10b981;">✓</span>
+                                </td>
+                                <td style="color: #374151; font-size: 14px;">Community support</td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+
+                    <!-- Want More? -->
+                    <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+                      <h2 style="margin: 0 0 8px 0; color: #ffffff; font-size: 18px; font-weight: 600;">
+                        Want More? Upgrade to Hero
+                      </h2>
+                      <p style="margin: 0 0 16px 0; color: #e0e7ff; font-size: 16px;">
+                        Get unlimited reviews for just ₹2,999/month
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td style="padding: 8px 0;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                              <tr>
+                                <td style="padding-right: 8px; vertical-align: top;">
+                                  <span style="font-size: 16px;">🚀</span>
+                                </td>
+                                <td style="color: #ffffff; font-size: 14px;">Unlimited submissions</td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 8px 0;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                              <tr>
+                                <td style="padding-right: 8px; vertical-align: top;">
+                                  <span style="font-size: 16px;">🔒</span>
+                                </td>
+                                <td style="color: #ffffff; font-size: 14px;">Advanced security analysis</td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 8px 0;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                              <tr>
+                                <td style="padding-right: 8px; vertical-align: top;">
+                                  <span style="font-size: 16px;">⚡</span>
+                                </td>
+                                <td style="color: #ffffff; font-size: 14px;">Priority support</td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+
+                    <!-- CTA Button -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                      <tr>
+                        <td style="text-align: center; padding: 8px 0;">
+                          <a href="${process.env.NEXTAUTH_URL}/pricing" class="button" style="background-color: #6366f1; color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 16px;">
+                            Upgrade to Hero
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                  <td style="background-color: #f9fafb; padding: 24px 40px; border-radius: 0 0 12px 12px; border-top: 1px solid #e5e7eb; text-align: center;">
+                    <p style="margin: 0; color: #6b7280; font-size: 12px;">
+                      Questions? Reply to this email or <a href="${process.env.NEXTAUTH_URL}/support" style="color: #6366f1; text-decoration: none;">visit our support page</a>
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+            </center>
           </td>
         </tr>
       </table>

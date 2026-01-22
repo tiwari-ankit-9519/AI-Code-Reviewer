@@ -1,4 +1,3 @@
-// lib/monitoring/error-tracker.ts
 import { prisma } from "@/lib/prisma";
 
 interface ErrorMetrics {
@@ -15,7 +14,7 @@ export async function trackError(
   errorType: string,
   errorMessage: string,
   userId?: string,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
 ): Promise<void> {
   console.error(`[ERROR_TRACKER] ${errorType}: ${errorMessage}`, {
     userId,
@@ -29,7 +28,7 @@ export async function trackError(
 
 export async function getErrorMetrics(
   startDate: Date,
-  endDate: Date
+  endDate: Date,
 ): Promise<ErrorMetrics> {
   const cronLogs = await prisma.cronLog.findMany({
     where: {
@@ -46,7 +45,7 @@ export async function getErrorMetrics(
   });
 
   const criticalLogs = cronLogs.filter((log) =>
-    log.error?.toLowerCase().includes("critical")
+    log.error?.toLowerCase().includes("critical"),
   );
 
   return {
@@ -77,7 +76,7 @@ export async function checkSystemHealth(): Promise<{
 
   if (recentFailedCrons > 5) {
     issues.push(
-      `High number of failed cron jobs in last 24h: ${recentFailedCrons}`
+      `High number of failed cron jobs in last 24h: ${recentFailedCrons}`,
     );
   }
 
@@ -92,7 +91,7 @@ export async function checkSystemHealth(): Promise<{
 
   if (stuckCoolingPeriods > 0) {
     issues.push(
-      `${stuckCoolingPeriods} users stuck in cooling period for >48h`
+      `${stuckCoolingPeriods} users stuck in cooling period for >48h`,
     );
   }
 

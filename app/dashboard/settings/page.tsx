@@ -1,4 +1,3 @@
-// app/dashboard/settings/page.tsx
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
@@ -20,7 +19,7 @@ export default async function SettingsPage() {
       avatar: true,
       createdAt: true,
       emailVerified: true,
-      passwordChangedAt: true, // Add this field
+      passwordChangedAt: true,
       _count: {
         select: {
           submissions: true,
