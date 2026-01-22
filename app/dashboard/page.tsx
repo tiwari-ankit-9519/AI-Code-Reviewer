@@ -161,7 +161,7 @@ export default async function DashboardPage() {
               </h3>
               <div
                 className={`p-2 rounded-lg ${getScoreBgColor(
-                  avgScore
+                  avgScore,
                 )} transition-colors`}
               >
                 <TrendingUp className={`h-4 w-4 ${getScoreColor(avgScore)}`} />
@@ -204,7 +204,7 @@ export default async function DashboardPage() {
               href={
                 isAtLimit || coolingStatus.isInCoolingPeriod
                   ? "/pricing"
-                  : "/dashboard/submissions/new"
+                  : "/dashboard/new"
               }
             >
               <Button
@@ -215,8 +215,8 @@ export default async function DashboardPage() {
                 {coolingStatus.isInCoolingPeriod
                   ? "Cooling Period"
                   : isAtLimit
-                  ? "Upgrade Plan"
-                  : "New Review"}
+                    ? "Upgrade Plan"
+                    : "New Review"}
                 <ArrowUpRight className="h-4 w-4 ml-2 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
               </Button>
             </Link>
@@ -311,7 +311,7 @@ export default async function DashboardPage() {
                             </Badge>
                             <span className="text-xs text-muted-foreground">
                               {new Date(
-                                submission.createdAt
+                                submission.createdAt,
                               ).toLocaleDateString()}
                             </span>
                           </div>
@@ -322,7 +322,7 @@ export default async function DashboardPage() {
                           <div className="text-right">
                             <p
                               className={`text-xl font-bold ${getScoreColor(
-                                submission.analysis.overallScore
+                                submission.analysis.overallScore,
                               )}`}
                             >
                               {submission.analysis.overallScore}%

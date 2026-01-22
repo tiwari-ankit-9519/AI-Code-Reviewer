@@ -6,7 +6,6 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { v2 as cloudinary, UploadApiResponse } from "cloudinary";
 
-// Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -30,7 +29,6 @@ export async function uploadAvatar(formData: FormData) {
       return { success: false, error: "No file provided" };
     }
 
-    // Validate file type
     if (!ALLOWED_TYPES.includes(file.type)) {
       return {
         success: false,
@@ -38,7 +36,6 @@ export async function uploadAvatar(formData: FormData) {
       };
     }
 
-    // Validate file size
     if (file.size > MAX_FILE_SIZE) {
       return {
         success: false,
@@ -46,20 +43,16 @@ export async function uploadAvatar(formData: FormData) {
       };
     }
 
-    // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Get old avatar to delete from Cloudinary
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { avatar: true },
     });
 
-    // Delete old avatar from Cloudinary if exists
     if (user?.avatar) {
       try {
-        // Extract public_id from Cloudinary URL
         const urlParts = user.avatar.split("/");
         const publicIdWithExt = urlParts[urlParts.length - 1];
         const publicId = publicIdWithExt.split(".")[0];
@@ -72,7 +65,6 @@ export async function uploadAvatar(formData: FormData) {
       }
     }
 
-    // Upload to Cloudinary with proper typing
     const uploadResult = await new Promise<UploadApiResponse>(
       (resolve, reject) => {
         cloudinary.uploader
@@ -99,7 +91,6 @@ export async function uploadAvatar(formData: FormData) {
       },
     );
 
-    // Update database with Cloudinary URL
     await prisma.user.update({
       where: { id: session.user.id },
       data: { avatar: uploadResult.secure_url },
@@ -126,7 +117,6 @@ export async function removeAvatar() {
       select: { avatar: true },
     });
 
-    // Delete from Cloudinary if exists
     if (user?.avatar) {
       try {
         const urlParts = user.avatar.split("/");
