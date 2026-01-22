@@ -44,8 +44,6 @@ export async function expireTrials(): Promise<number> {
         },
       }),
     ]);
-
-    console.log(`Trial expired for user ${user.email}`);
   }
 
   return expiredUsers.length;
@@ -70,10 +68,6 @@ export async function sendTrialReminders(): Promise<number> {
       trialEndsAt: true,
     },
   });
-
-  console.log(
-    `Found ${endingSoon.length} trials ending in 24 hours - reminders to be sent`
-  );
 
   return endingSoon.length;
 }
@@ -104,7 +98,7 @@ export async function syncStripeSubscriptions(): Promise<number> {
 
     try {
       const stripeSub = await stripe.subscriptions.retrieve(
-        sub.stripeSubscriptionId
+        sub.stripeSubscriptionId,
       );
 
       if (stripeSub.status !== "active" && sub.status === "ACTIVE") {
@@ -123,7 +117,7 @@ export async function syncStripeSubscriptions(): Promise<number> {
     } catch (error) {
       console.error(
         `Failed to sync subscription ${sub.id}:`,
-        error instanceof Error ? error.message : "Unknown error"
+        error instanceof Error ? error.message : "Unknown error",
       );
     }
   }

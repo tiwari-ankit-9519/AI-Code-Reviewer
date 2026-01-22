@@ -1,8 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import DashboardNav from "@/components/dashboard-nav";
-import TrialBanner from "@/components/trial-banner";
-import { checkTrialStatus } from "@/lib/subscription/subscription-utils";
 import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({
@@ -34,17 +32,9 @@ export default async function DashboardLayout({
     redirect("/");
   }
 
-  const trialStatus = await checkTrialStatus(session.user.id);
-
   return (
     <div className="min-h-screen bg-background">
       <DashboardNav user={user} />
-
-      {trialStatus.isInTrial && (
-        <div className="sticky top-16 z-40 animate-in slide-in-from-top duration-300">
-          <TrialBanner userId={user.id} />
-        </div>
-      )}
 
       <main className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="animate-in fade-in slide-in-from-bottom duration-500">

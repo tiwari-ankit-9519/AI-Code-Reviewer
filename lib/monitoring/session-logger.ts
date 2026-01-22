@@ -18,8 +18,6 @@ export async function logSessionEvent(entry: SessionLogEntry): Promise<void> {
     entry.userId || "N/A"
   } - Session: ${entry.sessionId || "N/A"}`;
 
-  console.log(logMessage, entry.details);
-
   if (entry.level === "ERROR" || entry.level === "CRITICAL") {
     console.error(logMessage, entry.details);
   }
@@ -28,7 +26,7 @@ export async function logSessionEvent(entry: SessionLogEntry): Promise<void> {
 export async function logCoolingPeriodExpiration(
   userId: string,
   success: boolean,
-  error?: string
+  error?: string,
 ): Promise<void> {
   await logSessionEvent({
     level: success ? "INFO" : "ERROR",
@@ -45,7 +43,7 @@ export async function logCoolingPeriodExpiration(
 
 export async function logSessionCreationFailure(
   userId: string,
-  error: Error
+  error: Error,
 ): Promise<void> {
   await logSessionEvent({
     level: "ERROR",
@@ -63,7 +61,7 @@ export async function logSessionCreationFailure(
 export async function logConcurrentSubmissionAttempt(
   userId: string,
   sessionId: string,
-  blocked: boolean
+  blocked: boolean,
 ): Promise<void> {
   await logSessionEvent({
     level: blocked ? "WARN" : "INFO",
@@ -82,7 +80,7 @@ export async function logTierChangeWithSession(
   userId: string,
   oldTier: string,
   newTier: string,
-  sessionId?: string
+  sessionId?: string,
 ): Promise<void> {
   await logSessionEvent({
     level: "INFO",
@@ -103,7 +101,7 @@ export async function logCronJobExecution(
   jobName: string,
   duration: number,
   success: boolean,
-  results: Record<string, unknown>
+  results: Record<string, unknown>,
 ): Promise<void> {
   await prisma.cronLog.create({
     data: {
@@ -131,7 +129,7 @@ export async function logCronJobExecution(
 export async function logDatabaseQueryPerformance(
   queryName: string,
   duration: number,
-  threshold: number = 1000
+  threshold: number = 1000,
 ): Promise<void> {
   if (duration > threshold) {
     await logSessionEvent({
@@ -151,7 +149,7 @@ export async function logDatabaseQueryPerformance(
 export async function logSessionLimitReachedWithoutCooling(
   userId: string,
   sessionId: string,
-  tier: string
+  tier: string,
 ): Promise<void> {
   await logSessionEvent({
     level: "CRITICAL",
@@ -170,7 +168,7 @@ export async function logSessionLimitReachedWithoutCooling(
 export async function logOrphanedSessionDetected(
   sessionId: string,
   userId: string,
-  reason: string
+  reason: string,
 ): Promise<void> {
   await logSessionEvent({
     level: "WARN",

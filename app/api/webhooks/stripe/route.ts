@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   if (!signature) {
     return NextResponse.json(
       { error: "Missing stripe-signature header" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     event = stripe.webhooks.constructEvent(
       body,
       signature,
-      STRIPE_CONFIG.webhookSecret
+      STRIPE_CONFIG.webhookSecret,
     );
   } catch (err) {
     console.error("Webhook signature verification failed:", err);
@@ -163,7 +163,6 @@ export async function POST(request: Request) {
       }
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
     }
 
     return NextResponse.json({ received: true, eventType: event.type });
@@ -171,7 +170,7 @@ export async function POST(request: Request) {
     console.error("Webhook processing failed:", err);
     return NextResponse.json(
       { error: "Webhook processing failed" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

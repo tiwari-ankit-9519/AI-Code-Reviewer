@@ -15,19 +15,12 @@ if (
 export async function sendPasswordResetEmail(
   email: string,
   name: string,
-  resetUrl: string
+  resetUrl: string,
 ) {
   const smtpUser = process.env.SMTP_USER;
   const smtpPassword = process.env.SMTP_PASS;
   const smtpHost = process.env.SMTP_HOST;
   const smtpPort = process.env.SMTP_PORT;
-
-  console.log("SMTP Config check:", {
-    host: smtpHost,
-    port: smtpPort,
-    user: smtpUser,
-    hasPassword: !!smtpPassword,
-  });
 
   if (!smtpUser || !smtpPassword) {
     throw new Error("SMTP credentials are not configured properly");
@@ -79,7 +72,6 @@ export async function sendPasswordResetEmail(
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent successfully:", info.messageId);
     return info;
   } catch (error) {
     console.error("Failed to send email:", error);

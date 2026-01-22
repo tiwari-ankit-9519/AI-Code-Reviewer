@@ -113,10 +113,6 @@ export default function DashboardNav({ user }: DashboardNavProps) {
     return name.substring(0, 2).toUpperCase();
   };
 
-  console.log(user.role);
-  console.log(user.role === "USER");
-  console.log(user.role !== "ADMIN");
-
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

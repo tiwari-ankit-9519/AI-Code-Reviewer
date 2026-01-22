@@ -52,9 +52,6 @@ export async function GET(request: Request) {
       });
 
       results.coolingPeriodsCleared = expiredCoolingPeriods.length;
-      console.log(
-        `[HOURLY] Cleared ${expiredCoolingPeriods.length} expired cooling periods`
-      );
 
       for (const user of expiredCoolingPeriods) {
         await logCoolingPeriodExpiration(user.id, true);
@@ -97,7 +94,6 @@ export async function GET(request: Request) {
       });
 
       results.sessionsEnded = expiredSessions.length;
-      console.log(`[HOURLY] Ended ${expiredSessions.length} expired sessions`);
     }
   } catch (error) {
     const errorMessage =
@@ -131,9 +127,6 @@ export async function GET(request: Request) {
       });
 
       results.orphanedSessionsCleaned = oldSessions.length;
-      console.log(
-        `[HOURLY] Cleaned ${oldSessions.length} old sessions (30+ days)`
-      );
     }
   } catch (error) {
     const errorMessage =
@@ -146,7 +139,7 @@ export async function GET(request: Request) {
     "hourly-plan-management",
     Date.now() - startTime,
     results.errors.length === 0,
-    results
+    results,
   );
 
   return NextResponse.json({

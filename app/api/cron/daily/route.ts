@@ -70,7 +70,6 @@ export async function GET(request: Request) {
     }
 
     results.trialsExpired = expiredUsers.length;
-    console.log(`[DAILY] Expired ${expiredUsers.length} trials`);
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
@@ -80,9 +79,6 @@ export async function GET(request: Request) {
 
   try {
     results.subscriptionsSynced = await syncStripeSubscriptions();
-    console.log(
-      `[DAILY] Synced ${results.subscriptionsSynced} Stripe subscriptions`
-    );
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
@@ -94,9 +90,6 @@ export async function GET(request: Request) {
     try {
       const resetResult = await resetAllUsers();
       results.monthlyResetCount = resetResult.resetCount;
-      console.log(
-        `[DAILY] Reset ${resetResult.resetCount} user submission counts`
-      );
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
@@ -112,8 +105,6 @@ export async function GET(request: Request) {
       if (monthlyTasksResult.errors.length > 0) {
         results.errors.push(...monthlyTasksResult.errors);
       }
-
-      console.log(`[DAILY] Monthly tasks completed`);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
