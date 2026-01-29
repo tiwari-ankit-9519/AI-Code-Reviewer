@@ -392,7 +392,7 @@ export async function emailMonthlyReport(
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
                       <tr>
                         <td>
-                          <a href="${process.env.NEXTAUTH_URL}/dashboard/admin/analytics" class="button" style="background-color: #6366f1; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 14px;">
+                          <a href="${process.env.AUTH_URL}/dashboard/admin/analytics" class="button" style="background-color: #6366f1; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 14px;">
                             View Full Analytics
                           </a>
                         </td>

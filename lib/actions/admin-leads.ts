@@ -134,7 +134,7 @@ export async function convertLeadToLegend(leadId: string, email: string) {
                       <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin:30px auto 0">
                         <tr>
                           <td align="center" style="border-radius:8px; background:linear-gradient(135deg, #7c3aed, #a855f7)">
-                            <a href="${process.env.NEXTAUTH_URL}/auth/signin" 
+                            <a href="${process.env.AUTH_URL}/auth/signin" 
                               style="display:inline-block; padding:14px 32px; color:#ffffff; text-decoration:none; font-size:16px; font-weight:900; border-radius:8px">
                               LOGIN NOW
                             </a>
@@ -198,7 +198,7 @@ export async function convertLeadToLegend(leadId: string, email: string) {
                       <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin:30px auto 0">
                         <tr>
                           <td align="center" style="border-radius:8px; background:linear-gradient(135deg, #7c3aed, #a855f7)">
-                            <a href="${process.env.NEXTAUTH_URL}/dashboard" 
+                            <a href="${process.env.AUTH_URL}/dashboard" 
                               style="display:inline-block; padding:14px 32px; color:#ffffff; text-decoration:none; font-size:16px; font-weight:900; border-radius:8px">
                               START USING LEGEND
                             </a>

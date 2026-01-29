@@ -15,7 +15,7 @@ export async function sendVerificationEmail(
   name: string,
   token: string,
 ) {
-  const verificationUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
+  const verificationUrl = `${process.env.AUTH_URL || "http://localhost:3000"}/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
 
   const html = `
     <!DOCTYPE html>
@@ -265,7 +265,7 @@ export async function sendVerificationEmail(
                             Need help? We're here for you
                           </p>
                           <p style="margin: 0 0 16px 0;">
-                            <a href="${process.env.NEXTAUTH_URL}/support" style="color: #6366f1; text-decoration: none; font-size: 14px; font-weight: 500;">
+                            <a href="${process.env.AUTH_URL}/support" style="color: #6366f1; text-decoration: none; font-size: 14px; font-weight: 500;">
                               Contact Support
                             </a>
                           </p>

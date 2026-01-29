@@ -223,7 +223,7 @@ export async function sendTrialEndingEmail(userId: string, trialEndsAt: Date) {
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                       <tr>
                         <td style="text-align: center; padding: 8px 0;">
-                          <a href="${process.env.NEXTAUTH_URL}/pricing" class="button" style="background-color: #f59e0b; color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 16px;">
+                          <a href="${process.env.AUTH_URL}/pricing" class="button" style="background-color: #f59e0b; color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 16px;">
                             Upgrade to Hero Now
                           </a>
                         </td>
@@ -454,7 +454,7 @@ export async function sendTrialExpiredEmail(userId: string) {
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                       <tr>
                         <td style="text-align: center; padding: 8px 0;">
-                          <a href="${process.env.NEXTAUTH_URL}/pricing" class="button" style="background-color: #6366f1; color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 16px;">
+                          <a href="${process.env.AUTH_URL}/pricing" class="button" style="background-color: #6366f1; color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 16px;">
                             Upgrade to Hero
                           </a>
                         </td>
@@ -467,7 +467,7 @@ export async function sendTrialExpiredEmail(userId: string) {
                 <tr>
                   <td style="background-color: #f9fafb; padding: 24px 40px; border-radius: 0 0 12px 12px; border-top: 1px solid #e5e7eb; text-align: center;">
                     <p style="margin: 0; color: #6b7280; font-size: 12px;">
-                      Questions? Reply to this email or <a href="${process.env.NEXTAUTH_URL}/support" style="color: #6366f1; text-decoration: none;">visit our support page</a>
+                      Questions? Reply to this email or <a href="${process.env.AUTH_URL}/support" style="color: #6366f1; text-decoration: none;">visit our support page</a>
                     </p>
                   </td>
                 </tr>

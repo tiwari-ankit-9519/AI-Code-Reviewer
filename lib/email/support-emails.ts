@@ -174,7 +174,7 @@ export async function sendTicketCreatedEmail(ticketId: string) {
                         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                           <tr>
                             <td style="text-align: center; padding: 8px 0;">
-                              <a href="${process.env.NEXTAUTH_URL}/dashboard/admin/support/${ticket.id}" class="button" style="background-color: #6366f1; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 15px;">
+                              <a href="${process.env.AUTH_URL}/dashboard/admin/support/${ticket.id}" class="button" style="background-color: #6366f1; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 15px;">
                                 View & Respond to Ticket
                               </a>
                             </td>
@@ -275,7 +275,7 @@ export async function sendTicketCreatedEmail(ticketId: string) {
                       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                         <tr>
                           <td style="text-align: center; padding: 8px 0;">
-                            <a href="${process.env.NEXTAUTH_URL}/dashboard/support/tickets/${ticket.id}" style="display: inline-block; padding: 14px 28px; background-color: #10b981; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
+                            <a href="${process.env.AUTH_URL}/dashboard/support/tickets/${ticket.id}" style="display: inline-block; padding: 14px 28px; background-color: #10b981; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
                               View Ticket
                             </a>
                           </td>
@@ -405,7 +405,7 @@ export async function sendTicketResponseEmail(ticketId: string) {
                       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                         <tr>
                           <td style="text-align: center; padding: 8px 0;">
-                            <a href="${process.env.NEXTAUTH_URL}/dashboard/support/tickets/${ticket.id}" style="display: inline-block; padding: 14px 28px; background-color: #3b82f6; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
+                            <a href="${process.env.AUTH_URL}/dashboard/support/tickets/${ticket.id}" style="display: inline-block; padding: 14px 28px; background-color: #3b82f6; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
                               View & Reply
                             </a>
                           </td>

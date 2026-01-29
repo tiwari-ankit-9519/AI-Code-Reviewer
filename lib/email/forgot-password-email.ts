@@ -217,7 +217,7 @@ export async function sendPasswordResetEmail(
                                 Need help? Contact our support team
                               </p>
                               <p style="margin: 0 0 16px 0;">
-                                <a href="${process.env.NEXTAUTH_URL}/support" style="color: #6366f1; text-decoration: none; font-size: 14px; font-weight: 500;">
+                                <a href="${process.env.AUTH_URL}/support" style="color: #6366f1; text-decoration: none; font-size: 14px; font-weight: 500;">
                                   Visit Support Center
                                 </a>
                               </p>

@@ -118,7 +118,7 @@ export async function submitEnterpriseContact(data: ContactData) {
                         <tr>
                           <td align="center" style="border-radius:8px; background:linear-gradient(135deg, #7c3aed, #a855f7)">
                             <a href="${
-                              process.env.NEXTAUTH_URL
+                              process.env.AUTH_URL
                             }/dashboard/admin/leads/${lead.id}" 
                               style="display:inline-block; padding:14px 32px; color:#ffffff; text-decoration:none; font-size:16px; font-weight:900; border-radius:8px">
                               VIEW IN ADMIN PANEL
@@ -179,7 +179,7 @@ export async function submitEnterpriseContact(data: ContactData) {
                     <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin:0 auto">
                       <tr>
                         <td align="center" style="border-radius:8px; background:linear-gradient(135deg, #7c3aed, #a855f7)">
-                          <a href="${process.env.NEXTAUTH_URL}/pricing" 
+                          <a href="${process.env.AUTH_URL}/pricing" 
                             style="display:inline-block; padding:14px 32px; color:#ffffff; text-decoration:none; font-size:16px; font-weight:900; border-radius:8px">
                             VIEW PRICING
                           </a>
